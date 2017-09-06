@@ -1,4 +1,4 @@
-#Instructions for the Wing Optimization Example
+# Instructions for the Wing Optimization Example
 In order to be able to run the wing optimization example the Open-source [dAEDalus tool](https://github.com/sbind/dAEDalusNXT)
 is required. *dAEDalus* is not bundled with this repo. The user should obtain it manually from Github and install it and
 its dependencies. 
@@ -17,13 +17,13 @@ Finally, once the *TIXI* and *TIGL* bindings, as well as *dAEDalus* have been ob
 ensured to be present in the MATLAB search path every time a new instance of MATLAB is started. To do so, create a file
 called `startup.m` in the default working directory of MATLAB with the following contents:
 ```Matlab
-addpath /path/to/tixi/matlab
-addpath /path/to/tigl/matlab
-addpath /path/to/dAEDalus/aerodynamics
-addpath /path/to/dAEDalus/aircraft
-addpath /path/to/dAEDalus/criticaldesign
-addpath /path/to/dAEDalus/geometry
-addpath /path/to/dAEDalus/stdlib
-addpath /path/to/dAEDalus/structures
+addpath('/path/to/tixi/matlab')
+addpath('/path/to/tigl/matlab')
+addpath('/path/to/dAEDalus/aerodynamics')
+addpath('/path/to/dAEDalus/aircraft')
+addpath('/path/to/dAEDalus/criticaldesign')
+addpath('/path/to/dAEDalus/geometry')
+addpath('/path/to/dAEDalus/stdlib')
+addpath('/path/to/dAEDalus/structures')
 ```
 Where `/path/to/...` should of course be replaced with the correct paths to *TIXI*, *TIGL*, and *dAEDalus*.

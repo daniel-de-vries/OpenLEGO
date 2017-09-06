@@ -17,9 +17,10 @@ limitations under the License.
 
 This file contains the setup code for the OpenLEGO package.
 """
-from setuptools import setup, find_packages
+from setuptools import setup
 
 version = '0.0.0dev1'
+
 
 def readme():
     with open('README.md') as f:
@@ -39,7 +40,7 @@ setup(
         'Topic :: Scientific/Engineering',
     ],
     keywords='optimization agile multidisciplinary kadmos openmdao engineering xml cpacs',
-    # TODO: url='https://github.com/some/git/repo',
+    url='https://github.com/daniel-de-vries/OpenLEGO',
     # TODO: download_url='https://github.com/some/git/repo/dist/' + version + '.tar.gzip',
     author='Daniël de Vries',
     author_email='danieldevries6@gmail.com',
@@ -50,7 +51,6 @@ setup(
         'openmdao',
         'lxml',
         'numpy',
-        'matlab',
         'matplotlib'
     ],
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',

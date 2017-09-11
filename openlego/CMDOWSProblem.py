@@ -36,7 +36,6 @@ from openlego.DisciplineComponent import DisciplineComponent
 from openlego.xmlutils import xpath_to_param, xml_to_dict
 from openlego.BoundsNormalizedDriver import normalized_to_bounds
 from openlego.util import CachedProperty
-from kadmos.cmdows import CMDOWS
 
 
 class CMDOWSProblem(Problem):
@@ -52,7 +51,7 @@ class CMDOWSProblem(Problem):
 
     Attributes
     ----------
-        cmdows
+        cmdows_path
         kb_path
         discipline_components
         block_order
@@ -73,8 +72,8 @@ class CMDOWSProblem(Problem):
 
     re_attr_val = re.compile(r'\[((?!\b\d+\b)\b.+\b)\]')
 
-    def __init__(self, cmdows=None, kb_path=None, data_folder=None, base_xml_file=None):
-        # type: (Optional[CMDOWS], Optional[str], Optional[str], Optional[str]) -> None
+    def __init__(self, cmdows_path=None, kb_path=None, data_folder=None, base_xml_file=None):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
         """Initialize a CMDOWS Problem from a given CMDOWS file and knowledge base.
 
         It is also possible to specify where (temporary) data should be stored, and if a base XML
@@ -82,8 +81,8 @@ class CMDOWSProblem(Problem):
 
         Parameters
         ----------
-        cmdows : `CMDOWS`, optional
-            Instance of `CMDOWS` class representing the CMDOWS file.
+        cmdows_path : str, optional
+            Path to the CMDOWS file.
 
         kb_path : str, optional
             Path to the knowledge base.
@@ -94,7 +93,7 @@ class CMDOWSProblem(Problem):
         base_xml_file : str, optional
             Path to a base XML file to update with the problem data.
         """
-        self._cmdows = cmdows
+        self._cmdows_path = cmdows_path
         self._kb_path = kb_path
         self.data_folder = data_folder
         self.base_xml_file = base_xml_file
@@ -130,7 +129,7 @@ class CMDOWSProblem(Problem):
             ValueError
                 If either no CMDOWS file or no knowledge base path has been supplied
         """
-        a = self._cmdows is None
+        a = self._cmdows_path is None
         b = self._kb_path is None
         if a or b:
             raise ValueError('No ' + a*'CMDOWS file ' + (a & b)*'and ' + b*'knowledge base path ' + 'specified!')
@@ -144,18 +143,18 @@ class CMDOWSProblem(Problem):
                 value.invalidate()
 
     @property
-    def cmdows(self):
-        # type: () -> CMDOWS
-        """:obj:`CMDOWS`: Instance of `CMDOWS` representing the CMDOWS file this class corresponds to.
+    def cmdows_path(self):
+        # type: () -> str
+        """:obj:`str`: Path to the CMDOWS file this class corresponds to.
 
         When this property is set the instance is automatically invalidated.
         """
-        return self._cmdows
+        return self._cmdows_path
 
-    @cmdows.setter
-    def cmdows(self, cmdows):
-        # type: (CMDOWS) -> None
-        self._cmdows = cmdows
+    @cmdows_path.setter
+    def cmdows_path(self, cmdows_path):
+        # type: (str) -> None
+        self._cmdows_path = cmdows_path
         self.invalidate()
 
     @property
@@ -174,10 +173,16 @@ class CMDOWSProblem(Problem):
         self.invalidate()
 
     @CachedProperty
+    def _cmdows(self):
+        # type: () -> etree._Element
+        """:obj:`etree._Element`: Root element of the CMDOWS XML file."""
+        return etree.parse(self.cmdows_path).getroot()
+
+    @CachedProperty
     def _problem_def(self):
         # type: () -> etree._Element
         """:obj:`etree._Element`: The problemDefition element of this problem's CMDOWS file."""
-        return self.cmdows.root.find('problemDefinition')
+        return self._cmdows.find('problemDefinition')
 
     @CachedProperty
     def discipline_components(self):
@@ -190,7 +195,7 @@ class CMDOWSProblem(Problem):
                 If a ``designCompetence`` specified in the CMDOWS file does not correspond to an `AbstractDiscipline`.
         """
         _discipline_components = dict()
-        for design_competence in self.cmdows.root.iter('designCompetence'):
+        for design_competence in self._cmdows.iter('designCompetence'):
             uid = design_competence.attrib['uID']
             name = design_competence.find('ID').text
             try:
@@ -361,7 +366,7 @@ class CMDOWSProblem(Problem):
         _driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}
 
         # Find the problem role parameters in the CMDOWS file
-        params = self.cmdows.root.find('problemDefinition/problemRoles/parameters')
+        params = self._cmdows.find('problemDefinition/problemRoles/parameters')
         if params is None:
             raise Exception('cmdows does not contain (valid) parameters in the problemRoles')
 
@@ -431,7 +436,7 @@ class CMDOWSProblem(Problem):
         values = []
 
         # Loop over all edges in the data graph of the CMDOWS file
-        for edge in self.cmdows.root.iterfind('workflow/dataGraph/edges/edge'):
+        for edge in self._cmdows.iterfind('workflow/dataGraph/edges/edge'):
             # Check if this edge departs from the Coordinator block
             from_exec_block_uid = edge.find('fromExecutableBlockUID')
             if from_exec_block_uid is not None and from_exec_block_uid.text == 'Coordinator':

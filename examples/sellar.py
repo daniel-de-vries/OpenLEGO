@@ -154,24 +154,6 @@ def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_v
     return os.path.join(out_path, cmdows_file + '.xml')
 
 
-def cmdows_to_openmdao(cmdows_path, kb_path, data_folder=None, base_xml_file=None):
-    # type: (str, str, Optional[str], Optional[str]) -> CMDOWSProblem
-    """ Transforms a CMDOWS file into an OpenMDAO Problem.
-
-    :param cmdows_path: path to the CMDOWS file
-    :param kb_path: path to the knowledge base
-    :param data_folder: path to the data folder in which to store all files and output from the problem
-    :param base_xml_file: path to a base XML file to update with the problem data
-    :returns: instance of openlego.CMDOWS.CMDOWSProblem representing the CMDOWS file
-    """
-    from openlego.CMDOWSProblem import CMDOWSProblem
-    from kadmos.cmdows import CMDOWS
-    problem = CMDOWSProblem(data_folder=data_folder, base_xml_file=base_xml_file)
-    problem.cmdows = CMDOWS(cmdows_path)
-    problem.kb_path = kb_path
-    return problem
-
-
 def generate_init_xml(xml_path, z1, z2, x1):
     # type: (str, float, float, float) -> None
     """ Generates the initialization XML file for the reference Sellar problem.
@@ -199,14 +181,15 @@ if __name__ == '__main__':
     from shutil import copyfile
     from openmdao.api import view_model
     from openlego.Recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
+    from openlego.CMDOWSProblem import CMDOWSProblem
 
     out = os.path.join(dir_path, 'output')
     xml = os.path.join(out, 'input.xml')
     base_file = os.path.join(out, 'base.xml')
 
     kb_path = kb_deploy()
-    cmdows_path = kb_to_cmdows(kb_path, out, False, False, False)
-    cmdows_problem = cmdows_to_openmdao(cmdows_path, kb_path, out, base_file)
+    cmdows_path = kb_to_cmdows(kb_path, out, True, True, False)
+    cmdows_problem = CMDOWSProblem(cmdows_path, kb_path, out, base_file)
 
     desvar_plotter = NormalizedDesignVarPlotter(cmdows_problem.driver)
     desvar_plotter.options['save_on_close'] = True

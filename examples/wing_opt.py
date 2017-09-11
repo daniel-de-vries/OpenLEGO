@@ -94,12 +94,18 @@ t_bs_lim = np.array([0.0010, 0.0300])
 
 
 def get_variables(n_wing_segments=2):
-    # type: (Optional[int]) -> OrderedDict
-    """ Returns a dictionary with all the input variables for the wing optimization
-     test problem for a given number of wing segments.
+    # type: (int) -> OrderedDict
+    """Get a dictionary with all the input variables for the wing problem for a given number of wing segments.
 
-    :param n_wing_segments: number of wing segments
-    :returns: dictionary with the system input variables
+    Parameters
+    ----------
+        n_wing_segments : int(2)
+            Number of wing segments.
+
+    Returns
+    -------
+        obj:`OrderedDict`
+            Dictionary with the system input variables.
     """
     _c_lim = np.tile(c_lim, (n_wing_segments + 1, 1)).T
     _tc_lim = np.tile(tc_lim, (n_wing_segments + 1, 1)).T
@@ -196,28 +202,55 @@ def get_variables(n_wing_segments=2):
 
 
 def kb_deploy(n_wing_segments=2, n_load_cases=3):
-    # type: (Optional[int], Optional[int]) -> str
-    """ Deploy the knowledge base for the wing optimization problem and returns the path of the base.
+    # type: (int, int) -> str
+    """Deploy the knowledge base for the wing optimization problem and return the path of the base.
 
-    :param n_wing_segments: number of wing segments to use for the wing object model
-    :param n_load_cases: number of load cases to use for the problem
-    :returns: path to the deployed knowledge base
+    Parameters
+    ----------
+        n_wing_segments : int(2)
+            Number of wing segments.
+
+        n_load_cases : int(3)
+            Number of load cases.
+
+    Returns
+    -------
+        str
+            Path to the folder of the deployed knowledge base.
     """
     from examples.kb.kb_wing_opt import deploy
     deploy(n_wing_segments, n_load_cases)
     return os.path.join(dir_path, 'kb', 'kb_wing_opt')
 
 
-def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_vistoms=False):
-    # type: (str, str, Optional[bool], Optional[bool], Optional[bool]) -> str
-    """ Uses KADMOS to transform the wing design knowledge base into a CMDOWS file.
+def kb_to_cmdows(kb_path, out_path, n_wing_segments=2, create_pdfs=False, open_pdfs=False, create_vistoms=False):
+    # type: (str, str, int, bool, bool, bool) -> str
+    """Use KADMOS to transform the wing design knowledge base into a CMDOWS file.
 
-    :param kb_path: path to the knowledge base
-    :param out_path: path to the output directory
-    :param create_pdfs: set to True to create PDFs with XDSMs
-    :param open_pdfs: set to True to open PDFs as they are created
-    :param create_vistoms: set to True to create VISTOMS visualization package
-    :returns: path to the output CMDOWS file
+    Parameters
+    ----------
+        kb_path : str
+            Path to the folder of the knowledge base.
+
+        out_path : str
+            Path to the output folder.
+
+        n_wing_segments : int(2)
+            Number of wing segments.
+
+        create_pdfs : bool(False)
+            Set to `True` to create PDF files of the XDSM diagrams created by KADMOS.
+
+        open_pdfs : bool(False)
+            Set to `True` to open the PDF files as they are created.
+
+        create_vistoms : bool(False)
+            Set to `True` to create an interactive visualization package of the problem.
+
+    Returns
+    -------
+        str
+            Path to the CMDOWS file created by KADMOS.
     """
     from kadmos.graph import FundamentalProblemGraph
     from kadmos.knowledgebase import KnowledgeBase
@@ -225,6 +258,9 @@ def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_v
     from examples.kb.kb_wing_opt.disciplines.xpaths import x_c, x_epsilon, x_b, \
         x_xsi_fs, x_xsi_rs, x_t_fs, x_t_rs, x_t_ts, x_t_bs, \
         x_obj_m_fuel, x_con_sigmas, x_con_exposed_area
+
+    # Get dict of variables
+    variables = get_variables(n_wing_segments)
 
     # KB
     kb_path = os.path.split(kb_path)
@@ -251,8 +287,6 @@ def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_v
     fpg.graph[pf]['allow_unconverged_couplings'] = allow_unconverged_couplings
     fpg.make_all_variables_valid()
 
-    n_wing_segments = 2
-    variables = get_variables(n_wing_segments)
     desvars = [x_c, x_epsilon, x_b, x_xsi_fs, x_xsi_rs, x_t_fs, x_t_rs, x_t_ts, x_t_bs]
     # desvars = [x_t_fs, x_t_rs, x_t_ts, x_t_bs]
     lower_bounds = len(desvars) * [None]
@@ -346,32 +380,20 @@ def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_v
     return os.path.join(out_path, cmdows_file + '.xml')
 
 
-def cmdows_to_openmdao(cmdows_path, kb_path, data_folder=None, base_xml_file=None):
-    # type: (str, str, Optional[str], Optional[str]) -> CMDOWSProblem
-    """ Transforms a CMDOWS file into an OpenMDAO Problem.
-
-    :param cmdows_path: path to the CMDOWS file
-    :param kb_path: path to the knowledge base
-    :param data_folder: path to the data folder in which to store all files and output from the problem
-    :param base_xml_file: path to a base XML file to update with the problem data
-    :returns: instance of openlego.CMDOWS.CMDOWSProblem representing the CMDOWS file
-    """
-    from openlego.CMDOWSProblem import CMDOWSProblem
-    from kadmos.cmdows import CMDOWS
-    problem = CMDOWSProblem(data_folder=data_folder, base_xml_file=base_xml_file)
-    problem.cmdows = CMDOWS(cmdows_path)
-    problem.kb_path = kb_path
-    return problem
-
-
 def generate_init_xml(xml_path, n_wing_segments=2, load_cases=None):
-    # type: (str, Optional[int], Optional[List[(float, float, float)]], Optional[float]) -> None
-    """ Generates the initialization XML file for the reference wing optimization problem.
+    # type: (str, int, Optional[List[(float, float, float)]]) -> None
+    """Generate the initialization XML file for the reference wing optimization problem.
 
-    :param xml_path: path to the XML file
-    :param n_wing_segments: number of wing segments used for the wing object model
-    :param load_cases: list of tuples of length three containing (M, H, n) for each load case
-    :param m_F_init: initial value of the fuel weight in kg
+    Parameters
+    ----------
+        xml_path : str
+            Path of the initialization XML file.
+
+        n_wing_segments : int(2)
+            Number of wing segments.
+
+        load_cases : list of (float, float, float), optional
+            List of load cases in the form of tuples with (Mach number, altitude, load factor).
     """
     from openlego.xmlutils import xml_safe_create_element
     from examples.kb.kb_wing_opt.disciplines.xpaths import x_m_fixed, x_m_payload, x_m_mlw, \
@@ -447,6 +469,30 @@ def generate_init_xml(xml_path, n_wing_segments=2, load_cases=None):
 
 
 class WingDesignPlotter(BaseIterationPlotter):
+    """Specialized `BaseIterationPlotter` displaying a top-view of the wing, the spars, and an outline of the original.
+
+    Attributes
+    ----------
+        p_c, p_epsilon, p_b, p_Lambda, p_Gamma, p_incidence, p_xsi_fs, p_xsi_rs : str
+            OpenMDAO parameter names of the chord, twist, span, sweep, dihedral, incidence, front spar location, and
+            rear spar location variables.
+
+        ax : Axes
+            Axes of the figure.
+
+        first_run : bool
+            Flag to indicate whether it is the first run of this `Recorder`.
+            Flipped to `False` after first run.
+
+        n_wing_segments : int
+            Number of wing segments.
+
+        x_outline_0 : :obj:`np.ndarray`
+            Coordinates of the vertices of the outline of the wing.
+
+        x_fs_0, x_rs_0 : :obj:`np.ndarray`
+            Coordinates of the front and rear spar vertices.
+    """
 
     from examples.kb.kb_wing_opt.disciplines.xpaths import x_c, x_epsilon, x_b,\
         x_Lambda, x_Gamma, x_incidence, x_xsi_fs, x_xsi_rs
@@ -462,6 +508,7 @@ class WingDesignPlotter(BaseIterationPlotter):
     p_xsi_rs = xpath_to_param(x_xsi_rs)
 
     def __init__(self):
+        """Initialize the `WingDesignPlotter`."""
         super(WingDesignPlotter, self).__init__()
 
         self.ax = None
@@ -473,10 +520,33 @@ class WingDesignPlotter(BaseIterationPlotter):
         self.x_rs_0 = None
 
     def init_fig(self, fig):
+        """Add axes and set the aspect ratio of the figure to equal.
+
+        Parameters
+        ----------
+            fig : `Figure`
+                Figure handle of the plot.
+        """
         self.ax = fig.add_subplot(111)
         self.ax.set_aspect('equal', 'box')
 
     def _update_plot(self, params, unknowns, resids, metadata):
+        """Update the plot of the wing shape for the next iteration.
+
+        Parameters
+        ----------
+            params : dict
+                Dictionary containing the ``OpenMDAO`` parameters.
+
+            unknowns : dict
+                Dictionary containing the ``OpenMDAO`` unknowns.
+
+            resids : dict
+                Dictionary containing the ``OpenMDAO`` residuals.
+
+            metadata : dict
+                Dictionary containing the ``OpenMDAO`` metadata.
+         """
         if self.first_run:
             self.n_wing_segments = unknowns[self.p_b].size
 
@@ -565,25 +635,36 @@ if __name__ == '__main__':
     from openmdao.api import view_model
     from openmdao.recorders.sqlite_recorder import SqliteRecorder
     from openlego.Recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter, VOIPlotter
+    from openlego.CMDOWSProblem import CMDOWSProblem
 
+    # Problem settings
     n_ws = 2
     n_lc = 3
+
+    # Output paths and files
     out = os.path.join(dir_path, 'output')
     xml = os.path.join(out, 'input.xml')
     base_file = os.path.join(out, 'base.xml')
     data_file = os.path.join(out, 'data.db')
 
-    kb_path = kb_deploy(n_ws, n_lc)
-    cmdows_path = kb_to_cmdows(kb_path, out)
-    cmdows_problem = cmdows_to_openmdao(cmdows_path, kb_path, out, base_file)
+    # Obtain a dictionary of the variables for the given amount of wing segments
+    variables = get_variables(n_wing_segments=n_ws)
 
+    # Generate the input XML file for the problem
+    generate_init_xml(xml, n_wing_segments=n_ws)
+    copyfile(xml, base_file)
+
+    # Pipeline: Knowledgebase -> KADMOS -> CMDOWS file -> OpenMDAO Problem
+    kb_path = kb_deploy(n_ws, n_lc)
+    cmdows_path = kb_to_cmdows(kb_path, out, n_ws, True, True)
+    cmdows_problem = CMDOWSProblem(cmdows_path, kb_path, out, base_file)
+
+    # Manually fix the exposed area equality contraint
     cmdows_problem.driver._cons[xpath_to_param(x_con_exposed_area)]['lower'] = None
     cmdows_problem.driver._cons[xpath_to_param(x_con_exposed_area)]['upper'] = None
     cmdows_problem.driver._cons[xpath_to_param(x_con_exposed_area)]['equals'] = 0.
 
-    generate_init_xml(xml)
-    copyfile(xml, base_file)
-
+    # Create and setup all recorders for the OpenMDAO Problem
     recorder = SqliteRecorder(data_file)
     cmdows_problem.driver.add_recorder(recorder)
 
@@ -616,10 +697,12 @@ if __name__ == '__main__':
     cmdows_problem.driver.add_recorder(voi_plotter)
     cmdows_problem.driver.add_recorder(wing_des_plotter)
 
+    # Setup the OpenMDAO Problem
     cmdows_problem.setup()
     view_model(cmdows_problem)
-
     cmdows_problem.initialize_from_xml(xml)
+
+    # Run the problem
 
     # cmdows_problem.run_once()
     # print('Initial value m_F: %f kg' % cmdows_problem.root.unknowns[xpath_to_param(x_m_fuel)])
@@ -640,4 +723,5 @@ if __name__ == '__main__':
         str(cmdows_problem.root.unknowns[xpath_to_param(x_t_ts)]),
         str(cmdows_problem.root.unknowns[xpath_to_param(x_t_bs)])))
 
+    # Finally clean up the problem
     cmdows_problem.cleanup()

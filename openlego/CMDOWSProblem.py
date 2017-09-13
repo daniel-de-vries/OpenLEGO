@@ -25,6 +25,7 @@ import re
 import imp
 import numpy as np
 import sys
+import warnings
 
 from lxml import etree
 from openmdao.api import Problem, Group, LinearGaussSeidel, NLGaussSeidel, IndepVarComp, Driver
@@ -34,7 +35,7 @@ from typing import Union, Optional, List
 from openlego.AbstractDiscipline import AbstractDiscipline
 from openlego.DisciplineComponent import DisciplineComponent
 from openlego.xmlutils import xpath_to_param, xml_to_dict
-from openlego.util import CachedProperty
+from openlego.util import CachedProperty, parse_string
 
 
 class CMDOWSProblem(Problem):
@@ -345,6 +346,15 @@ class CMDOWSProblem(Problem):
         """:obj:`dict`: Dictionary of the system input parameters by their promoted names."""
         return {key: value for key, value in self.system_variables.items() if value['system_input']}
 
+    @CachedProperty
+    def _params(self):
+        # type: () -> etree._Element
+        """:obj:`etree._Element`: The problemRoles/parameters element of the CMDOWS file."""
+        params = self._cmdows.find('problemDefinition/problemRoles/parameters')
+        if params is None:
+            raise Exception('cmdows does not contain (valid) parameters in the problemRoles')
+        return params
+
     @property
     def driver(self):
         # type: () -> Driver
@@ -360,38 +370,25 @@ class CMDOWSProblem(Problem):
     def driver(self, driver):
         # type: (Driver) -> None
         if driver is not None:
-            # Find the problem role parameters in the CMDOWS file
-            params = self._cmdows.find('problemDefinition/problemRoles/parameters')
-            if params is None:
-                raise Exception('cmdows does not contain (valid) parameters in the problemRoles')
-
             # Process design variables
-            desvars = params.find('designVariables')
+            desvars = self._params.find('designVariables')
             if desvars is None:
                 raise Exception('cmdows does not contain (valid) design variables')
 
             for desvar in desvars:
                 name = xpath_to_param(desvar.find('parameterUID').text)
-                bounds = ['', '']
+                bounds = 2 * [None]     # type: List[Optional[str]]
 
-                for index, bnd in enumerate(['lowerBound', 'upperBound']):
-                    elem = desvar.find(bnd)
-                    if elem is not None:
-                        bounds[index] = re.sub(r'[\[\]]', '', elem.text)
-                        if ',' in bounds[index]:
-                            bounds[index] = bounds[index].split(',')
-                        elif ';' in bounds[index]:
-                            bounds[index] = bounds[index].split(';')
-
-                        try:
-                            bounds[index] = np.array(bounds[index], dtype=float)
-                        except ValueError:
-                            bounds[index] = elem.text
-
+                limit_range = desvar.find('validRanges/limitRange')
+                if limit_range is not None:
+                    for index, bnd, in enumerate(['minimum', 'maximum']):
+                        elem = limit_range.find(bnd)
+                        if elem is not None:
+                            bounds[index] = parse_string(elem.text)
                 driver.add_desvar(name, lower=bounds[0], upper=bounds[1])
 
             # Process objective variables
-            objvars = params.find('objectiveVariables')
+            objvars = self._params.find('objectiveVariables')
             if objvars is None:
                 raise Exception('cmdows does not contain (valid) objective variables')
             if len(objvars) > 1:
@@ -401,14 +398,45 @@ class CMDOWSProblem(Problem):
             driver.add_objective(obj_name)
 
             # Process constraint variables
-            convars = params.find('constraintVariables')
+            convars = self._params.find('constraintVariables')
             for convar in convars:
                 name = xpath_to_param(convar.find('parameterUID').text)
-                if name in self.system_variables:
-                    val = self.system_variables[name]['val']
+
+                # Obtain the reference value of the constraint
+                constr_ref = convar.find('referenceValue')
+                if constr_ref is not None:
+                    ref = parse_string(constr_ref.text)
+                    if type(ref) == str:
+                        raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
                 else:
-                    val = 0.
-                driver.add_constraint(name, upper=val)
+                    warnings.warn('no referenceValue given for constraint "%s". Default is 0.' % name)
+                    ref = 0.
+
+                # Process the constraint type
+                constr_type = convar.find('constraintType')
+                if constr_type is not None:
+                    if constr_type.text == 'inequality':
+                        constr_oper = convar.find('constraintOperator')
+                        if constr_oper is not None:
+                            oper = constr_oper.text
+                            if oper == '>=' or oper == '>':
+                                driver.add_constraint(name, lower=ref)
+                            elif oper == '<=' or oper == '<':
+                                driver.add_constraint(name, upper=ref)
+                            else:
+                                raise ValueError('invalid constraintOperator "%s" for constraint "%s"' % (oper, name))
+                        else:
+                            warnings.warn('no constraintOperator given for inequality constraint. Default is "&lt;=".')
+                            driver.add_constraint(name, upper=ref)
+                    elif constr_type.text == 'equality':
+                        if convar.find('constraintOperator') is not None:
+                            warnings.warn('constraintOperator given for an equalityConstraint will be ignored')
+                        driver.add_constraint(name, equals=ref)
+                    else:
+                        raise ValueError('invalid constraintType "%s" for constraint "%s".' % (constr_type.text, name))
+                else:
+                    warnings.warn('no constraintType specified for constraint "%s". Default is a <= inequality.')
+                    driver.add_constraint(name, upper=ref)
 
         self._driver = driver
 
@@ -475,9 +503,25 @@ class CMDOWSProblem(Problem):
         --------
             openmdao.api.Problem.setup : the super class' `setup()` method.
         """
+        # Add the coordinator and set the order of the systems before setting up the problem
         self.root.add('coordinator', self.coordinator, promotes=self.__coordinator_promotes)
         self.root.set_order(list(self.system_order))
-        return super(CMDOWSProblem, self).setup(check, out_stream)
+
+        # Setup the problem
+        result = super(CMDOWSProblem, self).setup(check, out_stream)
+
+        # Set initial values from the CMDOWS file
+        for desvar in self._params.find('designVariables'):
+            name = xpath_to_param(desvar.find('parameterUID').text)
+            val = desvar.find('nominalValue')
+            if val is not None:
+                val = parse_string(val.text)
+            else:
+                warnings.warn('no nominalValue given for designVariable "%s". Default is 0.' % name)
+                val = 0.
+            self.root.unknowns[name] = val
+
+        return result
 
     def initialize_from_xml(self, xml):
         # type: (Union[str, etree._ElementTree]) -> None

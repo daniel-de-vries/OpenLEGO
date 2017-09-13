@@ -21,9 +21,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
+import re
 import warnings
 
-from typing import Callable, Any, Optional
+from typing import Callable, Any, Optional, Union
 
 
 def try_hard(fun, *args, **kwargs):
@@ -142,3 +144,35 @@ class CachedProperty(property):
         # type: () -> None
         """Marks the cache of the property as invalid, prompting its recomputation the next time it is accessed."""
         self.__dirty = True
+
+
+def parse_string(s):
+    # type: (str) -> Union[str, np.ndarray, float]
+    """Convert a string to a numpy array of floats or float if possible.
+
+    The string is returned unchanged if it cannot be converted to a numpy array of floats or float.
+
+    Parameters
+    ----------
+        s : str
+            String to be converted.
+
+    Returns
+    -------
+        str or np.ndarray or float
+            Parsed string or the string itself.
+    """
+    v = re.sub(r'[\[\]]', '', s)
+
+    if ',' in v:
+        v = v.split(',')
+    elif ';' in v:
+        v = v.split(';')
+
+    try:
+        v = np.atleast_1d(np.array(v, dtype=float))
+        if v.size == 1:
+            v = v[0]
+        return v
+    except ValueError:
+        return s

@@ -632,10 +632,11 @@ if __name__ == '__main__':
     from openlego.xmlutils import xpath_to_param
     from examples.kb.kb_wing_opt.disciplines.xpaths import x_m_fuel, x_m_wing, \
         x_t_fs, x_t_rs, x_t_ts, x_t_bs, x_con_exposed_area
-    from openmdao.api import view_model
+    from openmdao.api import ScipyOptimizer
     from openmdao.recorders.sqlite_recorder import SqliteRecorder
     from openlego.Recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter, VOIPlotter
     from openlego.CMDOWSProblem import CMDOWSProblem
+    from openlego.BoundsNormalizedDriver import normalized_to_bounds
 
     # Problem settings
     n_ws = 2
@@ -654,10 +655,18 @@ if __name__ == '__main__':
     generate_init_xml(xml, n_wing_segments=n_ws)
     copyfile(xml, base_file)
 
+    # Create a driver for the problem
+    driver = normalized_to_bounds(ScipyOptimizer)()
+    driver.options['optimizer'] = 'SLSQP'
+    driver.options['maxiter'] = 1000
+    driver.options['disp'] = True
+    driver.options['tol'] = 1.0e-3
+    driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}
+
     # Pipeline: Knowledgebase -> KADMOS -> CMDOWS file -> OpenMDAO Problem
     kb_path = kb_deploy(n_ws, n_lc)
-    cmdows_path = kb_to_cmdows(kb_path, out, n_ws, True, True)
-    cmdows_problem = CMDOWSProblem(cmdows_path, kb_path, out, base_file)
+    cmdows_path = kb_to_cmdows(kb_path, out, n_ws)
+    cmdows_problem = CMDOWSProblem(cmdows_path, kb_path, driver, out, base_file)
 
     # Manually fix the exposed area equality contraint
     cmdows_problem.driver._cons[xpath_to_param(x_con_exposed_area)]['lower'] = None
@@ -699,7 +708,6 @@ if __name__ == '__main__':
 
     # Setup the OpenMDAO Problem
     cmdows_problem.setup()
-    view_model(cmdows_problem)
     cmdows_problem.initialize_from_xml(xml)
 
     # Run the problem

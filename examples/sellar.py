@@ -179,17 +179,25 @@ def generate_init_xml(xml_path, z1, z2, x1):
 
 if __name__ == '__main__':
     from shutil import copyfile
-    from openmdao.api import view_model
+    from openmdao.api import ScipyOptimizer
     from openlego.Recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
     from openlego.CMDOWSProblem import CMDOWSProblem
+    from openlego.BoundsNormalizedDriver import normalized_to_bounds
 
     out = os.path.join(dir_path, 'output')
     xml = os.path.join(out, 'input.xml')
     base_file = os.path.join(out, 'base.xml')
 
+    driver = normalized_to_bounds(ScipyOptimizer)()
+    driver.options['optimizer'] = 'SLSQP'
+    driver.options['maxiter'] = 1000
+    driver.options['disp'] = True
+    driver.options['tol'] = 1.0e-3
+    driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}
+
     kb_path = kb_deploy()
-    cmdows_path = kb_to_cmdows(kb_path, out, True, True, False)
-    cmdows_problem = CMDOWSProblem(cmdows_path, kb_path, out, base_file)
+    cmdows_path = kb_to_cmdows(kb_path, out)
+    cmdows_problem = CMDOWSProblem(cmdows_path, kb_path, driver, out, base_file)
 
     desvar_plotter = NormalizedDesignVarPlotter(cmdows_problem.driver)
     desvar_plotter.options['save_on_close'] = True
@@ -211,8 +219,6 @@ if __name__ == '__main__':
     copyfile(xml, base_file)
 
     cmdows_problem.setup()
-    view_model(cmdows_problem)
-
     cmdows_problem.initialize_from_xml(xml)
     cmdows_problem.run()
 

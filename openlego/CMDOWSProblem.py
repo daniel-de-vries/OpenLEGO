@@ -27,27 +27,24 @@ import numpy as np
 import sys
 
 from lxml import etree
-from openmdao.api import Problem, Group, ScipyOptimizer, LinearGaussSeidel, NLGaussSeidel, IndepVarComp, Driver
+from openmdao.api import Problem, Group, LinearGaussSeidel, NLGaussSeidel, IndepVarComp, Driver
 from openmdao.core.problem import _ProbData
 from typing import Union, Optional, List
 
 from openlego.AbstractDiscipline import AbstractDiscipline
 from openlego.DisciplineComponent import DisciplineComponent
 from openlego.xmlutils import xpath_to_param, xml_to_dict
-from openlego.BoundsNormalizedDriver import normalized_to_bounds
 from openlego.util import CachedProperty
 
 
 class CMDOWSProblem(Problem):
     """Specialized OpenMDAO Problem class representing the problem specified by a CMDOWS file.
 
-    An important note about this class in the context of OpenMDAO is that the aggregation pattern
-    of the root Group and main Driver classes the base Problem class has is changed into a
-    stronger composition pattern. This is because this class directly controls the creation and
-    assembly of these two classes by making use of Python's @property decorator. It is not
-    possible, nor should it be attempted, to manually inject a different instance of Group
-    and/or Driver in place of these, because the correspondence between the CMDOWS file and the
-    Problem can then no longer be guaranteed.
+    An important note about this class in the context of OpenMDAO is that the aggregation pattern of the root Group
+    class the base Problem class has is changed into a stronger composition pattern. This is because this class directly
+    controls the creation and assembly of this class by making use of Python's @property decorator. It is not possible,
+    nor should it be attempted, to manually inject a different instance of Group  in place of these, because the
+    correspondence between the CMDOWS file and the Problem can then no longer be guaranteed.
 
     Attributes
     ----------
@@ -72,7 +69,7 @@ class CMDOWSProblem(Problem):
 
     re_attr_val = re.compile(r'\[((?!\b\d+\b)\b.+\b)\]')
 
-    def __init__(self, cmdows_path=None, kb_path=None, data_folder=None, base_xml_file=None):
+    def __init__(self, cmdows_path=None, kb_path=None, driver=None, data_folder=None, base_xml_file=None):
         # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
         """Initialize a CMDOWS Problem from a given CMDOWS file and knowledge base.
 
@@ -86,6 +83,9 @@ class CMDOWSProblem(Problem):
 
         kb_path : str, optional
             Path to the knowledge base.
+
+        driver : :obj:`Driver`, optional
+            Instance of a Driver.
 
         data_folder : str, optional
             Path to the data folder in which to store all files and output from the problem.
@@ -101,7 +101,9 @@ class CMDOWSProblem(Problem):
         self.__coupled_group_promotes = None
         self.__coordinator_promotes = None
 
-        super(CMDOWSProblem, self).__init__()
+        self._driver = None
+
+        super(CMDOWSProblem, self).__init__(driver=driver)
 
     def __getattribute__(self, name):
         """Check the integrity before returning any of the cached variables.
@@ -212,9 +214,9 @@ class CMDOWSProblem(Problem):
                 if 'fp' in locals():
                     fp.close()
 
-                    _discipline_components.update({uid: DisciplineComponent(cls(),
-                                                                            data_folder=self.data_folder,
-                                                                            base_file=self.base_xml_file)})
+            _discipline_components.update({uid: DisciplineComponent(cls(),
+                                                                    data_folder=self.data_folder,
+                                                                    base_file=self.base_xml_file)})
         return _discipline_components
 
     @CachedProperty
@@ -343,84 +345,72 @@ class CMDOWSProblem(Problem):
         """:obj:`dict`: Dictionary of the system input parameters by their promoted names."""
         return {key: value for key, value in self.system_variables.items() if value['system_input']}
 
-    @CachedProperty
+    @property
     def driver(self):
+        # type: () -> Driver
         """:obj:`Driver`: The main `Driver` of this `Problem`.
 
-        This `Driver` is constructed to represent the system specified in the CMDOWS file. To ensure the main `Driver`
-        always represents the CMDOWS file it is computed by this class and should not be set directly by the user.
-
-        The `Problem` class, which this class inherits, sets this property to a default, simple `Driver`. This behavior
-        is overridden by this class by ignoring any attempts to directly set this property.
+        The user can replace the `Problem` class' default driver at any point with any other subclass of `Driver`. When
+        this is done, the design, objective, and constraint variables will automatically added to it corresponding to
+        the CMDOWS file.
         """
-        pass
-
-    @driver.getter
-    def driver(self):
-        # type: () -> ScipyOptimizer
-        _driver = normalized_to_bounds(ScipyOptimizer)()
-        _driver.options['optimizer'] = 'SLSQP'
-        _driver.options['maxiter'] = 1000
-        _driver.options['disp'] = True
-        _driver.options['tol'] = 1.0e-3
-        _driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}
-
-        # Find the problem role parameters in the CMDOWS file
-        params = self._cmdows.find('problemDefinition/problemRoles/parameters')
-        if params is None:
-            raise Exception('cmdows does not contain (valid) parameters in the problemRoles')
-
-        # Process design variables
-        desvars = params.find('designVariables')
-        if desvars is None:
-            raise Exception('cmdows does not contain (valid) design variables')
-
-        for desvar in desvars:
-            name = xpath_to_param(desvar.find('parameterUID').text)
-            bounds = ['', '']
-
-            for index, bnd in enumerate(['lowerBound', 'upperBound']):
-                elem = desvar.find(bnd)
-                if elem is not None:
-                    bounds[index] = re.sub(r'[\[\]]', '', elem.text)
-                    if ',' in bounds[index]:
-                        bounds[index] = bounds[index].split(',')
-                    elif ';' in bounds[index]:
-                        bounds[index] = bounds[index].split(';')
-
-                    try:
-                        bounds[index] = np.array(bounds[index], dtype=float)
-                    except ValueError:
-                        bounds[index] = elem.text
-
-            _driver.add_desvar(name, lower=bounds[0], upper=bounds[1])
-
-        # Process objective variables
-        objvars = params.find('objectiveVariables')
-        if objvars is None:
-            raise Exception('cmdows does not contain (valid) objective variables')
-        if len(objvars) > 1:
-            raise Exception('cmdows contains multiple objectives, but this is not supported')
-
-        obj_name = xpath_to_param(objvars[0].find('parameterUID').text)
-        _driver.add_objective(obj_name)
-
-        # Process constraint variables
-        convars = params.find('constraintVariables')
-        for convar in convars:
-            name = xpath_to_param(convar.find('parameterUID').text)
-            if name in self.system_variables:
-                val = self.system_variables[name]['val']
-            else:
-                val = 0.
-            _driver.add_constraint(name, upper=val)
-
-        return _driver
+        return self._driver
 
     @driver.setter
-    def driver(self, value):
+    def driver(self, driver):
         # type: (Driver) -> None
-        pass
+        if driver is not None:
+            # Find the problem role parameters in the CMDOWS file
+            params = self._cmdows.find('problemDefinition/problemRoles/parameters')
+            if params is None:
+                raise Exception('cmdows does not contain (valid) parameters in the problemRoles')
+
+            # Process design variables
+            desvars = params.find('designVariables')
+            if desvars is None:
+                raise Exception('cmdows does not contain (valid) design variables')
+
+            for desvar in desvars:
+                name = xpath_to_param(desvar.find('parameterUID').text)
+                bounds = ['', '']
+
+                for index, bnd in enumerate(['lowerBound', 'upperBound']):
+                    elem = desvar.find(bnd)
+                    if elem is not None:
+                        bounds[index] = re.sub(r'[\[\]]', '', elem.text)
+                        if ',' in bounds[index]:
+                            bounds[index] = bounds[index].split(',')
+                        elif ';' in bounds[index]:
+                            bounds[index] = bounds[index].split(';')
+
+                        try:
+                            bounds[index] = np.array(bounds[index], dtype=float)
+                        except ValueError:
+                            bounds[index] = elem.text
+
+                driver.add_desvar(name, lower=bounds[0], upper=bounds[1])
+
+            # Process objective variables
+            objvars = params.find('objectiveVariables')
+            if objvars is None:
+                raise Exception('cmdows does not contain (valid) objective variables')
+            if len(objvars) > 1:
+                raise Exception('cmdows contains multiple objectives, but this is not supported')
+
+            obj_name = xpath_to_param(objvars[0].find('parameterUID').text)
+            driver.add_objective(obj_name)
+
+            # Process constraint variables
+            convars = params.find('constraintVariables')
+            for convar in convars:
+                name = xpath_to_param(convar.find('parameterUID').text)
+                if name in self.system_variables:
+                    val = self.system_variables[name]['val']
+                else:
+                    val = 0.
+                driver.add_constraint(name, upper=val)
+
+        self._driver = driver
 
     @CachedProperty
     def coordinator(self):

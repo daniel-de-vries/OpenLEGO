@@ -19,7 +19,7 @@ This file contains the setup code for the OpenLEGO package.
 """
 from setuptools import setup
 
-version = '0.0.0dev1'
+version = '1.0.0dev1'
 
 
 def readme():
@@ -48,7 +48,7 @@ setup(
     packages=['openlego'],
     install_requires=[
         'kadmos=0.7',
-        'openmdao==1.7.3',
+        'openmdao==2.0.0',
         'lxml',
         'numpy',
         'matplotlib'

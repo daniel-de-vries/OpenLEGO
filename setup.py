@@ -47,8 +47,8 @@ setup(
     license='Apache Software License',
     packages=['openlego'],
     install_requires=[
-        'kadmos',
-        'openmdao',
+        'kadmos=0.7',
+        'openmdao==1.7.3',
         'lxml',
         'numpy',
         'matplotlib'

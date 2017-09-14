@@ -23,7 +23,6 @@ from __future__ import print_function
 
 import re
 import imp
-import numpy as np
 import sys
 import warnings
 
@@ -121,10 +120,10 @@ class CMDOWSProblem(Problem):
         """
         if name != '__class__' and name != '__dict__':
             if name in [_name for _name, value in self.__class__.__dict__.items() if isinstance(value, CachedProperty)]:
-                self.__integrety_check()
+                self.__integrity_check()
         return super(CMDOWSProblem, self).__getattribute__(name)
 
-    def __integrety_check(self):
+    def __integrity_check(self):
         """Ensure both a CMDOWS file and a knowledge base path have been supplied.
 
         Raises
@@ -277,6 +276,8 @@ class CMDOWSProblem(Problem):
                 _coupled_group.ln_solver = LinearGaussSeidel()
                 _coupled_group.ln_solver.options['maxiter'] = 10
                 _coupled_group.nl_solver = NLGaussSeidel()
+            else:
+                raise RuntimeError('OpenMDAO 1.x only supports a Gauss-Seidel converger.')
             return _coupled_group
         return None
 

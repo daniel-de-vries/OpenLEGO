@@ -79,6 +79,12 @@ class DisciplineComponent(XMLComponent):
         """:obj:`AbstractDiscipline`: Read-only reference to the specific discipline this `Component` wraps."""
         return self._discipline
 
+    def setup(self):
+        # type: () -> None
+        """Approximate all gradients using finite difference."""
+        super(DisciplineComponent, self).setup()
+        self.approx_partials('*', '*')
+
     def execute(self, input_xml=None, output_xml=None):
         # type: (str, str) -> None
         """Call the `execute()` method of this `Component`'s discipline.

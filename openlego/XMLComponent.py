@@ -29,16 +29,15 @@ from abc import abstractmethod
 from datetime import datetime
 from lxml import etree
 from typing import Optional, List, Union, Iterable
-from openmdao.api import Group, IndepVarComp
-from openmdao.core.vec_wrapper import VecWrapper
+from openmdao.api import Group, IndepVarComp, ExplicitComponent
+from openmdao.vectors.vector import Vector
 
 from openlego.xmlutils import xml_safe_create_element, xml_to_dict, xpath_to_param, param_to_xpath, xml_merge
-from openlego.PromotingComponent import PromotingComponent
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class XMLComponent(PromotingComponent):
+class XMLComponent(ExplicitComponent):
     """Abstract base class exposing an interface to use XML files for its in- and output.
 
     This subclass of `PromotingComponent` can automatically create ``OpenMDAO`` inputs and outputs based on given in-
@@ -60,10 +59,7 @@ class XMLComponent(PromotingComponent):
 
     Attributes
     ----------
-        input_by_xml, output_by_xml : bool
-            True if any inputs, resp. outputs, are taken from XML.
-
-        inputs_from_xml, outputs_from_xml : list
+        inputs_from_xml, outputs_from_xml : dict
             List of inputs, resp. outputs, taken from XML.
 
         data_folder : str('')
@@ -106,11 +102,8 @@ class XMLComponent(PromotingComponent):
         """
         super(XMLComponent, self).__init__()
 
-        self.input_by_xml = False
-        self.output_by_xml = False
-
-        self.inputs_from_xml = list()
-        self.outputs_from_xml = list()
+        self.inputs_from_xml = dict()
+        self.outputs_from_xml = dict()
 
         if input_xml is not None:
             self.set_inputs_from_xml(input_xml)
@@ -124,7 +117,7 @@ class XMLComponent(PromotingComponent):
 
     def set_inputs_from_xml(self, input_xml):
         # type: (Union[str, etree._ElementTree]) -> None
-        """Add input parameters to the `Component` based on an input XML template file.
+        """Set inputs to the `Component` based on an input XML template file.
 
         Parameter names correspond to their XML elements' full XPaths, converted to valid ``OpenMDAO`` names using the
         `xpath_to_param()` method.
@@ -134,19 +127,14 @@ class XMLComponent(PromotingComponent):
             input_xml : str or :obj:`etree._ElementTree`
                 Path to or an `etree._ElementTree` of an input XML file.
         """
-        for param, value in xml_to_dict(input_xml).items():
-            param_name = xpath_to_param(param)
-            self.inputs_from_xml.append(param_name)
-            if not isinstance(value, str):
-                self.add_param(param_name, val=value)
-            else:
-                self.add_param(param_name, val=value, pass_by_obj=True)
-
-        self.input_by_xml = True
+        self.inputs_from_xml.clear()
+        for xpath, value in xml_to_dict(input_xml).items():
+            name = xpath_to_param(xpath)
+            self.inputs_from_xml.update({name: value})
 
     def set_outputs_from_xml(self, output_xml):
         # type: (Union[str, etree._ElementTree]) -> None
-        """Add output parameters to the `Component` based on an output XML template file.
+        """Set outputs to the `Component` based on an output XML template file.
 
         Parameter names correspond to their XML elements' full XPaths, converted to valid ``OpenMDAO`` names using the
         `xpath_to_param()` method.
@@ -156,23 +144,25 @@ class XMLComponent(PromotingComponent):
             output_xml : str or :obj:`etree._ElementTree`
                 Path to or an `etree._ElementTree` of an output XML file.
         """
-        for output, value in xml_to_dict(output_xml).items():
-            output_name = xpath_to_param(output)
-            self.outputs_from_xml.append(output_name)
-            if not isinstance(value, str):
-                self.add_output(output_name, val=value)
-            else:
-                self.add_output(output_name, val=value, pass_by_obj=True)
-
-        self.output_by_xml = True
+        self.outputs_from_xml.clear()
+        for xpath, value in xml_to_dict(output_xml).items():
+            name = xpath_to_param(xpath)
+            self.outputs_from_xml.update({name: value})
 
     @property
     def variables_from_xml(self):
-        # type: () -> List[str]
-        """:obj:`list` of :obj:`str`: List of all XML param and unkown names."""
-        variables = self.inputs_from_xml[:]
-        variables.extend(self.outputs_from_xml)
+        # type: () -> dict
+        """:obj:`dict`: Dictionary of all XML inputs and outputs."""
+        variables = self.inputs_from_xml.copy()
+        variables.update(self.outputs_from_xml.copy())
         return variables
+
+    def setup(self):
+        for name, value in self.inputs_from_xml.items():
+            self.add_input(name, value)
+
+        for name, value in self.outputs_from_xml.items():
+            self.add_output(name, value)
 
     @abstractmethod
     def execute(self, input_xml=None, output_xml=None):
@@ -186,42 +176,37 @@ class XMLComponent(PromotingComponent):
         """
         raise NotImplementedError
 
-    def solve_nonlinear(self, params, unknowns, resids):
-        # type: (VecWrapper, VecWrapper, VecWrapper) -> None
+    def compute(self, inputs, outputs):
+        # type: (Vector, Vector) -> None
         """Write the input XML file, call `execute()`, and read the output XML file to obtain the results.
 
         Parameters
         ----------
-            params : `VecWrapper`, optional
-                `VecWrapper` containing parameters. (p)
+            inputs : `Vector`
+                Input parameters.
 
-            unknowns : `VecWrapper`, optional
-                `VecWrapper` containing outputs and states. (u)
-
-            resids : `VecWrapper`, optional
-                `VecWrapper` containing residuals. (r)
+            outputs : `Vector`
+                Output parameters.
         """
 
-        input_xml = output_xml = None
+        # Create file names
         salt = datetime.now().strftime('%Y%m%d%H%M%f')
-        if self.input_by_xml:
-            input_xml = os.path.join(self.data_folder, self.name + '_in_%s.xml' % salt)
+        input_xml = os.path.join(self.data_folder, self.name + '_in_%s.xml' % salt)
+        output_xml = os.path.join(self.data_folder, self.name + '_out_%s.xml' % salt)
 
+        if self.inputs_from_xml:
             # Create new root element and an ElementTree
-            root = etree.Element(param_to_xpath(params.keys()[0]).split('/')[1])
+            root = etree.Element(param_to_xpath(self.inputs_from_xml.keys()[0]).split('/')[1])
             doc = etree.ElementTree(root)
 
             # Convert all XML param names to XPaths and add new elements to the tree correspondingly
             for param in self.inputs_from_xml:
-                xml_safe_create_element(doc, param_to_xpath(param), params[param])
+                xml_safe_create_element(doc, param_to_xpath(param), inputs[param])
 
             # Write the tree to an XML file
             doc.write(input_xml, pretty_print=True, xml_declaration=True, encoding='utf-8')
             if self.base_file is not None:
                 xml_merge(self.base_file, input_xml)
-
-        if self.output_by_xml:
-            output_xml = os.path.join(self.data_folder, self.name + '_out_%s.xml' % salt)
 
         # Call execute
         if self.base_file is not None:
@@ -231,7 +216,7 @@ class XMLComponent(PromotingComponent):
             self.execute(input_xml, output_xml)
 
         # If files should not be kept, delete the input XML file
-        if self.input_by_xml and not self.keep_files:
+        if not self.keep_files:
             try:
                 os.remove(input_xml)
             except OSError:
@@ -240,9 +225,9 @@ class XMLComponent(PromotingComponent):
         if self.outputs_from_xml:
             # Extract the results from the output xml
             for xpath, value in xml_to_dict(output_xml).items():
-                param = xpath_to_param(xpath)
-                if param in unknowns:
-                    unknowns[param] = value
+                name = xpath_to_param(xpath)
+                if name in self.outputs_from_xml:
+                    outputs[name] = value
 
             # If files should not be kept, delete the output XML file
             if not self.keep_files:

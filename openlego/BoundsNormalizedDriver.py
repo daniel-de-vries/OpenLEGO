@@ -23,7 +23,7 @@ from __future__ import print_function
 
 import numpy as np
 
-from openmdao.api import Driver
+from openmdao.core.driver import Driver
 from typing import Type, Optional, Union, Callable
 
 

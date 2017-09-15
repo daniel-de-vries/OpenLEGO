@@ -1,4 +1,7 @@
 # OpenLEGO
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1f32ed0b023e4d2db498589983652773)](https://www.codacy.com/app/danieldevries6/OpenLEGO?utm_source=github.com&utm_medium=referral&utm_content=daniel-de-vries/OpenLEGO&utm_campaign=badger)
+
 Welcome to the Git repo of *OpenLEGO*!
 
 *OpenLEGO* stands for "Open-source Link between AGILE and OpenMDAO", which is just what it does. It links together two

@@ -26,8 +26,8 @@ import numpy as np
 from lxml import etree
 from typing import Optional, Union, Tuple, Sized
 
-from openlego.AbstractDiscipline import AbstractDiscipline
-from openlego.XMLComponent import xml_safe_create_element
+from openlego.discipline import AbstractDiscipline
+from openlego.components import xml_safe_create_element
 
 from examples.kb.kb_wing_opt.disciplines.xpaths import *
 

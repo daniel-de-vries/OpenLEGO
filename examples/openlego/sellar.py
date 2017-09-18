@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 from openmdao.api import Problem, ScipyOptimizer
-from openlego.LEGOModel import LEGOModel
+from openlego.model import LEGOModel
 
 if __name__ == '__main__':
     # 1. Create a Driver object

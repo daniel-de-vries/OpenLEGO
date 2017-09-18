@@ -36,7 +36,7 @@ import os
 import sys
 
 from shutil import copyfile
-from openlego.xmlutils import xml_merge
+from openlego.xml import xml_merge
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 base_file_path = os.path.join(dir_path, 'wing_opt-base.xml')

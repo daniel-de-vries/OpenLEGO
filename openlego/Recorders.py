@@ -17,7 +17,6 @@ limitations under the License.
 
 This file contains the definitions of ``OpenMDAO`` `Recorder` utility classes.
 """
-# TODO: update the recorders to OpenMDAO 2
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -38,8 +37,11 @@ import matplotlib
 
 from abc import abstractmethod
 from multiprocessing import Process, Pipe
-from openmdao.api import BaseRecorder, Driver, Group
-from typing import Optional, Any
+from openmdao.core.driver import Driver
+from openmdao.solvers.solver import Solver
+from openmdao.core.system import System
+from openmdao.recorders.base_recorder import BaseRecorder
+from typing import Optional, Any, Union
 
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -71,7 +73,7 @@ class BaseIterationPlotter(BaseRecorder):
         # type: () -> None
         """Initialize the class."""
         super(BaseIterationPlotter, self).__init__()
-        self.options.add_option('save_on_close', False, desc='Set to True to save figure when closing the Recorder')
+        self.options.declare('save_on_close', False, desc='Set to True to save figure when closing the Recorder')
         self.save_settings = {'path': self.__class__.__name__ + '_figure.png',
                               'dpi': 600, 'ar': 1.61803398875, 'width': 4000}
 
@@ -84,8 +86,8 @@ class BaseIterationPlotter(BaseRecorder):
         self._toolbar = None
         self._fig = None
 
-        self.options['record_params'] = True
-        self.options['record_metadata'] = True
+        self.options['record_objectives'] = True
+        self.options['record_constraints'] = True
 
     @abstractmethod
     def init_fig(self, fig):
@@ -103,8 +105,8 @@ class BaseIterationPlotter(BaseRecorder):
         raise NotImplementedError
 
     @abstractmethod
-    def _update_plot(self, params, unknowns, resids, metadata):
-        # type: (dict, dict, dict, dict) -> None
+    def _update_plot(self, *args):
+        # type: (Any) -> None
         """Update the plot with data from the next iteration/function evaluation.
 
         This method should be implemented to insert new data into the plot. This method is called within the plot
@@ -112,30 +114,21 @@ class BaseIterationPlotter(BaseRecorder):
 
         Parameters
         ----------
-            params : dict
-                Dictionary containing the ``OpenMDAO`` parameters.
-
-            unknowns : dict
-                Dictionary containing the ``OpenMDAO`` unknowns.
-
-            resids : dict
-                Dictionary containing the ``OpenMDAO`` residuals.
-
-            metadata : dict
-                Dictionary containing the ``OpenMDAO`` metadata.
+            *args : any
+                Data to update or enrich the plot with.
          """
         raise NotImplementedError
 
-    def startup(self, group):
-        # type: (Group) -> None
+    def startup(self, object_requesting_recording):
+        # type: (Union[Driver, System, Solver]) -> None
         """Call the `BaseRecorder` `startup()` method and start the `Process` handling the figure.
 
         Parameters
         ----------
-            group : :obj:`Group`
-                The `Group` that owns this `Recorder`.
+            object_requesting_recording : Union[Driver, System, Solver]
+                The Object to which this recorder is attached.
         """
-        super(BaseIterationPlotter, self).startup(group)
+        super(BaseIterationPlotter, self).startup(object_requesting_recording)
 
         self._process = Process(target=self._process_run)
         self._process.daemon = True
@@ -169,7 +162,7 @@ class BaseIterationPlotter(BaseRecorder):
             fig = plt.figure()
             time.sleep(1e-4)
             return fig
-        self._fig = try_hard(plt_figure, try_hard_limit=4)
+        self._fig = try_hard(plt_figure, try_hard_limit=4)  # type: Figure
 
         self._canvas = FigureCanvasTkAgg(self._fig, master=self._tk)
         self._toolbar = NavigationToolbar2TkAgg(self._canvas, self._tk)
@@ -198,11 +191,8 @@ class BaseIterationPlotter(BaseRecorder):
             if out is None or not isinstance(out, tuple):
                 raise ValueError('packet sent to _update() is not a tuple')
             elif 'update' in out[0] or 'save' in out[0]:
-                if len(out) != 5:
-                    raise SyntaxError('update and save commands need exactly 4 arguments')
-                elif 'update' in out[0]:
-                    params, unknowns, resids, metadata = out[1:]
-                    self._update_plot(params, unknowns, resids, metadata)
+                if 'update' in out[0]:
+                    self._update_plot(*out[1:])
                 elif 'save' in out[0]:
                     path, dpi, ar, width = out[1:]
                     self._fig.set_size_inches(ar * width / dpi, ar * width / dpi)
@@ -241,40 +231,43 @@ class BaseIterationPlotter(BaseRecorder):
             time.sleep(1.e-4)
         return self._callback_out.recv()
 
-    def record_metadata(self, group):
-        """Not implemented."""
+    def record_metadata_driver(self, object_requesting_recording):
         pass
 
-    def record_iteration(self, params, unknowns, resids, metadata):
-        """Process the data of a new iteration.
-
-        Filters the variables that were set to be recorded and sends the new data to the `Process` handling the plot
-        without blocking the main process/thread.
-
-        Parameters
-        ----------
-            params : :obj:`VecWrapper`
-                The parameters at this iteration.
-
-            unknowns : :obj:`VecWrapper`
-                The unknowns at this iteration.
-
-            resids : :obj:`VecWrapper`
-                The residuals at this iteration.
-
-            metadata : :obj:`VecWrapper`
-                The metadata at this iteration.
-        """
-        iter_coord = metadata['coord']
-        myparams = self._filter_vector(params, 'p', iter_coord)
-        myunknowns = self._filter_vector(unknowns, 'u', iter_coord)
-        myresids = self._filter_vector(resids, 'r', iter_coord)
-
-        self._in.send(('update', myparams, myunknowns, myresids, metadata))
-
-    def record_derivatives(self, derivs, metadata):
-        """Not implemented."""
+    def record_metadata_system(self, object_requesting_recording):
         pass
+
+    def record_metadata_solver(self, object_requesting_recording):
+        pass
+
+    def record_iteration_driver(self, object_requesting_recording, metadata):
+        super(BaseIterationPlotter, self).record_iteration_driver(object_requesting_recording, metadata)
+
+        self._in.send(('update',
+                       self._desvars_values,
+                       self._responses_values,
+                       self._objectives_values,
+                       self._constraints_values,
+                       metadata))
+
+    def record_iteration_system(self, object_requesting_recording, metadata):
+        super(BaseIterationPlotter, self).record_iteration_system(object_requesting_recording, metadata)
+
+        self._in.send(('update',
+                       self._inputs,
+                       self._outputs,
+                       self._resids,
+                       metadata))
+
+    def record_iteration_solver(self, object_requesting_recording, metadata, **kwargs):
+        super(BaseIterationPlotter, self).record_iteration_solver(object_requesting_recording, metadata, **kwargs)
+
+        self._in.send(('update',
+                       self._abs_error,
+                       self._rel_error,
+                       self._outputs,
+                       self._resids,
+                       metadata))
 
     def save_figure(self, path=None, dpi=None, ar=None, width=None):
         # type: (Optional[str], Optional[int], Optional[float], Optional[int]) -> None
@@ -394,20 +387,23 @@ class VOIPlotter(BaseIterationPlotter):
 
         self.lines = None
 
-    def startup(self, group):
-        # type: (Group) -> None
+    def startup(self, system):
+        # type: (System) -> None
         """Check `includes`, `legend`, and `labels` options for validity and compatibility and create `vois` dictionary.
 
         Parameters
         ----------
-            group : :obj:`Group`
-                `Group` that owns this `Recorder`.
+            system : :obj:`System`
+                `Sytem` that owns this `Recorder`.
 
         Raises
         ------
             AttributeError
                 If the `includes`, `legend`, and/or `labels` are not valid or incompatible with one another.
         """
+        if not isinstance(system, System):
+            raise ValueError('This Recorder must be attached to a System.')
+
         includes = self.options['includes']
         legend = self.options['legend']
         labels = self.options['labels']
@@ -425,7 +421,7 @@ class VOIPlotter(BaseIterationPlotter):
 
         self.vois = OrderedDict()
 
-        super(VOIPlotter, self).startup(group)
+        super(VOIPlotter, self).startup(system)
 
     def init_fig(self, fig):
         # type: (Figure) -> None
@@ -474,20 +470,20 @@ class VOIPlotter(BaseIterationPlotter):
 
         ax_main.legend(bbox_to_anchor=(.5, 1.), loc='lower center', ncol=4)
 
-    def _update_plot(self, params, unknowns, resids, metadata):
+    def _update_plot(self, inputs, outputs, resids, metadata):
         # type: (dict, dict, dict, dict) -> None
         """Insert the new data into the plot and refresh it.
 
         Parameters
         ----------
-            params : dict
-                Dictionary containing the ``OpenMDAO`` parameters.
+            inputs : dict
+                Dictionary containing the inputs of the `System`.
 
-            unknowns : dict
-                Dictionary containing the ``OpenMDAO`` unknowns.
+            outputs : dict
+                Dictionary containing the outputs of the `System`.
 
             resids : dict
-                Dictionary containing the ``OpenMDAO`` residuals.
+                Dictionary containing the residuals of the `System`.
 
             metadata : dict
                 Dictionary containing the ``OpenMDAO`` metadata.
@@ -498,7 +494,16 @@ class VOIPlotter(BaseIterationPlotter):
             self.xdata = np.append(self.xdata, [self.xdata[-1] + 1])
 
         for key in self.vois.keys():
-            self.vois[key]['data'] = np.append(self.vois[key]['data'], [unknowns[key]])
+            if key in inputs:
+                data = inputs[key]
+            elif key in outputs:
+                data = outputs[key]
+            elif key in resids:
+                data = resids[key]
+            else:
+                raise ValueError('Variable of interest "%s" does not belong to the System holding this Recorder.' % key)
+
+            self.vois[key]['data'] = np.append(self.vois[key]['data'], [data])
             self.vois[key]['line'].set_data(self.xdata, self.vois[key]['data'])
             self.vois[key]['ax'].relim()
             self.vois[key]['ax'].autoscale_view()
@@ -528,12 +533,11 @@ class SimpleObjectivePlotter(BaseIterationPlotter):
             Flag signifying whether this is the first run of the `Recorder`. Flipped to `False` after first iteration.
     """
 
-    def __init__(self, driver):
+    def __init__(self):
         # type: (Driver) -> None
         """Initialize the `SimpleObjectivePlotter`."""
         super(SimpleObjectivePlotter, self).__init__()
 
-        self._driver_link = driver
         self.obj_name = None
         self.obj_init = None
 
@@ -545,20 +549,19 @@ class SimpleObjectivePlotter(BaseIterationPlotter):
 
         self.first_run = True
 
-    def startup(self, group):
-        # type: (Group) -> None
+    def startup(self, driver):
+        # type: (Driver) -> None
         """Obtain the name of the objective function variable from the `Driver` before calling the `super()`.
 
         Parameters
         ----------
-            group : :obj:`Group`
-                `Group` that owns this `Recorder`.
+            driver : :obj:`Driver`
+                `Driver` that owns this `Recorder`.
         """
-        if self._driver_link is not None:
-            self.obj_name = self._driver_link.get_objectives().keys()[0]
-            self._driver_link = None
+        if not isinstance(driver, Driver):
+            raise ValueError('This Recorder must be attached to a Driver.')
 
-        super(SimpleObjectivePlotter, self).startup(group)
+        super(SimpleObjectivePlotter, self).startup(driver)
 
     def init_fig(self, fig):
         # type: (Figure) -> None
@@ -576,33 +579,36 @@ class SimpleObjectivePlotter(BaseIterationPlotter):
 
         self.line, = self.ax.plot([], [], color='black')
 
-    def _update_plot(self, params, unknowns, resids, metadata):
+    def _update_plot(self, desvar_values, response_values, objectives_values, constraints_values, metadata):
         # type: (dict, dict, dict, dict) -> None
         """Insert the new data into the plot and refresh it.
 
         Parameters
         ----------
-            params : dict
-                Dictionary containing the ``OpenMDAO`` parameters.
+            desvar_values : dict
+                Dictionary containing the design variables of the `Driver`.
 
-            unknowns : dict
-                Dictionary containing the ``OpenMDAO`` unknowns.
+            response_values : dict
+                Dictionary containing the response variables of the `Driver`.
 
-            resids : dict
-                Dictionary containing the ``OpenMDAO`` residuals.
+            objectives_values : dict
+                Dictionary containing the objective variables of the `Driver`.
+
+            constraints_values : dict
+                Dictionary containing the constraint variables of the `Driver`.
 
             metadata : dict
                 Dictionary containing the ``OpenMDAO`` metadata.
         """
         if self.first_run:
             self.first_run = False
-            self.obj_init = unknowns[self.obj_name]
+            self.obj_init = objectives_values.values()[0]
             self.xdata = np.array([0.])
             self.ydata = np.array([1.])
         else:
             _iter = self.xdata[-1] + 1
             self.xdata = np.append(self.xdata, [_iter])
-            self.ydata = np.append(self.ydata, [unknowns[self.obj_name]/self.obj_init])
+            self.ydata = np.append(self.ydata, [objectives_values.values()[0]/self.obj_init])
             self.ax.set_xlim([0, _iter])
             self.ax.set_ylim([0, 1])
 
@@ -652,15 +658,12 @@ class BaseLanePlotter(BaseIterationPlotter):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, driver, vmin=0., vmax=1., cmap='viridis', norm=None):
-        # type: (Driver, float, float, str, Optional[colors.Normalize]) -> None
+    def __init__(self, vmin=0., vmax=1., cmap='viridis', norm=None):
+        # type: (float, float, str, Optional[colors.Normalize]) -> None
         """Initialize a new `BaseLanePlotter` instance.
 
         Parameters
         ----------
-            driver : :obj:`Driver`
-                Instance of the `Driver` of the `Problem` this `Recorder` is associated with.
-
             vmin, vmax : float
                 Lower and upper cutoff for the values along the colorbar.
 
@@ -681,11 +684,7 @@ class BaseLanePlotter(BaseIterationPlotter):
 
         self.iter = 0
         self.ax = None
-
-        if 'maxiter' in driver.options:
-            self.max_iter = driver.options['maxiter']
-        else:
-            self.max_iter = 1000
+        self.max_iter = 1000
 
         self.quad = None
 
@@ -693,6 +692,15 @@ class BaseLanePlotter(BaseIterationPlotter):
         self.vmax = vmax
         self.cmap = cmap
         self.norm = norm
+
+    def startup(self, object_requesting_recording):
+        if not isinstance(object_requesting_recording, Driver):
+            raise ValueError('This Recorder should be attached to a Driver.')
+
+        if 'maxiter' in object_requesting_recording.options:
+            self.max_iter = object_requesting_recording.options['maxiter']
+
+        super(BaseLanePlotter, self).startup(object_requesting_recording)
 
     @abstractmethod
     def init_vars(self):
@@ -731,20 +739,23 @@ class BaseLanePlotter(BaseIterationPlotter):
 
         self.ax.set_xlabel('Evaluation #')
 
-    def _update_plot(self, params, unknowns, resids, metadata):
+    def _update_plot(self, desvar_values, response_values, objectives_values, constraints_values, metadata):
         # type: (dict, dict, dict, dict) -> None
         """Insert the new data into the plot and refresh it.
 
         Parameters
         ----------
-            params : dict
-                Dictionary containing the ``OpenMDAO`` parameters.
+            desvar_values : dict
+                Dictionary containing the design variables of the `Driver`.
 
-            unknowns : dict
-                Dictionary containing the ``OpenMDAO`` unknowns.
+            response_values : dict
+                Dictionary containing the response variables of the `Driver`.
 
-            resids : dict
-                Dictionary containing the ``OpenMDAO`` residuals.
+            objectives_values : dict
+                Dictionary containing the objective variables of the `Driver`.
+
+            constraints_values : dict
+                Dictionary containing the constraint variables of the `Driver`.
 
             metadata : dict
                 Dictionary containing the ``OpenMDAO`` metadata.
@@ -762,19 +773,16 @@ class BaseLanePlotter(BaseIterationPlotter):
 class NormalizedDesignVarPlotter(BaseLanePlotter):
     """Specific case of the `BaseLanePlotter` which plots all normalized design variables of a `Problem`.
 
-    Design variable values are normalized using the ``adder`` and ``scaler`` properties of the design variables as
+    Design variable values are normalized using the ``ref0`` and ``ref`` properties of the design variables as
     specified in the ``metadata``.
     """
 
-    def __init__(self, driver, vmin=0., vmax=1., cmap='viridis', norm=None):
-        # type: (Driver, float, float, str, Optional[colors.Normalize]) -> None
+    def __init__(self, vmin=0., vmax=1., cmap='viridis', norm=None):
+        # type: (float, float, str, Optional[colors.Normalize]) -> None
         """Initialize the `BaseLanePlotter` and stores the ``desvar_metadata`` from the `Driver`.
 
         Parameters
         ----------
-            driver : :obj:`Driver`
-                Instance of the `Driver` of the `Problem` this `Recorder` is associated with.
-
             vmin, vmax : float
                 Lower and upper cutoff for the values along the colorbar.
 
@@ -784,8 +792,15 @@ class NormalizedDesignVarPlotter(BaseLanePlotter):
             norm : :obj:`colors.Normalize`, optional
                 Instance of `colors.Normalize` can be supplied to use a normalization scheme for the colorbar.
         """
-        super(NormalizedDesignVarPlotter, self).__init__(driver, vmin, vmax, cmap, norm)
-        self.desvar_meta = driver.get_desvar_metadata()
+        super(NormalizedDesignVarPlotter, self).__init__(vmin, vmax, cmap, norm)
+        self.desvar_meta = None
+
+    def startup(self, object_requesting_recording):
+        try:
+            self.desvar_meta = object_requesting_recording._designvars.copy()
+            super(NormalizedDesignVarPlotter, self).startup(object_requesting_recording)
+        except ValueError:
+            raise ValueError('This Recorder must be attached to a Driver.')
 
     def init_vars(self):
         # type: () -> None
@@ -793,35 +808,38 @@ class NormalizedDesignVarPlotter(BaseLanePlotter):
         self.var_names = list()
         self.n_vars = 0
         for key in self.desvar_meta.keys():
-            adder = self.desvar_meta[key]['adder']
-            if isinstance(adder, np.ndarray):
+            ref0 = self.desvar_meta[key]['ref0']
+            if isinstance(ref0, np.ndarray):
                 size = self.desvar_meta[key]['adder'].size
             else:
                 size = 1
             self.n_vars += size
             self.var_names.extend(['%s[%d]' % (key, i) for i in range(size)])
 
-    def _update_plot(self, params, unknowns, resids, metadata):
+    def _update_plot(self, desvar_values, response_values, objectives_values, constraints_values, metadata):
         # type: (dict, dict, dict, dict) -> None
         """Update the lane plot with the new data by inserting scaled design variable values into the cs property of
         the super class.
 
         Parameters
         ----------
-            params : dict
-                Dictionary containing the ``OpenMDAO`` parameters.
+            desvar_values : dict
+                Dictionary containing the design variables of the `Driver`.
 
-            unknowns : dict
-                Dictionary containing the ``OpenMDAO`` unknowns.
+            response_values : dict
+                Dictionary containing the response variables of the `Driver`.
 
-            resids : dict
-                Dictionary containing the ``OpenMDAO`` residuals.
+            objectives_values : dict
+                Dictionary containing the objective variables of the `Driver`.
+
+            constraints_values : dict
+                Dictionary containing the constraint variables of the `Driver`.
 
             metadata : dict
                 Dictionary containing the ``OpenMDAO`` metadata.
         """
-        parts = [(unknowns[key] + self.desvar_meta[key]['adder']) * self.desvar_meta[key]['scaler']
-                 for key in self.desvar_meta.keys()]
+        parts = [(desvar_values[key] + self.desvar_meta[key]['ref0']) /
+                 (self.desvar_meta[key]['ref'] - self.desvar_meta[key]['ref0']) for key in self.desvar_meta.keys()]
         for index, part in enumerate(parts):
             if type(part) == np.ndarray:
                 parts[index] = part.flatten()
@@ -829,7 +847,8 @@ class NormalizedDesignVarPlotter(BaseLanePlotter):
                 parts[index] = np.array([part])
         self.cs[:, self.iter] = np.concatenate(parts)
 
-        super(NormalizedDesignVarPlotter, self)._update_plot(params, unknowns, resids, metadata)
+        super(NormalizedDesignVarPlotter, self)._update_plot(desvar_values, response_values, objectives_values,
+                                                             constraints_values, metadata)
 
 
 class ConstraintsPlotter(BaseLanePlotter):
@@ -843,16 +862,13 @@ class ConstraintsPlotter(BaseLanePlotter):
             A copy of the constraint metadata of the `Driver` this `Recorder` is associated with.
     """
 
-    def __init__(self, driver, vmin=-1., vmax=1.,
-                 cmap='RdBu_r', norm=colors.SymLogNorm(linthresh=1.e-3, linscale=.5, vmin=-1., vmax=1.)):
-        # type: (Driver, float, float, str, Optional[colors.Normalize]) -> None
+    def __init__(self, vmin=-1., vmax=1., cmap='RdBu_r',
+                 norm=colors.SymLogNorm(linthresh=1.e-3, linscale=.5, vmin=-1., vmax=1.)):
+        # type: (float, float, str, Optional[colors.Normalize]) -> None
         """Initialize the `BaseLanePlotter` and store the ``constraint_metadata`` from the `Driver`.
 
         Parameters
         ----------
-            driver : :obj:`Driver`
-                Instance of the `Driver` of the `Problem` this `Recorder` is associated with.
-
             vmin, vmax : float
                 Lower and upper cutoff for the values along the colorbar.
 
@@ -862,8 +878,15 @@ class ConstraintsPlotter(BaseLanePlotter):
             norm : :obj:`colors.Normalize`(`colors.SymLogNorm`), optional
                 A symmetric logarithmic colorbar is used by default by this plottter.
         """
-        super(ConstraintsPlotter, self).__init__(driver, vmin, vmax, cmap, norm)
-        self.constr_meta = driver.get_constraint_metadata()
+        super(ConstraintsPlotter, self).__init__(vmin, vmax, cmap, norm)
+        self.constr_meta = None
+
+    def startup(self, object_requesting_recording):
+        try:
+            self.constr_meta = object_requesting_recording._cons.copy()
+            super(ConstraintsPlotter, self).startup(object_requesting_recording)
+        except ValueError:
+            raise ValueError('This Recorder must be attached to a Driver.')
 
     def init_vars(self):
         # type: () -> None
@@ -875,30 +898,34 @@ class ConstraintsPlotter(BaseLanePlotter):
             self.n_vars += size
             self.var_names.extend(['%s[%d]' % (key, i) for i in range(size)])
 
-    def _update_plot(self, params, unknowns, resids, metadata):
-        # type: (dict, dict, dict, dict) -> None
+    def _update_plot(self, desvar_values, response_values, objectives_values, constraints_values, metadata):
+        # type: (dict, dict, dict, dict, dict) -> None
         """Update the lane plot with the new data by inserting the constraint variable values into the cs property of
         the super class.
 
         Parameters
         ----------
-            params : dict
-                Dictionary containing the ``OpenMDAO`` parameters.
+            desvar_values : dict
+                Dictionary containing the design variables of the `Driver`.
 
-            unknowns : dict
-                Dictionary containing the ``OpenMDAO`` unknowns.
+            response_values : dict
+                Dictionary containing the response variables of the `Driver`.
 
-            resids : dict
-                Dictionary containing the ``OpenMDAO`` residuals.
+            objectives_values : dict
+                Dictionary containing the objective variables of the `Driver`.
+
+            constraints_values : dict
+                Dictionary containing the constraint variables of the `Driver`.
 
             metadata : dict
                 Dictionary containing the ``OpenMDAO`` metadata.
         """
-        parts = [unknowns[key] for key in self.constr_meta.keys()]
+        parts = [constraints_values[key] for key in self.constr_meta.keys()]
         for index, part in enumerate(parts):
             if type(part) == np.ndarray:
                 parts[index] = part.flatten()
             else:
                 parts[index] = np.array([part])
         self.cs[:, self.iter] = np.concatenate(parts)
-        super(ConstraintsPlotter, self)._update_plot(params, unknowns, resids, metadata)
+        super(ConstraintsPlotter, self)._update_plot(desvar_values, response_values, objectives_values,
+                                                     constraints_values, metadata)

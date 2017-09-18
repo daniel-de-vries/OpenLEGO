@@ -15,20 +15,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-This file contains a reference to the steady lift distribution calculations discipline.
+This file contains a reference to the objective function discipline.
 """
 from __future__ import absolute_import, division, print_function
 
-from examples.kb.kb_wing_opt.disciplines.dAEDalus import SteadyLiftDistribution
+from examples.knowledge_bases.wing_opt.disciplines.ProblemDefinition import Objectives
 
 
-class dSLD(SteadyLiftDistribution):
+class ObjectiveFunctions(Objectives):
     pass
 
-
 if __name__ == '__main__':
-    n_ws = 2
-    n_lc = 3
-
-    dsld = dSLD(n_ws, n_lc)
-    dsld.deploy()
+    objs = ObjectiveFunctions()
+    objs.deploy()

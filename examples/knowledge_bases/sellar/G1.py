@@ -15,22 +15,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-This file contains the definition of the Sellar F1 discipline.
+This file contains the definition of the Sellar G1 discipline.
 """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
 from lxml import etree
-from math import exp
 
 from openlego.discipline import AbstractDiscipline
 from openlego.xml import xml_safe_create_element
 
-from examples.kb.kb_sellar import root_tag, x_x1, x_y1, x_y2, x_z2, x_f1
+from examples.knowledge_bases.sellar import root_tag, x_y1, x_g1
 
 
-class F1(AbstractDiscipline):
+class G1(AbstractDiscipline):
 
     @property
     def creator(self):
@@ -38,16 +37,13 @@ class F1(AbstractDiscipline):
 
     @property
     def description(self):
-        return u'Objective function of the Sellar problem'
+        return u'First constraint function of the Sellar problem'
 
     def generate_input_xml(self):
         root = etree.Element(root_tag)
         doc = etree.ElementTree(root)
 
-        xml_safe_create_element(doc, x_z2, 0.)
-        xml_safe_create_element(doc, x_x1, 0.)
         xml_safe_create_element(doc, x_y1, 0.)
-        xml_safe_create_element(doc, x_y2, 0.)
 
         return etree.tostring(doc, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
@@ -55,23 +51,20 @@ class F1(AbstractDiscipline):
         root = etree.Element(root_tag)
         doc = etree.ElementTree(root)
 
-        xml_safe_create_element(doc, x_f1, 0.)
+        xml_safe_create_element(doc, x_g1, 0.)
 
         return etree.tostring(doc, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
     @staticmethod
     def execute(in_file, out_file):
         doc = etree.parse(in_file)
-        z2 = float(doc.xpath(x_z2)[0].text)
-        x1 = float(doc.xpath(x_x1)[0].text)
         y1 = float(doc.xpath(x_y1)[0].text)
-        y2 = float(doc.xpath(x_y2)[0].text)
 
-        f1 = x1**2. + z2 + y1 + exp(-y2)
+        g1 = 1. - y1/3.16
 
         root = etree.Element(root_tag)
         doc = etree.ElementTree(root)
-        xml_safe_create_element(doc, x_f1, f1)
+        xml_safe_create_element(doc, x_g1, g1)
         doc.write(out_file, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
 

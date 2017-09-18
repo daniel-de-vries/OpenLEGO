@@ -19,7 +19,7 @@ This file contains a reference to the fuel weight estimator discipline.
 """
 from __future__ import absolute_import, division, print_function
 
-from examples.kb.kb_wing_opt.disciplines.FuelWeightEstimator import FuelWeightEstimator
+from examples.knowledge_bases.wing_opt.disciplines.FuelWeightEstimator import FuelWeightEstimator
 
 
 class FWE(FuelWeightEstimator):

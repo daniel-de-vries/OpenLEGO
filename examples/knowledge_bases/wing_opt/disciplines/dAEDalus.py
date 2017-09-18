@@ -27,8 +27,8 @@ import matlab.engine
 import numpy as np
 from lxml import etree
 
-from examples.kb.kb_wing_opt.disciplines.xpaths import *
-from examples.kb.kb_wing_opt.disciplines.WingObjectModel import WingObjectModel
+from examples.knowledge_bases.wing_opt.disciplines.xpaths import *
+from examples.knowledge_bases.wing_opt.disciplines.WingObjectModel import WingObjectModel
 from openlego.discipline import AbstractDiscipline
 from openlego.util import try_hard
 from openlego.xml import xml_safe_create_element

@@ -46,11 +46,11 @@ x_f1 = '/'.join([x_analyses, 'f1'])
 x_g1 = '/'.join([x_analyses, 'g1'])
 x_g2 = '/'.join([x_analyses, 'g2'])
 
-from examples.kb.kb_sellar.D1 import D1
-from examples.kb.kb_sellar.D2 import D2
-from examples.kb.kb_sellar.F1 import F1
-from examples.kb.kb_sellar.G1 import G1
-from examples.kb.kb_sellar.G2 import G2
+from examples.knowledge_bases.sellar.D1 import D1
+from examples.knowledge_bases.sellar.D2 import D2
+from examples.knowledge_bases.sellar.F1 import F1
+from examples.knowledge_bases.sellar.G1 import G1
+from examples.knowledge_bases.sellar.G2 import G2
 
 
 def list_disciplines():

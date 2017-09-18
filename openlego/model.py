@@ -174,6 +174,26 @@ class LEGOModel(Group):
             if isinstance(value, CachedProperty):
                 value.invalidate()
 
+    def does_value_fit(self, name, val):
+        # type: (str, Union[str, float, np.ndarray]) -> bool
+        """Check whether a given value has the correct size to be assigned to a given variable.
+
+        Parameters
+        ----------
+            name : str
+                Name of the variable.
+
+            val : str or float or np.ndarray
+                Value to check.
+
+        Returns
+        -------
+            bool
+                `True` if the value fits, `False` if not.
+        """
+        return (isinstance(val, np.ndarray) and val.size == self.variable_sizes[name]) \
+            or (not isinstance(val, np.ndarray) and self.variable_sizes[name] == 1)
+
     @property
     def cmdows_path(self):
         # type: () -> str
@@ -308,11 +328,8 @@ class LEGOModel(Group):
         # type: () -> Dict[str, int]
         """:obj:`dict`: Dictionary containing the system input sizes by their names."""
         system_inputs = {}
-        for index, value in enumerate(
-                self.elem_cmdows.xpath(
-                    r"workflow/dataGraph/edges/edge[fromExecutableBlockUID='Coordinator']/toParameterUID/text()"
-                )
-        ):
+        for value in self.elem_cmdows.xpath(
+                    r"workflow/dataGraph/edges/edge[fromExecutableBlockUID='Coordinator']/toParameterUID/text()"):
             if 'architectureNodes' not in value or 'designVariables' in value:
                 xpath = LEGOModel.re_attr_val.sub(r"[@uID='\1']", value)
                 name = xpath_to_param(xpath)
@@ -336,9 +353,11 @@ class LEGOModel(Group):
             initial = desvar.find('nominalValue')
             if initial is not None:
                 initial = parse_string(initial.text)
+                if not self.does_value_fit(name, initial):
+                    raise ValueError('incompatible size of nominalValue for design variable "%s"' % name)
             else:
-                warnings.warn('no nominalValue given for designVariable "%s". Default is 0.' % name)
-                initial = 0.
+                warnings.warn('no nominalValue given for designVariable "%s". Default is all zeros.' % name)
+                initial = np.zeros(self.variable_sizes[name])
 
             # Obtain the lower and upper bounds
             bounds = 2 * [None]  # type: List[Optional[str]]
@@ -348,6 +367,8 @@ class LEGOModel(Group):
                     elem = limit_range.find(bnd)
                     if elem is not None:
                         bounds[index] = parse_string(elem.text)
+                        if not self.does_value_fit(name, bounds[index]):
+                            raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
 
             design_vars.update({name: {'initial': initial,
                                        'lower': bounds[0], 'upper': bounds[1],
@@ -371,9 +392,11 @@ class LEGOModel(Group):
                     ref = parse_string(constr_ref.text)
                     if isinstance(ref, str):
                         raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
+                    elif not self.does_value_fit(name, ref):
+                        raise ValueError('incompatible size of constraint "%s"' % name)
                 else:
-                    warnings.warn('no referenceValue given for constraint "%s". Default is 0.' % name)
-                    ref = 0.
+                    warnings.warn('no referenceValue given for constraint "%s". Default is all zeros.' % name)
+                    ref = np.zeros(self.variable_sizes[name])
 
                 # Process the constraint type
                 constr_type = convar.find('constraintType')

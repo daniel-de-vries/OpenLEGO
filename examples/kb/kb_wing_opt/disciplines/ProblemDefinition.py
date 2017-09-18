@@ -22,8 +22,8 @@ import numpy as np
 from lxml import etree
 
 from examples.kb.kb_wing_opt.disciplines.xpaths import *
-from openlego.AbstractDiscipline import AbstractDiscipline
-from openlego.xmlutils import xml_safe_create_element
+from openlego.discipline import AbstractDiscipline
+from openlego.xml import xml_safe_create_element
 
 
 class Constraints(AbstractDiscipline):

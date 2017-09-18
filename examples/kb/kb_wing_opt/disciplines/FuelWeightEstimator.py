@@ -26,7 +26,7 @@ from numpy import sqrt, expm1
 
 from examples.kb.kb_wing_opt.disciplines.xpaths import *
 from examples.kb.kb_wing_opt.disciplines.dAEDalus import LoadCaseSpecific
-from openlego.xmlutils import xml_safe_create_element
+from openlego.xml import xml_safe_create_element
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 

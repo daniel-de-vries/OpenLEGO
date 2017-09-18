@@ -479,7 +479,7 @@ class VOIPlotter(BaseIterationPlotter):
             inputs, outputs, resids, metadata : dict
                 Dictionaries containing inputs, outputs, residuals, and metadata of the system.
         """
-        inputs, outputs, resids, metadata = args
+        inputs, outputs, resids, _ = args
 
         if self.xdata is None:
             self.xdata = np.array([0.])
@@ -758,7 +758,11 @@ class BaseLanePlotter(BaseIterationPlotter):
             desvars, responses, objectives, constraints, metadata : dict
                 Dictionaries of the new design, response, objective, and constraint variables, as well as metadata.
         """
-        data = self._compute_new_data(*args)
+        if len(args) != 5 and not any([isinstance(arg, dict) for arg in args]):
+            raise ValueError('Illegal arguments for _update_plot of %s' % self.__name__)
+        desvars, responses, objectives, constraints, metadata = args
+
+        data = self._compute_new_data(desvars, responses, objectives, constraints, metadata)
         self.cs[:, self.iter] = data[:]
         self.quad.set_array(self.cs.ravel())
         self.ax.set_xlim([-.5, self.iter+.5])
@@ -833,10 +837,7 @@ class NormalizedDesignVarPlotter(BaseLanePlotter):
         parts = [(desvars[key] + self.desvar_meta[key]['ref0']) /
                  (self.desvar_meta[key]['ref'] - self.desvar_meta[key]['ref0']) for key in self.desvar_meta.keys()]
         for index, part in enumerate(parts):
-            if type(part) == np.ndarray:
-                parts[index] = part.flatten()
-            else:
-                parts[index] = np.array([part])
+            parts[index] = np.atleast_1d(part).flatten()
         return np.concatenate(parts)
 
 
@@ -908,8 +909,5 @@ class ConstraintsPlotter(BaseLanePlotter):
         """
         parts = [constraints[key] for key in self.constr_meta.keys()]
         for index, part in enumerate(parts):
-            if type(part) == np.ndarray:
-                parts[index] = part.flatten()
-            else:
-                parts[index] = np.array([part])
+            parts[index] = np.atleast_1d(part).flatten()
         return np.concatenate(parts)

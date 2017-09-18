@@ -24,8 +24,8 @@ from __future__ import print_function
 from lxml import etree
 from math import exp
 
-from openlego.AbstractDiscipline import AbstractDiscipline
-from openlego.xmlutils import xml_safe_create_element
+from openlego.discipline import AbstractDiscipline
+from openlego.xml import xml_safe_create_element
 
 from examples.kb.kb_sellar import root_tag, x_x1, x_y1, x_y2, x_z2, x_f1
 

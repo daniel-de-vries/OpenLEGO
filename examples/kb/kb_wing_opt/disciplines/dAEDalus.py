@@ -29,9 +29,9 @@ from lxml import etree
 
 from examples.kb.kb_wing_opt.disciplines.xpaths import *
 from examples.kb.kb_wing_opt.disciplines.WingObjectModel import WingObjectModel
-from openlego.AbstractDiscipline import AbstractDiscipline
+from openlego.discipline import AbstractDiscipline
 from openlego.util import try_hard
-from openlego.xmlutils import xml_safe_create_element
+from openlego.xml import xml_safe_create_element
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 _mles = {}

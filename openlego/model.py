@@ -15,7 +15,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-This file contains the definition of the `CMDOWSProblem` class.
+This file contains the definition of the `LEGOModel` class.
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -32,9 +32,9 @@ from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, L
     LinearRunOnce, NonLinearRunOnce
 from typing import Union, Optional, List, Any, Dict
 
-from openlego.AbstractDiscipline import AbstractDiscipline
-from openlego.DisciplineComponent import DisciplineComponent
-from openlego.xmlutils import xpath_to_param, xml_to_dict
+from openlego.discipline import AbstractDiscipline
+from openlego.components import DisciplineComponent
+from openlego.xml import xpath_to_param, xml_to_dict
 from openlego.util import CachedProperty, parse_string
 
 
@@ -113,7 +113,7 @@ class LEGOModel(Group):
         self.data_folder = data_folder
         self.base_xml_file = base_xml_file
 
-        super(Group, self).__init__(**kwargs)
+        super(LEGOModel, self).__init__(**kwargs)
         self.linear_solver = LinearRunOnce()
         self.nonlinear_solver = NonLinearRunOnce()
 
@@ -170,7 +170,7 @@ class LEGOModel(Group):
         """Invalidate the instance.
 
         All computed (cached) properties will be recomputed upon being read once the instance has been invalidated."""
-        for key, value in self.__class__.__dict__.items():
+        for value in self.__class__.__dict__.values():
             if isinstance(value, CachedProperty):
                 value.invalidate()
 
@@ -263,7 +263,7 @@ class LEGOModel(Group):
         """:obj:`dict`: Dictionary of the sizes of all variables by their names."""
         variable_sizes = {}
         for component in self.discipline_components.values():
-            for name, value in component.variables_from_xml():
+            for name, value in component.variables_from_xml.items():
                 variable_sizes.update({name: np.atleast_1d(value).size})
         return variable_sizes
 
@@ -369,7 +369,7 @@ class LEGOModel(Group):
                 constr_ref = convar.find('referenceValue')
                 if constr_ref is not None:
                     ref = parse_string(constr_ref.text)
-                    if type(ref) == str:
+                    if isinstance(ref, str):
                         raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
                 else:
                     warnings.warn('no referenceValue given for constraint "%s". Default is 0.' % name)
@@ -503,6 +503,8 @@ class LEGOModel(Group):
                 Path to an XML file or an instance of `etree._ElementTree` representing it.
         """
         for xpath, value in xml_to_dict(xml).items():
-            param = xpath_to_param(xpath)
-            if param in self.model.unknowns:
-                self.model.unknowns[param] = value
+            name = xpath_to_param(xpath)
+            if name in self._outputs:
+                self._outputs[name] = value
+            elif name in self._inputs:
+                self._inputs[name] = value

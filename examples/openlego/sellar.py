@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from openmdao.api import Problem, ScipyOptimizer
 from openlego.model import LEGOModel
+from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
 
 if __name__ == '__main__':
     # 1. Create Problem
@@ -25,6 +26,11 @@ if __name__ == '__main__':
     prob.run_model()
     model.initialize_from_xml('sellar_input.xml')
 
-    # 5. Solve the Problem
+    # 5. Attach some Recorders
+    driver.add_recorder(NormalizedDesignVarPlotter())
+    driver.add_recorder(ConstraintsPlotter())
+    driver.add_recorder(SimpleObjectivePlotter())
+
+    # 6. Solve the Problem
     prob.run_driver()
     prob.cleanup()

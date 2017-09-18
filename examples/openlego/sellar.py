@@ -6,24 +6,25 @@ from openmdao.api import Problem, ScipyOptimizer
 from openlego.model import LEGOModel
 
 if __name__ == '__main__':
-    # 1. Create a Driver object
-    driver = ScipyOptimizer()
+    # 1. Create Problem
+    prob = Problem()
+    prob.set_solver_print(0)
+
+    # 2. Create the LEGOModel
+    model = prob.model = LEGOModel('sellar_MDG_MDF_GS.xml', '../kb/kb_sellar', '', 'sellar_output.xml')
+
+    # 3. Create the Driver
+    driver = prob.driver = ScipyOptimizer()
     driver.options['optimizer'] = 'SLSQP'
     driver.options['disp'] = True
     driver.options['tol'] = 1.0e-3
     driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}
 
-    # 2. Create the LEGOModel
-    model = LEGOModel('sellar_MDG_MDF_GS.xml', '../kb/kb_sellar', '', 'out.xml')
-
-    # 3. Create and setup the problem
-    prob = Problem(model=model)
-    prob.driver = driver
-    prob.set_solver_print(0)
+    # 4. Setup the Problem
     prob.setup()
+    prob.run_model()
+    model.initialize_from_xml('sellar_input.xml')
 
-    # 4. Run the problem
+    # 5. Solve the Problem
     prob.run_driver()
-
-    # 5. Cleanup the problem
     prob.cleanup()

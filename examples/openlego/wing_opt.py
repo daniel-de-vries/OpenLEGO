@@ -27,11 +27,11 @@ if __name__ == '__main__':
     prob.run_model()
     model.initialize_from_xml('wing_opt_input.xml')
 
-    # 6. Attach some Recorders
+    # 5. Attach some Recorders
     driver.add_recorder(NormalizedDesignVarPlotter())
     driver.add_recorder(ConstraintsPlotter())
     driver.add_recorder(SimpleObjectivePlotter())
 
-    # 5. Solve the problem
+    # 6. Solve the problem
     prob.run_driver()
     prob.cleanup()

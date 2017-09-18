@@ -160,10 +160,18 @@ class XMLComponent(ExplicitComponent):
 
     def setup(self):
         for name, value in self.inputs_from_xml.items():
-            self.add_input(name, value)
+            if not isinstance(value, float) and not isinstance(value, np.ndarray):
+                # TODO: pass_by_obj
+                raise NotImplementedError('pass-by-object variables are not yet supported by OpenMDAO 2.0')
+            else:
+                self.add_input(name, value)
 
         for name, value in self.outputs_from_xml.items():
-            self.add_output(name, value)
+            if not isinstance(value, float) and not isinstance(value, np.ndarray):
+                # TODO: pass_by_obj
+                raise NotImplementedError('pass-by-object variables are not yet supported by OpenMDAO 2.0')
+            else:
+                self.add_output(name, value)
 
     @abstractmethod
     def execute(self, input_xml=None, output_xml=None):

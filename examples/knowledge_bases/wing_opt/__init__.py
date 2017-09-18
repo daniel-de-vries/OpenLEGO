@@ -21,16 +21,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from examples.kb.kb_wing_opt.WOM import WOM
-from examples.kb.kb_wing_opt.dSMI import dSMI
-from examples.kb.kb_wing_opt.dSAMI import dSAMI
-from examples.kb.kb_wing_opt.dSAA import dSAA
-from examples.kb.kb_wing_opt.dSSA import dSSA
-from examples.kb.kb_wing_opt.dSLD import dSLD
-from examples.kb.kb_wing_opt.dLC import dLC
-from examples.kb.kb_wing_opt.FWE import FWE
-from examples.kb.kb_wing_opt.ConstraintFunctions import ConstraintFunctions
-from examples.kb.kb_wing_opt.ObjectiveFunctions import ObjectiveFunctions
+from examples.knowledge_bases.wing_opt.WOM import WOM
+from examples.knowledge_bases.wing_opt.dSMI import dSMI
+from examples.knowledge_bases.wing_opt.dSAMI import dSAMI
+from examples.knowledge_bases.wing_opt.dSAA import dSAA
+from examples.knowledge_bases.wing_opt.dSSA import dSSA
+from examples.knowledge_bases.wing_opt.dSLD import dSLD
+from examples.knowledge_bases.wing_opt.dLC import dLC
+from examples.knowledge_bases.wing_opt.FWE import FWE
+from examples.knowledge_bases.wing_opt.ConstraintFunctions import ConstraintFunctions
+from examples.knowledge_bases.wing_opt.ObjectiveFunctions import ObjectiveFunctions
 
 import os
 import sys

@@ -26,7 +26,7 @@ from lxml import etree
 from openlego.discipline import AbstractDiscipline
 from openlego.xml import xml_safe_create_element
 
-from examples.kb.kb_sellar import root_tag, x_y1, x_y2, x_z1, x_z2
+from examples.knowledge_bases.sellar import root_tag, x_y1, x_y2, x_z1, x_z2
 
 
 class D2(AbstractDiscipline):

@@ -15,18 +15,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-This file contains a reference to the problem definition discipline.
+This file contains a reference to the wing object model discipline.
 """
 from __future__ import absolute_import, division, print_function
 
-from examples.kb.kb_wing_opt.disciplines.ProblemDefinition import Constraints
+from examples.knowledge_bases.wing_opt.disciplines.WingObjectModel import WingObjectModel
 
 
-class ConstraintFunctions(Constraints):
+class WOM(WingObjectModel):
     pass
 
 if __name__ == '__main__':
     n_ws = 2
 
-    cons = ConstraintFunctions(n_ws)
-    cons.deploy()
+    wom = WOM(n_ws)
+    wom.deploy()

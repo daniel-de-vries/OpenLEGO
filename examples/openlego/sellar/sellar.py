@@ -12,7 +12,7 @@ if __name__ == '__main__':
     prob.set_solver_print(0)
 
     # 2. Create the LEGOModel
-    model = prob.model = LEGOModel('sellar_MDG_MDF_GS.xml', '../kb/kb_sellar', '', 'sellar_output.xml')
+    model = prob.model = LEGOModel('sellar_MDG_MDF_GS.xml', '../knowledge_bases/sellar', '', 'sellar_output.xml')
 
     # 3. Create the Driver
     driver = prob.driver = ScipyOptimizer()

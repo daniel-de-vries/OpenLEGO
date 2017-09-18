@@ -15,16 +15,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-This file contains a reference to the objective function discipline.
+This file contains a reference to the problem definition discipline.
 """
 from __future__ import absolute_import, division, print_function
 
-from examples.kb.kb_wing_opt.disciplines.ProblemDefinition import Objectives
+from examples.knowledge_bases.wing_opt.disciplines.ProblemDefinition import Constraints
 
 
-class ObjectiveFunctions(Objectives):
+class ConstraintFunctions(Constraints):
     pass
 
 if __name__ == '__main__':
-    objs = ObjectiveFunctions()
-    objs.deploy()
+    n_ws = 2
+
+    cons = ConstraintFunctions(n_ws)
+    cons.deploy()

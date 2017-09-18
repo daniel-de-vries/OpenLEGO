@@ -21,7 +21,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from lxml import etree
 
-from examples.kb.kb_wing_opt.disciplines.xpaths import *
+from examples.knowledge_bases.wing_opt.disciplines.xpaths import *
 from openlego.discipline import AbstractDiscipline
 from openlego.xml import xml_safe_create_element
 

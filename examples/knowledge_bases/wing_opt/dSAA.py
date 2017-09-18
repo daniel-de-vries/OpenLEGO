@@ -15,19 +15,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-This file contains a reference to the steady structural analysis discipline.
+This file contains a reference to the steady aerodynamic analysis discipline.
 """
 from __future__ import absolute_import, division, print_function
 
-from examples.kb.kb_wing_opt.disciplines.dAEDalus import SteadyStructuralAnalysis
+from examples.knowledge_bases.wing_opt.disciplines.dAEDalus import SteadyAerodynamicAnalysis
 
 
-class dSSA(SteadyStructuralAnalysis):
+class dSAA(SteadyAerodynamicAnalysis):
     pass
 
 if __name__ == '__main__':
     n_ws = 2
     n_lc = 3
 
-    dssa = dSSA(n_ws, n_lc)
-    dssa.deploy()
+    dsaa = dSAA(n_ws, n_lc)
+    dsaa.deploy()

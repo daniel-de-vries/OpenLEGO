@@ -1,4 +1,4 @@
-*_output.xml
-*_in_*.xml
-*_out_*.xml
-visualization/
+**/*_output.xml
+**/*_in_*.xml
+**/*_out_*.xml
+**/visualization/

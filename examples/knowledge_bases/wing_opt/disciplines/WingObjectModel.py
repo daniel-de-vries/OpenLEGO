@@ -29,7 +29,7 @@ from typing import Optional, Union, Tuple, Sized
 from openlego.discipline import AbstractDiscipline
 from openlego.components import xml_safe_create_element
 
-from examples.kb.kb_wing_opt.disciplines.xpaths import *
+from examples.knowledge_bases.wing_opt.disciplines.xpaths import *
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -434,6 +434,8 @@ class WingObjectModel(AbstractDiscipline):
         xml_safe_create_element(doc, x_m_wing_copy, 0.)
         xml_safe_create_element(doc, x_m_fuel_copy, 0.)
         xml_safe_create_element(doc, x_m_mlw, 0.)
+        xml_safe_create_element(doc, x_f_m_sys, 0.)
+        xml_safe_create_element(doc, x_f_m_wings, 0.)
 
         return etree.tostring(doc, encoding='utf-8', pretty_print=True, xml_declaration=True)
 

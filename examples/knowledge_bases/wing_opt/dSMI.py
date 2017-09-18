@@ -19,7 +19,7 @@ This file contains a reference to the steady model initialization discipline.
 """
 from __future__ import absolute_import, division, print_function
 
-from examples.kb.kb_wing_opt.disciplines.dAEDalus import SteadyModelInitializer
+from examples.knowledge_bases.wing_opt.disciplines.dAEDalus import SteadyModelInitializer
 
 
 class dSMI(SteadyModelInitializer):

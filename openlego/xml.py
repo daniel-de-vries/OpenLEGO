@@ -275,9 +275,12 @@ def xml_safe_create_element(
         if isinstance(value, np.ndarray):
             value = np.atleast_1d(value).flatten()
 
-        if isinstance(value, list) or isinstance(value, np.ndarray):
-            elem.text = ';'.join([str(v) for v in value[:]])
-            elem.attrib.update({'mapType': 'vector'})
+        if isinstance(value, np.ndarray):
+            if value.size == 1:
+                elem.text = str(value[0])
+            else:
+                elem.text = ';'.join([str(v) for v in value[:]])
+                elem.attrib.update({'mapType': 'vector'})
         else:
             elem.text = str(value)
 

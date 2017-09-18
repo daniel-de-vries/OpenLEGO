@@ -13,7 +13,10 @@ if __name__ == '__main__':
     prob.set_solver_print(0)
 
     # 2. Create the LEGOModel
-    model = prob.model = LEGOModel('wing_opt_MDG_MDF_GS.xml', '../knowledge_bases/wing_opt', '', 'wing_opt_output.xml')
+    model = prob.model = LEGOModel('wing_opt_MDG_MDF_GS.xml',           # CMDOWS file
+                                   '../../knowledge_bases/wing_opt',    # Knowledge base
+                                   '',                                  # Output directory
+                                   'wing_opt_output.xml')               # Output file
 
     # 3. Create a Driver object
     driver = prob.driver = ScipyOptimizer()

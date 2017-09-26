@@ -21,7 +21,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import re
 import imp
 import numpy as np
 import warnings
@@ -66,26 +65,6 @@ class LEGOModel(Group):
         base_xml_file : str, optional
             Path to an XML file which should be kept up-to-date with the latest data describing the problem.
     """
-
-    re_attr_val = re.compile(r'\[((?!\b\d+\b)\b.+\b)\]')
-
-    @staticmethod
-    def cmdows_uid_to_param(uid):
-        # type: (str) -> str
-        """Transform a CMDOWS uID to a valid OpenMDAO parameter name.
-
-        Parameters
-        ----------
-            uid : str
-                CMDOWS uID.
-
-        Returns
-        -------
-            str
-                Corresponding OpenMDAO parameter name.
-        """
-        xpath = LEGOModel.re_attr_val.sub(r"[@uID='\1']", uid)
-        return xpath_to_param(xpath)
 
     def __init__(self, cmdows_path=None, kb_path=None, data_folder=None, base_xml_file=None, **kwargs):
         # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
@@ -329,10 +308,9 @@ class LEGOModel(Group):
         """:obj:`dict`: Dictionary containing the system input sizes by their names."""
         system_inputs = {}
         for value in self.elem_cmdows.xpath(
-                    r"workflow/dataGraph/edges/edge[fromExecutableBlockUID='Coordinator']/toParameterUID/text()"):
+                    r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="Coordinator"]/toParameterUID/text()'):
             if 'architectureNodes' not in value or 'designVariables' in value:
-                xpath = LEGOModel.re_attr_val.sub(r"[@uID='\1']", value)
-                name = xpath_to_param(xpath)
+                name = xpath_to_param(value)
                 system_inputs.update({name: self.variable_sizes[name]})
 
         return system_inputs
@@ -347,7 +325,7 @@ class LEGOModel(Group):
 
         design_vars = {}
         for desvar in desvars:
-            name = self.cmdows_uid_to_param(desvar.find('parameterUID').text)
+            name = xpath_to_param(desvar.find('parameterUID').text)
 
             # Obtain the initial value
             initial = desvar.find('nominalValue')
@@ -384,7 +362,7 @@ class LEGOModel(Group):
         if convars is not None:
             for convar in convars:
                 con = {'lower': None, 'upper': None, 'equals': None}
-                name = self.cmdows_uid_to_param(convar.find('parameterUID').text)
+                name = xpath_to_param(convar.find('parameterUID').text)
 
                 # Obtain the reference value of the constraint
                 constr_ref = convar.find('referenceValue')
@@ -438,7 +416,7 @@ class LEGOModel(Group):
         if len(objvars) > 1:
             raise Exception('cmdows contains multiple objectives, but this is not supported')
 
-        return self.cmdows_uid_to_param(objvars[0].find('parameterUID').text)
+        return xpath_to_param(objvars[0].find('parameterUID').text)
 
     @CachedProperty
     def coupled_group(self):

@@ -47,7 +47,7 @@ setup(
     license='Apache Software License',
     packages=['openlego'],
     install_requires=[
-        'kadmos=0.7',
+        'kadmos==0.7',
         'openmdao==1.7.3',
         'lxml',
         'numpy',

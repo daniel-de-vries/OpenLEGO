@@ -37,19 +37,19 @@ pttrn_attr_name = r'([:A-Z_a-z][0-9:A-Z_a-z]*?)'
 # They have to be executed in this order when going from XPaths to variables, and in reversed order the other way.
 # If they are not executed in this order the transformation may not be reversible.
 repl_sep = ':_:'                 # A path seperator (/) becomes :_:
-repl_atr = r':__:\1:__:\2'       # An attribute ([@name='value']) becomes :__:name:__:value
+repl_atr = r':__:\1:__:\2'       # An attribute ([@name="value"]) becomes :__:name:__:value
 repl_ind = r':__:__\1'           # An index ([2]) becomes :__:__2
 repl_min = ':___:'               # A minus (-) becomes :___:
 repl_dot = ':____'               # A dot (.) becomes :____
 
 repl_sep_inv = '/'
-repl_atr_inv = r"[@\1='\2']"
+repl_atr_inv = r'[@\1="\2"]'
 repl_ind_inv = r'[\1]'
 repl_dot_inv = '.'
 repl_min_inv = '-'
 
 # Regular expressions to match attributes and indices within valid XPaths
-re_atr = re.compile(r'\[@' + pttrn_attr_name + r"='" + pttrn_attr_val + r"'\]")
+re_atr = re.compile(r'\[@' + pttrn_attr_name + "=['\"]" + pttrn_attr_val + "['\"]\]")
 re_ind = re.compile(r'\[([0-9]+?)\]')
 
 # Regular expressions to match attributes and indices within OpenMDAO variables transformed from xpaths
@@ -142,7 +142,7 @@ def xml_to_dict(xml):
             for name, value in child.items():
                 # Exclude special purpose attribute: mapType
                 if name != 'mapType':
-                    tag += r"[@%s='%s']" % (name, value)
+                    tag += r'[@%s="%s"]' % (name, value)
 
             xpath = '/'.join([tag, xpath])
             child = parent

@@ -37,9 +37,9 @@ def kb_deploy():
 
     :returns: path to the deployed knowledge base
     """
-    from examples.kb.kb_sellar import deploy
+    from examples.knowledge_bases.sellar import deploy
     deploy()
-    return os.path.join(dir_path, 'kb', 'kb_sellar')
+    return os.path.join(dir_path, '..', 'knowledge_bases', 'sellar')
 
 
 def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_vistoms=False):
@@ -56,7 +56,7 @@ def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_v
     from kadmos.graph import FundamentalProblemGraph
     from kadmos.knowledgebase import KnowledgeBase
     from kadmos.utilities.general import get_mdao_setup
-    from examples.kb.kb_sellar import x_z1, x_z2, x_x1, x_f1, x_g1, x_g2
+    from examples.knowledge_bases.sellar import x_z1, x_z2, x_x1, x_f1, x_g1, x_g2
 
     # KB
     kb_path = os.path.split(kb_path)
@@ -80,10 +80,10 @@ def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_v
     fpg.graph[pf]['allow_unconverged_couplings'] = allow_unconverged_couplings
     fpg.make_all_variables_valid()
 
-    fpg.mark_as_design_variable([x_z1, x_z2, x_x1],
-                                lower_bounds=[-10., 0., 0.],
-                                nominal_values=[1., 5., 5.],
-                                upper_bounds=[10., 10., 10.])
+    fpg.mark_as_design_variables([x_z1, x_z2, x_x1],
+                                 lower_bounds=[-10., 0., 0.],
+                                 nominal_values=[1., 5., 5.],
+                                 upper_bounds=[10., 10., 10.])
 
     special_output_nodes = [x_f1, x_g1, x_g2]
 
@@ -91,9 +91,7 @@ def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_v
     fpg.mark_as_objective(objective)
 
     constraints = special_output_nodes[1:]
-    con_lower_bounds = len(constraints) * [1e99]
-    con_upper_bounds = len(constraints) * [0.]
-    fpg.mark_as_constraint(constraints, lower_bounds=con_lower_bounds, upper_bounds=con_upper_bounds)
+    fpg.mark_as_constraints(constraints, operators=['<=', '<='], reference_values=[0., 0.])
 
     output_nodes = fpg.find_all_nodes(subcategory='all outputs')
     for output_node in output_nodes:
@@ -163,8 +161,8 @@ def generate_init_xml(xml_path, z1, z2, x1):
     :param z2: initial value of the z2 parameter
     :param x1: initial value of the x1 parameter
     """
-    from openlego.xmlutils import xml_safe_create_element
-    from examples.kb.kb_sellar import root_tag, x_x1, x_z1, x_z2
+    from openlego.xml import xml_safe_create_element
+    from examples.knowledge_bases.sellar import root_tag, x_x1, x_z1, x_z2
     from lxml import etree
 
     root = etree.Element(root_tag)
@@ -179,14 +177,19 @@ def generate_init_xml(xml_path, z1, z2, x1):
 
 if __name__ == '__main__':
     from shutil import copyfile
-    from openmdao.api import ScipyOptimizer
-    from openlego.Recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
-    from openlego.CMDOWSProblem import CMDOWSProblem
-    from openlego.BoundsNormalizedDriver import normalized_to_bounds
+    from openmdao.api import ScipyOptimizer, Problem
+    from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
+    from openlego.model import LEGOModel
+    from openlego.util import normalized_to_bounds
 
     out = os.path.join(dir_path, 'output')
     xml = os.path.join(out, 'input.xml')
     base_file = os.path.join(out, 'base.xml')
+
+    kb_path = kb_deploy()
+    cmdows_path = kb_to_cmdows(kb_path, out)
+    model = LEGOModel(cmdows_path, kb_path, out, base_file)
+    prob = Problem(model)
 
     driver = normalized_to_bounds(ScipyOptimizer)()
     driver.options['optimizer'] = 'SLSQP'
@@ -195,31 +198,31 @@ if __name__ == '__main__':
     driver.options['tol'] = 1.0e-3
     driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}
 
-    kb_path = kb_deploy()
-    cmdows_path = kb_to_cmdows(kb_path, out)
-    cmdows_problem = CMDOWSProblem(cmdows_path, kb_path, driver, out, base_file)
+    prob.driver = driver
 
-    desvar_plotter = NormalizedDesignVarPlotter(cmdows_problem.driver)
+    desvar_plotter = NormalizedDesignVarPlotter()
     desvar_plotter.options['save_on_close'] = True
     desvar_plotter.save_settings['path'] = os.path.join(out, 'desvar.png')
 
-    constr_plotter = ConstraintsPlotter(cmdows_problem.driver)
+    constr_plotter = ConstraintsPlotter()
     constr_plotter.options['save_on_close'] = True
     constr_plotter.save_settings['path'] = os.path.join(out, 'constr.png')
 
-    objvar_plotter = SimpleObjectivePlotter(cmdows_problem.driver)
+    objvar_plotter = SimpleObjectivePlotter()
     objvar_plotter.options['save_on_close'] = True
     objvar_plotter.save_settings['path'] = os.path.join(out, 'objvar.png')
 
-    cmdows_problem.driver.add_recorder(desvar_plotter)
-    cmdows_problem.driver.add_recorder(constr_plotter)
-    cmdows_problem.driver.add_recorder(objvar_plotter)
+    prob.driver.add_recorder(desvar_plotter)
+    prob.driver.add_recorder(constr_plotter)
+    prob.driver.add_recorder(objvar_plotter)
 
     generate_init_xml(xml, 1., 5., 5.)
     copyfile(xml, base_file)
 
-    cmdows_problem.setup()
-    cmdows_problem.initialize_from_xml(xml)
-    cmdows_problem.run()
+    prob.setup()
+    prob.run_model()
 
-    cmdows_problem.cleanup()
+    model.initialize_from_xml(xml)
+    prob.run_driver()
+
+    prob.cleanup()

@@ -173,7 +173,7 @@ def parse_string(s):
     try:
         v = np.atleast_1d(np.array(v, dtype=float))
         if v.size == 1:
-            v = v[0]
+            v = float(v[0])
         return v
     except ValueError:
         return s

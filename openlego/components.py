@@ -32,44 +32,13 @@ from typing import Optional, List, Union, Iterable
 from openmdao.api import Group, IndepVarComp, Component
 from openmdao.core.vec_wrapper import VecWrapper
 
+from openlego.discipline import AbstractDiscipline
 from openlego.xml import xml_safe_create_element, xml_to_dict, xpath_to_param, param_to_xpath, xml_merge
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class PromotingComponent(Component):
-    """Specialized `Component` adding convenience methods to list all in- and/or outputs as a plain list."""
-    __metaclass__ = abc.ABCMeta
-
-    def list_inputs(self):
-        # type: () -> List[str]
-        """:obj:`list` of :obj:`str`: List of all ``param`` names."""
-        if isinstance(self.params, dict):
-            return list(self.params.keys())
-        else:
-            return list(self._init_params_dict.keys())
-
-    def list_outputs(self):
-        # type: () -> List[str]
-        """:obj:`list` of :obj:`str`: List of all ``unknown`` names."""
-        if isinstance(self.unknowns, dict):
-            return list(self.unknowns.keys())
-        else:
-            return list(self._init_unknowns_dict.keys())
-
-    def list_variables(self):
-        # type: () -> List[str]
-        """:obj:`str`: List of all ``param`` and ``unknown`` names."""
-        variables = self.list_inputs()
-        variables.extend(self.list_outputs())
-        return variables
-
-    @abc.abstractmethod
-    def solve_nonlinear(self, params, unknowns, resids):
-        super(PromotingComponent, self).solve_nonlinear(params, unknowns, resids)
-
-
-class XMLComponent(PromotingComponent):
+class XMLComponent(Component):
     """Abstract base class exposing an interface to use XML files for its in- and output.
 
     This subclass of `PromotingComponent` can automatically create ``OpenMDAO`` inputs and outputs based on given in-
@@ -137,11 +106,8 @@ class XMLComponent(PromotingComponent):
         """
         super(XMLComponent, self).__init__()
 
-        self.input_by_xml = False
-        self.output_by_xml = False
-
-        self.inputs_from_xml = list()
-        self.outputs_from_xml = list()
+        self.inputs_from_xml = dict()
+        self.outputs_from_xml = dict()
 
         if input_xml is not None:
             self.set_inputs_from_xml(input_xml)
@@ -167,13 +133,11 @@ class XMLComponent(PromotingComponent):
         """
         for param, value in xml_to_dict(input_xml).items():
             param_name = xpath_to_param(param)
-            self.inputs_from_xml.append(param_name)
+            self.inputs_from_xml.update({param_name: value})
             if not isinstance(value, str):
                 self.add_param(param_name, val=value)
             else:
                 self.add_param(param_name, val=value, pass_by_obj=True)
-
-        self.input_by_xml = True
 
     def set_outputs_from_xml(self, output_xml):
         # type: (Union[str, etree._ElementTree]) -> None
@@ -189,20 +153,18 @@ class XMLComponent(PromotingComponent):
         """
         for output, value in xml_to_dict(output_xml).items():
             output_name = xpath_to_param(output)
-            self.outputs_from_xml.append(output_name)
+            self.outputs_from_xml.update({output_name: value})
             if not isinstance(value, str):
                 self.add_output(output_name, val=value)
             else:
                 self.add_output(output_name, val=value, pass_by_obj=True)
 
-        self.output_by_xml = True
-
     @property
     def variables_from_xml(self):
-        # type: () -> List[str]
-        """:obj:`list` of :obj:`str`: List of all XML param and unkown names."""
-        variables = self.inputs_from_xml[:]
-        variables.extend(self.outputs_from_xml)
+        # type: () -> dict
+        """:obj:`dict`: Dictionary of all XML inputs and outputs."""
+        variables = self.inputs_from_xml.copy()
+        variables.update(self.outputs_from_xml.copy())
         return variables
 
     @abstractmethod
@@ -235,7 +197,7 @@ class XMLComponent(PromotingComponent):
 
         input_xml = output_xml = None
         salt = datetime.now().strftime('%Y%m%d%H%M%f')
-        if self.input_by_xml:
+        if self.inputs_from_xml:
             input_xml = os.path.join(self.data_folder, self.name + '_in_%s.xml' % salt)
 
             # Create new root element and an ElementTree
@@ -251,7 +213,7 @@ class XMLComponent(PromotingComponent):
             if self.base_file is not None:
                 xml_merge(self.base_file, input_xml)
 
-        if self.output_by_xml:
+        if self.outputs_from_xml:
             output_xml = os.path.join(self.data_folder, self.name + '_out_%s.xml' % salt)
 
         # Call execute
@@ -262,7 +224,7 @@ class XMLComponent(PromotingComponent):
             self.execute(input_xml, output_xml)
 
         # If files should not be kept, delete the input XML file
-        if self.input_by_xml and not self.keep_files:
+        if self.inputs_from_xml and not self.keep_files:
             try:
                 os.remove(input_xml)
             except OSError:

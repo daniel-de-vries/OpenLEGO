@@ -21,15 +21,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import re
 import imp
-import sys
+import numpy as np
 import warnings
 
 from lxml import etree
+from lxml.etree import _Element, _ElementTree
 from openmdao.api import Problem, Group, LinearGaussSeidel, NLGaussSeidel, IndepVarComp, Driver
-from openmdao.core.problem import _ProbData
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Any, Dict
 
 from openlego.discipline import AbstractDiscipline
 from openlego.components import DisciplineComponent
@@ -50,7 +49,14 @@ class CMDOWSProblem(Problem):
     ----------
         cmdows_path
         kb_path
+        discipline_components
+        block_order
+        coupled_blocks
+        system_order
+        system_variables
+        system_inputs
         driver
+        coordinator
 
         data_folder : str, optional
             Path to the folder in which to store all data generated during the `Problem`'s execution.
@@ -58,8 +64,6 @@ class CMDOWSProblem(Problem):
         base_xml_file : str, optional
             Path to an XML file which should be kept up-to-date with the latest data describing the problem.
     """
-
-    re_attr_val = re.compile(r'\[((?!\b\d+\b)\b.+\b)\]')
 
     def __init__(self, cmdows_path=None, kb_path=None, driver=None, data_folder=None, base_xml_file=None):
         # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
@@ -98,6 +102,7 @@ class CMDOWSProblem(Problem):
         super(CMDOWSProblem, self).__init__(driver=driver)
 
     def __getattribute__(self, name):
+        # type: (str) -> Any
         """Check the integrity before returning any of the cached variables.
 
         Parameters
@@ -116,6 +121,7 @@ class CMDOWSProblem(Problem):
         return super(CMDOWSProblem, self).__getattribute__(name)
 
     def __integrity_check(self):
+        # type: () -> None
         """Ensure both a CMDOWS file and a knowledge base path have been supplied.
 
         Raises
@@ -126,15 +132,36 @@ class CMDOWSProblem(Problem):
         a = self._cmdows_path is None
         b = self._kb_path is None
         if a or b:
-            raise ValueError('No ' + a*'CMDOWS file ' + (a & b)*'and ' + b*'knowledge base path ' + 'specified!')
+            raise ValueError('No ' + a * 'CMDOWS file ' + (a & b) * 'and ' + b * 'knowledge base path ' + 'specified!')
 
     def invalidate(self):
+        # type: () -> None
         """Invalidate the instance.
 
         All computed (cached) properties will be recomputed upon being read once the instance has been invalidated."""
-        for key, value in self.__class__.__dict__.items():
+        for value in self.__class__.__dict__.values():
             if isinstance(value, CachedProperty):
                 value.invalidate()
+
+    def does_value_fit(self, name, val):
+        # type: (str, Union[str, float, np.ndarray]) -> bool
+        """Check whether a given value has the correct size to be assigned to a given variable.
+
+        Parameters
+        ----------
+            name : str
+                Name of the variable.
+
+            val : str or float or np.ndarray
+                Value to check.
+
+        Returns
+        -------
+            bool
+                `True` if the value fits, `False` if not.
+        """
+        return (isinstance(val, np.ndarray) and val.size == self.variable_sizes[name]) \
+            or (not isinstance(val, np.ndarray) and self.variable_sizes[name] == 1)
 
     @property
     def cmdows_path(self):
@@ -167,20 +194,29 @@ class CMDOWSProblem(Problem):
         self.invalidate()
 
     @CachedProperty
-    def _cmdows(self):
-        # type: () -> etree._Element
+    def elem_cmdows(self):
+        # type: () -> _Element
         """:obj:`etree._Element`: Root element of the CMDOWS XML file."""
         return etree.parse(self.cmdows_path).getroot()
 
     @CachedProperty
-    def _problem_def(self):
-        # type: () -> etree._Element
+    def elem_problem_def(self):
+        # type: () -> _Element
         """:obj:`etree._Element`: The problemDefition element of this problem's CMDOWS file."""
-        return self._cmdows.find('problemDefinition')
+        return self.elem_cmdows.find('problemDefinition')
+
+    @CachedProperty
+    def elem_params(self):
+        # type: () -> _Element
+        """:obj:`etree._Element`: The problemRoles/parameters element of the CMDOWS file."""
+        params = self.elem_cmdows.find('problemDefinition/problemRoles/parameters')
+        if params is None:
+            raise Exception('cmdows does not contain (valid) parameters in the problemRoles')
+        return params
 
     @CachedProperty
     def discipline_components(self):
-        # type: () -> dict
+        # type: () -> Dict[str, DisciplineComponent]
         """:obj:`dict`: Dictionary of discipline components by their design competence ``uID`` from CMDOWS.
 
         Raises
@@ -189,7 +225,7 @@ class CMDOWSProblem(Problem):
                 If a ``designCompetence`` specified in the CMDOWS file does not correspond to an `AbstractDiscipline`.
         """
         _discipline_components = dict()
-        for design_competence in self._cmdows.iter('designCompetence'):
+        for design_competence in self.elem_cmdows.iter('designCompetence'):
             uid = design_competence.attrib['uID']
             name = design_competence.find('ID').text
             try:
@@ -206,10 +242,19 @@ class CMDOWSProblem(Problem):
                 if 'fp' in locals():
                     fp.close()
 
-            _discipline_components.update({uid: DisciplineComponent(cls(),
-                                                                    data_folder=self.data_folder,
-                                                                    base_file=self.base_xml_file)})
+            component = DisciplineComponent(cls(), data_folder=self.data_folder, base_file=self.base_xml_file)
+            _discipline_components.update({uid: component})
         return _discipline_components
+
+    @CachedProperty
+    def variable_sizes(self):
+        # type: () -> Dict[str, int]
+        """:obj:`dict`: Dictionary of the sizes of all variables by their names."""
+        variable_sizes = {}
+        for component in self.discipline_components.values():
+            for name, value in component.variables_from_xml.items():
+                variable_sizes.update({name: np.atleast_1d(value).size})
+        return variable_sizes
 
     @CachedProperty
     def block_order(self):
@@ -217,7 +262,7 @@ class CMDOWSProblem(Problem):
         """:obj:`list` of :obj:`str`: List of executable block ``uIDs`` in the order specified in the CMDOWS file."""
         positions = list()
         uids = list()
-        for block in self._problem_def.iterfind('problemFormulation/executableBlocksOrder/executableBlock'):
+        for block in self.elem_problem_def.iterfind('problemFormulation/executableBlocksOrder/executableBlock'):
             uid = block.text
             positions.append(int(block.attrib['position']))
             uids.append(uid)
@@ -228,7 +273,7 @@ class CMDOWSProblem(Problem):
         # type: () -> List[str]
         """:obj:`list` of :obj:`str`: List of ``uIDs`` of the coupled executable blocks specified in the CMDOWS file."""
         _coupled_blocks = []
-        for block in self._problem_def.iterfind('problemRoles/executableBlocks/coupledBlocks/coupledBlock'):
+        for block in self.elem_problem_def.iterfind('problemRoles/executableBlocks/coupledBlocks/coupledBlock'):
             _coupled_blocks.append(block.text)
         return _coupled_blocks
 
@@ -248,162 +293,78 @@ class CMDOWSProblem(Problem):
         return _system_order
 
     @CachedProperty
-    def coupled_group(self):
-        # type: () -> Optional[Group]
-        """:obj:`Group`, optional: Group wrapping the coupled blocks with a converger specified in the CMDOWS file.
-
-        If no coupled blocks are specified in the CMDOWS file this property is `None`.
-        """
-        if self.coupled_blocks:
-            _coupled_group = Group()
-            self.__coupled_group_promotes = []
-            for uid in self.coupled_blocks:
-                discipline_promotes = self.discipline_components[uid].list_variables()
-                _coupled_group.add(uid, self.discipline_components[uid], discipline_promotes)
-                self.__coupled_group_promotes.extend(discipline_promotes)
-
-            # Find the convergence type of the coupled group
-            conv_type = self._problem_def.find('problemFormulation/convergerType').text
-            if conv_type == 'Gauss-Seidel':
-                _coupled_group.ln_solver = LinearGaussSeidel()
-                _coupled_group.ln_solver.options['maxiter'] = 10
-                _coupled_group.nl_solver = NLGaussSeidel()
-            else:
-                raise RuntimeError('OpenMDAO 1.x only supports a Gauss-Seidel converger.')
-            return _coupled_group
-        return None
-
-    @CachedProperty
-    def root(self):
-        """:obj:`Group`: The root `Group` of this `Problem`.
-
-        This `Group` is constructed to represent the system specified in the CMDOWS file. To ensure the root `Group`
-        always represents the CMDOWS file it is computed by this class and should not be set directly by the user.
-
-        The `Problem` class, which this class inherits, sets this property to a default, empty `Group` on multiple
-        occasions. This behavior is overridden by this class by ignoring any attempts to directly set this property.
-        """
-        pass
-
-    @root.getter
-    def root(self):
-        # type: () -> Group
-        _root = Group()
-        _root.deriv_options['type'] = 'fd'
-        _root.deriv_options['form'] = 'forward'
-        _root.deriv_options['step_size'] = 1.0e-4
-        _root.deriv_options['step_calc'] = 'relative'
-
-        for name, component in self.discipline_components.items():
-            if name not in self.coupled_blocks:
-                _root.add(name, component, promotes=component.list_variables())
-
-        if self.coupled_group is not None:
-            _root.add('coupled_group', self.coupled_group, promotes=self.__coupled_group_promotes)
-
-        return _root
-
-    @root.setter
-    def root(self, value):
-        # type: (Group) -> None
-        pass
-
-    @CachedProperty
-    def system_variables(self):
-        # type: () -> dict
-        """:obj:`dict`: Dictionary of all system variables by their promoted names."""
-        self._probdata = _ProbData()
-        self.root._init_sys_data('', self._probdata)
-        params_dict, unknowns_dict = self.root._setup_variables()
-        self._probdata.to_prom_name = self.root._sysdata.to_prom_name
-        self._setup_connections(params_dict, unknowns_dict)
-
-        _vars = params_dict.copy()
-        _vars.update(unknowns_dict)
-
-        _system_variables = dict()
-        for actual, promoted in self._probdata.to_prom_name.items():
-            param = _vars[actual]
-            del param['pathname']
-            if promoted in self._dangling:
-                param.update({'system_input': True})
-            else:
-                param.update({'system_input': False})
-            _system_variables.update({promoted: param})
-
-        return _system_variables
-
-    @CachedProperty
     def system_inputs(self):
-        # type: () -> dict
-        """:obj:`dict`: Dictionary of the system input parameters by their promoted names."""
-        return {key: value for key, value in self.system_variables.items() if value['system_input']}
+        # type: () -> Dict[str, int]
+        """:obj:`dict`: Dictionary containing the system input sizes by their names."""
+        system_inputs = {}
+        for value in self.elem_cmdows.xpath(
+                    r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="Coordinator"]/toParameterUID/text()'):
+            if 'architectureNodes' not in value or 'designVariables' in value:
+                name = xpath_to_param(value)
+                system_inputs.update({name: self.variable_sizes[name]})
+
+        return system_inputs
 
     @CachedProperty
-    def _params(self):
-        # type: () -> etree._Element
-        """:obj:`etree._Element`: The problemRoles/parameters element of the CMDOWS file."""
-        params = self._cmdows.find('problemDefinition/problemRoles/parameters')
-        if params is None:
-            raise Exception('cmdows does not contain (valid) parameters in the problemRoles')
-        return params
+    def design_vars(self):
+        # type: () -> Dict[str, Dict[str, Any]]
+        """:obj:`dict`: Dictionary containing the design variables' initial values, lower bounds, and upper bounds."""
+        desvars = self.elem_params.find('designVariables')
+        if desvars is None:
+            raise Exception('cmdows does not contain (valid) design variables')
 
-    @property
-    def driver(self):
-        # type: () -> Driver
-        """:obj:`Driver`: The main `Driver` of this `Problem`.
+        design_vars = {}
+        for desvar in desvars:
+            name = xpath_to_param(desvar.find('parameterUID').text)
 
-        The user can replace the `Problem` class' default driver at any point with any other subclass of `Driver`. When
-        this is done, the design, objective, and constraint variables will automatically added to it corresponding to
-        the CMDOWS file.
-        """
-        return self._driver
+            # Obtain the initial value
+            initial = desvar.find('nominalValue')
+            if initial is not None:
+                initial = parse_string(initial.text)
+                if not self.does_value_fit(name, initial):
+                    raise ValueError('incompatible size of nominalValue for design variable "%s"' % name)
+            else:
+                warnings.warn('no nominalValue given for designVariable "%s". Default is all zeros.' % name)
+                initial = np.zeros(self.variable_sizes[name])
 
-    @driver.setter
-    def driver(self, driver):
-        # type: (Driver) -> None
-        if driver is not None:
-            # Process design variables
-            desvars = self._params.find('designVariables')
-            if desvars is None:
-                raise Exception('cmdows does not contain (valid) design variables')
+            # Obtain the lower and upper bounds
+            bounds = 2 * [None]  # type: List[Optional[str]]
+            limit_range = desvar.find('validRanges/limitRange')
+            if limit_range is not None:
+                for index, bnd, in enumerate(['minimum', 'maximum']):
+                    elem = limit_range.find(bnd)
+                    if elem is not None:
+                        bounds[index] = parse_string(elem.text)
+                        if not self.does_value_fit(name, bounds[index]):
+                            raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
 
-            for desvar in desvars:
-                name = xpath_to_param(desvar.find('parameterUID').text)
-                bounds = 2 * [None]     # type: List[Optional[str]]
+            design_vars.update({name: {'initial': initial,
+                                       'lower': bounds[0], 'upper': bounds[1],
+                                       'adder': -bounds[0], 'scaler': 1./(bounds[1] - bounds[0])}})
+        return design_vars
 
-                limit_range = desvar.find('validRanges/limitRange')
-                if limit_range is not None:
-                    for index, bnd, in enumerate(['minimum', 'maximum']):
-                        elem = limit_range.find(bnd)
-                        if elem is not None:
-                            bounds[index] = parse_string(elem.text)
-                driver.add_desvar(name, lower=bounds[0], upper=bounds[1])
-
-            # Process objective variables
-            objvars = self._params.find('objectiveVariables')
-            if objvars is None:
-                raise Exception('cmdows does not contain (valid) objective variables')
-            if len(objvars) > 1:
-                raise Exception('cmdows contains multiple objectives, but this is not supported')
-
-            obj_name = xpath_to_param(objvars[0].find('parameterUID').text)
-            driver.add_objective(obj_name)
-
-            # Process constraint variables
-            convars = self._params.find('constraintVariables')
+    @CachedProperty
+    def constraints(self):
+        # type: () -> Dict[str, Dict[str, Any]]
+        """:obj:`dict`: Dictionary containing the constraints' lower, upper, and equals reference values."""
+        convars = self.elem_params.find('constraintVariables')
+        constraints = {}
+        if convars is not None:
             for convar in convars:
+                con = {'lower': None, 'upper': None, 'equals': None}
                 name = xpath_to_param(convar.find('parameterUID').text)
 
                 # Obtain the reference value of the constraint
                 constr_ref = convar.find('referenceValue')
                 if constr_ref is not None:
                     ref = parse_string(constr_ref.text)
-                    if type(ref) == str:
+                    if isinstance(ref, str):
                         raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
+                    elif not self.does_value_fit(name, ref):
+                        raise ValueError('incompatible size of constraint "%s"' % name)
                 else:
-                    warnings.warn('no referenceValue given for constraint "%s". Default is 0.' % name)
-                    ref = 0.
+                    warnings.warn('no referenceValue given for constraint "%s". Default is all zeros.' % name)
+                    ref = np.zeros(self.variable_sizes[name])
 
                 # Process the constraint type
                 constr_type = convar.find('constraintType')
@@ -413,111 +374,142 @@ class CMDOWSProblem(Problem):
                         if constr_oper is not None:
                             oper = constr_oper.text
                             if oper == '>=' or oper == '>':
-                                driver.add_constraint(name, lower=ref)
+                                con['lower'] = ref
                             elif oper == '<=' or oper == '<':
-                                driver.add_constraint(name, upper=ref)
+                                con['upper'] = ref
                             else:
                                 raise ValueError('invalid constraintOperator "%s" for constraint "%s"' % (oper, name))
                         else:
                             warnings.warn('no constraintOperator given for inequality constraint. Default is "&lt;=".')
-                            driver.add_constraint(name, upper=ref)
+                            con['upper'] = ref
                     elif constr_type.text == 'equality':
                         if convar.find('constraintOperator') is not None:
                             warnings.warn('constraintOperator given for an equalityConstraint will be ignored')
-                        driver.add_constraint(name, equals=ref)
+                        con['equals'] = ref
                     else:
                         raise ValueError('invalid constraintType "%s" for constraint "%s".' % (constr_type.text, name))
                 else:
                     warnings.warn('no constraintType specified for constraint "%s". Default is a <= inequality.')
-                    driver.add_constraint(name, upper=ref)
+                    con['upper'] = ref
 
-        self._driver = driver
+                # Add constraint to the dictionary
+                constraints.update({name: con})
+        return constraints
+
+    @CachedProperty
+    def objective(self):
+        # type: () -> str
+        """:obj:`str`: Name of the objective variable."""
+        objvars = self.elem_params.find('objectiveVariables')
+        if objvars is None:
+            raise Exception('cmdows does not contain (valid) objective variables')
+        if len(objvars) > 1:
+            raise Exception('cmdows contains multiple objectives, but this is not supported')
+
+        return xpath_to_param(objvars[0].find('parameterUID').text)
+
+    @CachedProperty
+    def coupled_group(self):
+        # type: () -> Optional[Group]
+        """:obj:`Group`, optional: Group wrapping the coupled blocks with a converger specified in the CMDOWS file.
+
+        If no coupled blocks are specified in the CMDOWS file this property is `None`.
+        """
+        if self.coupled_blocks:
+            coupled_group = Group()
+            for uid in self.coupled_blocks:
+                coupled_group.add(uid, self.discipline_components[uid], ['*'])
+
+            # Find the convergence type of the coupled group
+            conv_type = self.elem_problem_def.find('problemFormulation/convergerType').text
+            if conv_type == 'Gauss-Seidel':
+                coupled_group.ln_solver = LinearGaussSeidel()
+                coupled_group.ln_solver.options['maxiter'] = 10
+                coupled_group.nl_solver = NLGaussSeidel()
+            else:
+                raise RuntimeError('Specified convergerType "%s" is not supported.' % conv_type)
+            return coupled_group
+        return None
 
     @CachedProperty
     def coordinator(self):
+        # type: () -> IndepVarComp
+        """:obj:`IndepVarComp`: An `IndepVarComp` representing the system's ``Coordinator`` block.
+
+        This `IndepVarComp` takes care of all system input parameters and initial values of design variables.
+        """
+        # Add design variables
+        _vars = []
+        for name, value in self.design_vars.items():
+            _vars.append((name, value['initial']))
+
+        # Add system constants
+        for name, shape in self.system_inputs.items():
+            if name not in self.design_vars.keys():
+                if shape == 1:
+                    _vars.append((name, 0.))  # TODO: val = ?
+                else:
+                    _vars.append((name, np.zeros(shape)))  # TODO: val = ?
+
+        return IndepVarComp(_vars)
+
+    @CachedProperty
+    def root(self):
         # type: () -> Group
-        """:obj:`Group`: A `Group` representing the system's ``Coordinator`` block.
+        """:obj:`Group`: The root Group of the Problem."""
+        root = Group()
+        root.deriv_options['type'] = 'fd'
+        root.deriv_options['form'] = 'forward'
+        root.deriv_options['step_size'] = 1.0e-4
+        root.deriv_options['step_calc'] = 'relative'
 
-        This `Group` takes care of all system input parameters and initial values of design variables.
-        """
-        _coordinator = Group()
-        self.__coordinator_promotes = []
-        _names = []
-        names = []
-        values = []
+        # Add the coordinator
+        root.add('coordinator', self.coordinator, ['*'])
 
-        # Loop over all edges in the data graph of the CMDOWS file
-        for edge in self._cmdows.iterfind('workflow/dataGraph/edges/edge'):
-            # Check if this edge departs from the Coordinator block
-            from_exec_block_uid = edge.find('fromExecutableBlockUID')
-            if from_exec_block_uid is not None and from_exec_block_uid.text == 'Coordinator':
-                to_param_uid = edge.find('toParameterUID').text
+        # Add all pre-coupling and post-coupling components
+        for name, component in self.discipline_components.items():
+            if name not in self.coupled_blocks:
+                root.add(name, component, ['*'])
 
-                # Remove prefix to the XPath relating to copies of variables for initial guesses
-                if 'architectureNodes' in to_param_uid:
-                    to_param_uid = to_param_uid.split('/')
-                    del to_param_uid[2:5]
-                    to_param_uid = '/'.join(to_param_uid)
+        # Add the coupled group
+        if self.coupled_group is not None:
+            root.add('coupled_group', self.coupled_group, ['*'])
 
-                # Translate CMDOWS' 'fake' uID references to real attribute XPaths and obtain parameter name
-                xpath = CMDOWSProblem.re_attr_val.sub(r"[@uID='\1']", to_param_uid)
-                param = xpath_to_param(xpath)
+        # Put the blocks in the correct order
+        root.set_order(list(self.system_order))
 
-                # Check if the parameter is dangling
-                if param in self.system_inputs:
-                    _names.append('IN_' + re.sub(r'\[.+\]', '', '_'.join(xpath.split('/')[-2:])))
-                    values.append(self.system_inputs[param]['val'])
+        return root
 
-                    n = _names.count(_names[-1])
-                    if n > 1:
-                        names.append(_names[-1] + '_%d' % n)
-                        if n == 2:
-                            names[_names.index(_names[-1])] = _names[-1] + '_1'
-                    else:
-                        names.append(_names[-1])
+    @root.setter
+    def root(self, value):
+        pass
 
-                    self.__coordinator_promotes.append(param)
+    @property
+    def driver(self):
+        # type: () -> Driver
+        """:obj:`Driver`: The Driver of this Problem."""
+        return self._driver
 
-        for index, name in enumerate(names):
-            # Add an independent variable component for this parameter
-            _coordinator.add(name,
-                             IndepVarComp(self.__coordinator_promotes[index], val=values[index]),
-                             promotes=[self.__coordinator_promotes[index]])
+    @driver.setter
+    def driver(self, driver):
+        # type: (Driver) -> None
+        if driver is not None:
+            # Add the design variables
+            for name, value in self.design_vars.items():
+                driver.add_desvar(name, lower=value['lower'], upper=value['upper'],
+                                  adder=value['adder'], scaler=value['scaler'])
 
-        return _coordinator
+            # Add the constraints
+            for name, value in self.constraints.items():
+                driver.add_constraint(name, lower=value['lower'], upper=value['upper'], equals=value['equals'])
 
-    def setup(self, check=True, out_stream=sys.stdout):
-        """Setup the `Problem` to prepare it for execution.
+            # Add the objective
+            driver.add_objective(self.objective)
 
-        Add the ``Coordinator`` block to the root `Group`, set the order as specified in the CMDOWS file, and setup
-        this `Problem` using the super().setup() method.
-
-        See Also
-        --------
-            openmdao.api.Problem.setup : the super class' `setup()` method.
-        """
-        # Add the coordinator and set the order of the systems before setting up the problem
-        self.root.add('coordinator', self.coordinator, promotes=self.__coordinator_promotes)
-        self.root.set_order(list(self.system_order))
-
-        # Setup the problem
-        result = super(CMDOWSProblem, self).setup(check, out_stream)
-
-        # Set initial values from the CMDOWS file
-        for desvar in self._params.find('designVariables'):
-            name = xpath_to_param(desvar.find('parameterUID').text)
-            val = desvar.find('nominalValue')
-            if val is not None:
-                val = parse_string(val.text)
-            else:
-                warnings.warn('no nominalValue given for designVariable "%s". Default is 0.' % name)
-                val = 0.
-            self.root.unknowns[name] = val
-
-        return result
+        self._driver = driver
 
     def initialize_from_xml(self, xml):
-        # type: (Union[str, etree._ElementTree]) -> None
+        # type: (Union[str, _ElementTree]) -> None
         """Initialize the problem with initial values from an XML file.
 
         This function can only be called after the problem's setup method has been called.

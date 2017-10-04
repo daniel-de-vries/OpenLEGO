@@ -180,7 +180,6 @@ if __name__ == '__main__':
     from openmdao.api import ScipyOptimizer, Problem
     from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
     from openlego.model import LEGOModel
-    from openlego.util import normalized_to_bounds
 
     out = os.path.join(dir_path, 'output')
     xml = os.path.join(out, 'input.xml')
@@ -191,7 +190,7 @@ if __name__ == '__main__':
     model = LEGOModel(cmdows_path, kb_path, out, base_file)
     prob = Problem(model)
 
-    driver = normalized_to_bounds(ScipyOptimizer)()
+    driver = ScipyOptimizer()
     driver.options['optimizer'] = 'SLSQP'
     driver.options['maxiter'] = 1000
     driver.options['disp'] = True
@@ -199,6 +198,7 @@ if __name__ == '__main__':
     driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}
 
     prob.driver = driver
+    prob.set_solver_print(0)
 
     desvar_plotter = NormalizedDesignVarPlotter()
     desvar_plotter.options['save_on_close'] = True
@@ -212,15 +212,15 @@ if __name__ == '__main__':
     objvar_plotter.options['save_on_close'] = True
     objvar_plotter.save_settings['path'] = os.path.join(out, 'objvar.png')
 
-    prob.driver.add_recorder(desvar_plotter)
-    prob.driver.add_recorder(constr_plotter)
-    prob.driver.add_recorder(objvar_plotter)
-
     generate_init_xml(xml, 1., 5., 5.)
     copyfile(xml, base_file)
 
     prob.setup()
     prob.run_model()
+
+    prob.driver.add_recorder(desvar_plotter)
+    prob.driver.add_recorder(constr_plotter)
+    prob.driver.add_recorder(objvar_plotter)
 
     model.initialize_from_xml(xml)
     prob.run_driver()

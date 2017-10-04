@@ -814,7 +814,7 @@ class NormalizedDesignVarPlotter(BaseLanePlotter):
         for key in self.desvar_meta.keys():
             ref0 = self.desvar_meta[key]['ref0']
             if isinstance(ref0, np.ndarray):
-                size = self.desvar_meta[key]['adder'].size
+                size = ref0.size
             else:
                 size = 1
             self.n_vars += size
@@ -834,8 +834,8 @@ class NormalizedDesignVarPlotter(BaseLanePlotter):
             np.ndarray
                 A 1D numpy array containing the new data.
         """
-        parts = [(desvars[key] + self.desvar_meta[key]['ref0']) /
-                 (self.desvar_meta[key]['ref'] - self.desvar_meta[key]['ref0']) for key in self.desvar_meta.keys()]
+        parts = [(desvars[key] - self.desvar_meta[key]['lower']) /
+                 (self.desvar_meta[key]['upper'] - self.desvar_meta[key]['lower']) for key in self.desvar_meta.keys()]
         for index, part in enumerate(parts):
             parts[index] = np.atleast_1d(part).flatten()
         return np.concatenate(parts)

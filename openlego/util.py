@@ -25,7 +25,8 @@ import numpy as np
 import re
 import warnings
 
-from openmdao.api import Driver
+from lxml import etree
+from openmdao.core.driver import Driver
 from typing import Callable, Any, Optional, Union, Type
 
 
@@ -75,14 +76,14 @@ def try_hard(fun, *args, **kwargs):
         try:
             return_value = fun(*args, **kwargs)
             successful = True
-        except:
+        except Exception as e:
             attempts += 1
 
             if msg is None:
                 msg = 'Had to try again to evaluate: %s(' % fun.__name__ + ', '.join(['%s' % arg for arg in args])
                 if kwargs is not None:
                     msg += ', '.join(['%s=%s' % (key, value) for key, value in kwargs.items()])
-                msg += ')'
+                msg += '). The following exception was raised: "%s"' % e.message
 
             if 0 < try_hard_limit <= attempts:
                 raise
@@ -173,10 +174,30 @@ def parse_string(s):
     try:
         v = np.atleast_1d(np.array(v, dtype=float))
         if v.size == 1:
-            v = float(v[0])
+            v = v[0]
         return v
     except ValueError:
         return s
+
+
+def parse_cmdows_value(elem):
+    # type: (etree._Element) -> Union[str, np.ndarray, float]
+    """Convert an XML element from a CMDOWS file to a value.
+
+    Parameters
+    ----------
+        elem : :obj:`_Element`
+            `etree._Element` to convert.
+
+    Returns
+    -------
+        str or np.ndarray or float
+            Converted element.
+    """
+    if len(list(elem)) > 1:
+        return np.array([parse_string(child.text) for child in elem])
+    else:
+        return parse_string(elem.text)
 
 
 def normalized_to_bounds(driver):
@@ -188,7 +209,7 @@ def normalized_to_bounds(driver):
 
     Parameters
     ----------
-        :obj:`Driver`
+        driver : :obj:`Driver`
             `Driver` to normalize the design variables of.
 
     Returns

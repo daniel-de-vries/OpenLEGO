@@ -25,6 +25,7 @@ import numpy as np
 import re
 import warnings
 
+from lxml import etree
 from openmdao.core.driver import Driver
 from typing import Callable, Any, Optional, Union, Type
 
@@ -179,6 +180,26 @@ def parse_string(s):
         return s
 
 
+def parse_cmdows_value(elem):
+    # type: (etree._Element) -> Union[str, np.ndarray, float]
+    """Convert an XML element from a CMDOWS file to a value.
+
+    Parameters
+    ----------
+        elem : :obj:`_Element`
+            `etree._Element` to convert.
+
+    Returns
+    -------
+        str or np.ndarray or float
+            Converted element.
+    """
+    if len(list(elem)) > 1:
+        return np.array([parse_string(child.text) for child in elem])
+    else:
+        return parse_string(elem.text)
+
+
 def normalized_to_bounds(driver):
     # type: (Type[Driver]) -> Type[NormalizedDriver]
     """Decorate a `Driver` to adjust its ``adder``/``scaler`` attributes normalizing the ``desvar``s.
@@ -188,7 +209,7 @@ def normalized_to_bounds(driver):
 
     Parameters
     ----------
-        :obj:`Driver`
+        driver : :obj:`Driver`
             `Driver` to normalize the design variables of.
 
     Returns

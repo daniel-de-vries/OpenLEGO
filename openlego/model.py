@@ -34,7 +34,7 @@ from typing import Union, Optional, List, Any, Dict
 from openlego.discipline import AbstractDiscipline
 from openlego.components import DisciplineComponent
 from openlego.xml import xpath_to_param, xml_to_dict
-from openlego.util import CachedProperty, parse_string
+from openlego.util import CachedProperty, parse_cmdows_value
 
 
 class LEGOModel(Group):
@@ -330,7 +330,7 @@ class LEGOModel(Group):
             # Obtain the initial value
             initial = desvar.find('nominalValue')
             if initial is not None:
-                initial = parse_string(initial.text)
+                initial = parse_cmdows_value(initial)
                 if not self.does_value_fit(name, initial):
                     raise ValueError('incompatible size of nominalValue for design variable "%s"' % name)
             else:
@@ -344,7 +344,7 @@ class LEGOModel(Group):
                 for index, bnd, in enumerate(['minimum', 'maximum']):
                     elem = limit_range.find(bnd)
                     if elem is not None:
-                        bounds[index] = parse_string(elem.text)
+                        bounds[index] = parse_cmdows_value(elem)
                         if not self.does_value_fit(name, bounds[index]):
                             raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
 
@@ -365,13 +365,14 @@ class LEGOModel(Group):
                 name = xpath_to_param(convar.find('parameterUID').text)
 
                 # Obtain the reference value of the constraint
-                constr_ref = convar.find('referenceValue')
+                constr_ref = convar.find('referenceValue')  # type: etree._Element
                 if constr_ref is not None:
-                    ref = parse_string(constr_ref.text)
+                    ref = parse_cmdows_value(constr_ref)
                     if isinstance(ref, str):
                         raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
                     elif not self.does_value_fit(name, ref):
-                        raise ValueError('incompatible size of constraint "%s"' % name)
+                        warnings.warn('incompatible size of constraint "%s". Will assume the same for all.' % name)
+                        ref = np.ones(self.variable_sizes[name]) * np.atleast_1d(ref)[0]
                 else:
                     warnings.warn('no referenceValue given for constraint "%s". Default is all zeros.' % name)
                     ref = np.zeros(self.variable_sizes[name])

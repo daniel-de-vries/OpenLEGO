@@ -336,7 +336,7 @@ class DisciplineComponent(XMLComponent):
         # type: () -> None
         """Approximate all gradients using finite difference."""
         super(DisciplineComponent, self).setup()
-        self.approx_partials('*', '*')
+        self.declare_partials('*', '*', method='fd')
 
     def execute(self, input_xml=None, output_xml=None):
         # type: (str, str) -> None

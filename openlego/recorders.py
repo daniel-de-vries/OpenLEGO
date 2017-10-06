@@ -240,9 +240,26 @@ class BaseIterationPlotter(BaseRecorder):
     def record_metadata_solver(self, object_requesting_recording):
         pass
 
+    def record_iteration_driver_passing_vars(self, object_requesting_recording, desvars, responses, objectives,
+                                             constraints, metadata):
+        super(BaseIterationPlotter, self).record_iteration_driver_passing_vars(object_requesting_recording,
+                                                                                      desvars, responses, objectives,
+                                                                                      constraints, metadata)
+        self._record_iteration_driver(metadata)
+
     def record_iteration_driver(self, object_requesting_recording, metadata):
         super(BaseIterationPlotter, self).record_iteration_driver(object_requesting_recording, metadata)
+        self._record_iteration_driver(metadata)
 
+    def record_iteration_system(self, object_requesting_recording, metadata):
+        super(BaseIterationPlotter, self).record_iteration_system(object_requesting_recording, metadata)
+        self._record_iteration_system(metadata)
+
+    def record_iteration_solver(self, object_requesting_recording, metadata, **kwargs):
+        super(BaseIterationPlotter, self).record_iteration_solver(object_requesting_recording, metadata, **kwargs)
+        self._record_iteration_solver(metadata)
+
+    def _record_iteration_driver(self, metadata):
         self._in.send(('update',
                        self._desvars_values,
                        self._responses_values,
@@ -250,18 +267,14 @@ class BaseIterationPlotter(BaseRecorder):
                        self._constraints_values,
                        metadata))
 
-    def record_iteration_system(self, object_requesting_recording, metadata):
-        super(BaseIterationPlotter, self).record_iteration_system(object_requesting_recording, metadata)
-
+    def _record_iteration_system(self, metadata):
         self._in.send(('update',
                        self._inputs,
                        self._outputs,
                        self._resids,
                        metadata))
 
-    def record_iteration_solver(self, object_requesting_recording, metadata, **kwargs):
-        super(BaseIterationPlotter, self).record_iteration_solver(object_requesting_recording, metadata, **kwargs)
-
+    def _record_iteration_solver(self, metadata):
         self._in.send(('update',
                        self._abs_error,
                        self._rel_error,

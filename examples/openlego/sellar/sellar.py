@@ -7,15 +7,21 @@ from openlego.model import LEGOModel
 from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
 
 if __name__ == '__main__':
+    # 0. Select a CMDOWS file
+    if True:
+        CMDOWS_file = 'sellar-MDG_MDF-GS.xml'                           # MDF with a Gauss-Seidel converger
+    else:
+        CMDOWS_file = 'sellar-MDG_MDF-J.xml'                            # MDF with a Jacobi converger
+
     # 1. Create Problem
     prob = Problem()                                                    # Create an instance of the Problem class
     prob.set_solver_print(0)                                            # Turn off printing of solver information
 
     # 2. Create the LEGOModel
-    model = prob.model = LEGOModel('sellar_MDG_MDF_GS.xml',             # CMDOWS file
+    model = prob.model = LEGOModel(CMDOWS_file,                         # CMDOWS file
                                    '../../knowledge_bases/sellar',      # Knowledge base path
                                    '',                                  # Output directory
-                                   'sellar_output.xml')                 # Output file
+                                   'sellar-output.xml')                 # Output file
 
     # 3. Create the Driver
     driver = prob.driver = ScipyOptimizer()                             # Use a SciPy for the optimization
@@ -26,8 +32,10 @@ if __name__ == '__main__':
 
     # 4. Setup the Problem
     prob.setup()                                                        # Call the OpenMDAO setup() method
+    model.coupled_group.linear_solver.options['maxiter'] = 16           # Increase maxiter of the linear solver
+    model.coupled_group.nonlinear_solver.options['maxiter'] = 16        # Increase maxiter of the nonlinear solver
     prob.run_model()                                                    # Run the model once to initialize the variables
-    model.initialize_from_xml('sellar_input.xml')                       # Set the initial values from an XML file
+    model.initialize_from_xml('sellar-input.xml')                       # Set the initial values from an XML file
 
     # 5. Create and attach some Recorders (Optional)
     desvar_plotter = NormalizedDesignVarPlotter()                       # Create a plotter for the design variables

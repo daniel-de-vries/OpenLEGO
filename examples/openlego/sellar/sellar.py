@@ -8,32 +8,46 @@ from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, S
 
 if __name__ == '__main__':
     # 1. Create Problem
-    prob = Problem()
-    prob.set_solver_print(0)
+    prob = Problem()                                                    # Create an instance of the Problem class
+    prob.set_solver_print(0)                                            # Turn off printing of solver information
 
     # 2. Create the LEGOModel
-    model = prob.model = LEGOModel('sellar_MDG_MDF_GS.xml',         # CMDOWS file
-                                   '../../knowledge_bases/sellar',  # Knowledge base
-                                   '',                              # Output directory
-                                   'sellar_output.xml')             # Output file
+    model = prob.model = LEGOModel('sellar_MDG_MDF_GS.xml',             # CMDOWS file
+                                   '../../knowledge_bases/sellar',      # Knowledge base path
+                                   '',                                  # Output directory
+                                   'sellar_output.xml')                 # Output file
 
     # 3. Create the Driver
-    driver = prob.driver = ScipyOptimizer()
-    driver.options['optimizer'] = 'SLSQP'
-    driver.options['disp'] = True
-    driver.options['tol'] = 1.0e-3
-    driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}
+    driver = prob.driver = ScipyOptimizer()                             # Use a SciPy for the optimization
+    driver.options['optimizer'] = 'SLSQP'                               # Use the SQP algorithm
+    driver.options['disp'] = True                                       # Print the result
+    driver.options['tol'] = 1.0e-3                                      # Use a termination tolerance of 0.1%
+    driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}   # Display iterations and set the func. tolerance
 
     # 4. Setup the Problem
-    prob.setup()
-    prob.run_model()
-    model.initialize_from_xml('sellar_input.xml')
+    prob.setup()                                                        # Call the OpenMDAO setup() method
+    prob.run_model()                                                    # Run the model once to initialize the variables
+    model.initialize_from_xml('sellar_input.xml')                       # Set the initial values from an XML file
 
-    # 5. Attach some Recorders
-    driver.add_recorder(NormalizedDesignVarPlotter())
-    driver.add_recorder(ConstraintsPlotter())
-    driver.add_recorder(SimpleObjectivePlotter())
+    # 5. Create and attach some Recorders (Optional)
+    desvar_plotter = NormalizedDesignVarPlotter()                       # Create a plotter for the design variables
+    desvar_plotter.options['save_on_close'] = True                      # Should this plot be saved automatically?
+    desvar_plotter.save_settings['path'] = 'desvar.png'                 # Set the filename of the image file
+
+    convar_plotter = ConstraintsPlotter()                               # Create a plotter for the constraint variables
+    convar_plotter.options['save_on_close'] = True                      # Should this plot be saved automatically?
+    convar_plotter.save_settings['path'] = 'convar.png'                 # Set the filename of the image file
+
+    objvar_plotter = SimpleObjectivePlotter()                           # Create a plotter for the objective variable
+    objvar_plotter.options['save_on_close'] = True                      # Should this plot be saved automatically?
+    objvar_plotter.save_settings['path'] = 'objvar.png'                 # Set the filename of the image file
+
+    driver.add_recorder(desvar_plotter)                                 # Attach the design variable plotter
+    driver.add_recorder(convar_plotter)                                 # Attach the constraint variable plotter
+    driver.add_recorder(objvar_plotter)                                 # Attach the objective variable plotter
 
     # 6. Solve the Problem
-    prob.run_driver()
-    prob.cleanup()
+    prob.run_driver()                                                   # Run the optimization
+
+    # 7. Cleanup the Problem afterwards
+    prob.cleanup()                                                      # Clear all resources and close the plots

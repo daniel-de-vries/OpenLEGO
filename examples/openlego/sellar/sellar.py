@@ -13,6 +13,8 @@ if __name__ == '__main__':
     else:
         CMDOWS_file = 'sellar-MDG_MDF-J.xml'                            # MDF with a Jacobi converger
 
+    CMDOWS_file = 'sellar-MDG_IDF.xml'
+
     # 1. Create Problem
     prob = Problem()                                                    # Create an instance of the Problem class
     prob.set_solver_print(0)                                            # Turn off printing of solver information

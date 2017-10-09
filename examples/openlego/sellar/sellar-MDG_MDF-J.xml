@@ -3,14 +3,14 @@
   <header>
     <creator>D. de Vries</creator>
     <description>Sellar problem MPG file</description>
-    <timestamp>2017-10-09T11:35:18.577000</timestamp>
+    <timestamp>2017-10-09T11:34:39.674000</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.7</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>D. de Vries</creator>
-        <timestamp>2017-10-09T11:35:18.577000</timestamp>
+        <timestamp>2017-10-09T11:34:39.674000</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.7</cmdowsVersion>
       </update>
@@ -60,13 +60,13 @@
         <label>D2</label>
         <inputs>
           <input>
+            <parameterUID>/data_schema/architectureNodes/couplingCopyVariables/data_schemaCopy/y1</parameterUID>
+          </input>
+          <input>
             <parameterUID>/data_schema/z2</parameterUID>
           </input>
           <input>
             <parameterUID>/data_schema/z1</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/data_schema/y1</parameterUID>
           </input>
         </inputs>
         <outputs>
@@ -155,6 +155,9 @@
         </inputs>
         <outputs>
           <output>
+            <parameterUID>/data_schema/architectureNodes/finalCouplingVariables/data_schemaCopy/y1</parameterUID>
+          </output>
+          <output>
             <parameterUID>/data_schema/y1</parameterUID>
           </output>
         </outputs>
@@ -176,11 +179,11 @@
     <parameter uID="/data_schema/f1">
       <label>f1</label>
     </parameter>
-    <parameter uID="/data_schema/y1">
-      <label>y1</label>
-    </parameter>
     <parameter uID="/data_schema/y2">
       <label>y2</label>
+    </parameter>
+    <parameter uID="/data_schema/y1">
+      <label>y1</label>
     </parameter>
     <parameter uID="/data_schema/x1">
       <label>x1</label>
@@ -192,10 +195,10 @@
       <label>z1</label>
     </parameter>
   </parameters>
-  <problemDefinition uID="MDFGauss-Seidel">
+  <problemDefinition uID="MDFJacobi">
     <problemFormulation>
       <mdaoArchitecture>MDF</mdaoArchitecture>
-      <convergerType>Gauss-Seidel</convergerType>
+      <convergerType>Jacobi</convergerType>
       <executableBlocksOrder>
         <executableBlock position="1">D1</executableBlock>
         <executableBlock position="2">D2</executableBlock>
@@ -273,17 +276,29 @@
     </problemRoles>
   </problemDefinition>
   <workflow>
-    <problemDefinitionUID>MDFGauss-Seidel</problemDefinitionUID>
+    <problemDefinitionUID>MDFJacobi</problemDefinitionUID>
     <dataGraph>
       <name>MDG1</name>
       <edges>
+        <edge>
+          <fromParameterUID>/data_schema/architectureNodes/couplingCopyVariables/data_schemaCopy/y1</fromParameterUID>
+          <toExecutableBlockUID>D2</toExecutableBlockUID>
+        </edge>
         <edge>
           <fromParameterUID>/data_schema/architectureNodes/couplingCopyVariables/data_schemaCopy/y2</fromParameterUID>
           <toExecutableBlockUID>D1</toExecutableBlockUID>
         </edge>
         <edge>
+          <fromParameterUID>/data_schema/architectureNodes/initialGuessCouplingVariables/data_schemaCopy/y1</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
           <fromParameterUID>/data_schema/architectureNodes/initialGuessCouplingVariables/data_schemaCopy/y2</fromParameterUID>
           <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toParameterUID>/data_schema/architectureNodes/couplingCopyVariables/data_schemaCopy/y1</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
@@ -295,6 +310,58 @@
         </edge>
         <edge>
           <fromParameterUID>/data_schema/architectureNodes/finalOutputVariables/data_schemaCopy/g2</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/data_schema/y2</fromParameterUID>
+          <toExecutableBlockUID>F1</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/data_schema/y2</fromParameterUID>
+          <toExecutableBlockUID>G2</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/data_schema/y2</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>G2</fromExecutableBlockUID>
+          <toParameterUID>/data_schema/g2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>G2</fromExecutableBlockUID>
+          <toParameterUID>/data_schema/architectureNodes/finalOutputVariables/data_schemaCopy/g2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>G1</fromExecutableBlockUID>
+          <toParameterUID>/data_schema/architectureNodes/finalOutputVariables/data_schemaCopy/g1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>G1</fromExecutableBlockUID>
+          <toParameterUID>/data_schema/g1</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/data_schema/y1</fromParameterUID>
+          <toExecutableBlockUID>F1</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/data_schema/y1</fromParameterUID>
+          <toExecutableBlockUID>G1</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/data_schema/y1</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/data_schema/g1</fromParameterUID>
+          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/data_schema/g2</fromParameterUID>
+          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/data_schema/architectureNodes/finalOutputVariables/data_schemaCopy/f1</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
@@ -322,56 +389,8 @@
           <toParameterUID>/data_schema/z1</toParameterUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>G2</fromExecutableBlockUID>
-          <toParameterUID>/data_schema/g2</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>G2</fromExecutableBlockUID>
-          <toParameterUID>/data_schema/architectureNodes/finalOutputVariables/data_schemaCopy/g2</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>G1</fromExecutableBlockUID>
-          <toParameterUID>/data_schema/architectureNodes/finalOutputVariables/data_schemaCopy/g1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>G1</fromExecutableBlockUID>
-          <toParameterUID>/data_schema/g1</toParameterUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/data_schema/y1</fromParameterUID>
-          <toExecutableBlockUID>F1</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/data_schema/y1</fromParameterUID>
-          <toExecutableBlockUID>D2</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/data_schema/y1</fromParameterUID>
-          <toExecutableBlockUID>G1</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/data_schema/g1</fromParameterUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/data_schema/g2</fromParameterUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/data_schema/architectureNodes/finalOutputVariables/data_schemaCopy/f1</fromParameterUID>
+          <fromParameterUID>/data_schema/architectureNodes/finalCouplingVariables/data_schemaCopy/y1</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/data_schema/y2</fromParameterUID>
-          <toExecutableBlockUID>F1</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/data_schema/y2</fromParameterUID>
-          <toExecutableBlockUID>G2</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/data_schema/y2</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/data_schema/architectureNodes/finalDesignVariables/data_schemaCopy/x1</fromParameterUID>
@@ -423,6 +442,10 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/data_schema/architectureNodes/initialGuessCouplingVariables/data_schemaCopy/y1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
           <toParameterUID>/data_schema/architectureNodes/initialGuessDesignVariables/data_schemaCopy/x1</toParameterUID>
         </edge>
         <edge>
@@ -467,6 +490,10 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>D1</fromExecutableBlockUID>
+          <toParameterUID>/data_schema/architectureNodes/finalCouplingVariables/data_schemaCopy/y1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>D1</fromExecutableBlockUID>
           <toParameterUID>/data_schema/y1</toParameterUID>
         </edge>
       </edges>
@@ -477,12 +504,12 @@
         <edge>
           <fromExecutableBlockUID>F1</fromExecutableBlockUID>
           <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-          <processStepNumber>7</processStepNumber>
+          <processStepNumber>6</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-          <processStepNumber>8</processStepNumber>
+          <processStepNumber>7</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
@@ -492,27 +519,32 @@
         <edge>
           <fromExecutableBlockUID>G2</fromExecutableBlockUID>
           <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-          <processStepNumber>7</processStepNumber>
+          <processStepNumber>6</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>G1</fromExecutableBlockUID>
           <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-          <processStepNumber>7</processStepNumber>
+          <processStepNumber>6</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
           <toExecutableBlockUID>F1</toExecutableBlockUID>
-          <processStepNumber>6</processStepNumber>
+          <processStepNumber>5</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toExecutableBlockUID>D2</toExecutableBlockUID>
+          <processStepNumber>3</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
           <toExecutableBlockUID>G2</toExecutableBlockUID>
-          <processStepNumber>6</processStepNumber>
+          <processStepNumber>5</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
           <toExecutableBlockUID>G1</toExecutableBlockUID>
-          <processStepNumber>6</processStepNumber>
+          <processStepNumber>5</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
@@ -527,51 +559,51 @@
         <edge>
           <fromExecutableBlockUID>D2</fromExecutableBlockUID>
           <toExecutableBlockUID>Converger</toExecutableBlockUID>
-          <processStepNumber>5</processStepNumber>
+          <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>D1</fromExecutableBlockUID>
-          <toExecutableBlockUID>D2</toExecutableBlockUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
           <processStepNumber>4</processStepNumber>
         </edge>
       </edges>
       <nodes>
         <node>
           <referenceUID>F1</referenceUID>
-          <processStepNumber>6</processStepNumber>
+          <processStepNumber>5</processStepNumber>
           <diagonalPosition>5</diagonalPosition>
         </node>
         <node>
           <referenceUID>Optimizer</referenceUID>
           <processStepNumber>1</processStepNumber>
-          <convergerStepNumber>7</convergerStepNumber>
+          <convergerStepNumber>6</convergerStepNumber>
           <diagonalPosition>1</diagonalPosition>
         </node>
         <node>
           <referenceUID>G2</referenceUID>
-          <processStepNumber>6</processStepNumber>
+          <processStepNumber>5</processStepNumber>
           <diagonalPosition>7</diagonalPosition>
         </node>
         <node>
           <referenceUID>G1</referenceUID>
-          <processStepNumber>6</processStepNumber>
+          <processStepNumber>5</processStepNumber>
           <diagonalPosition>6</diagonalPosition>
         </node>
         <node>
           <referenceUID>Converger</referenceUID>
           <processStepNumber>2</processStepNumber>
-          <convergerStepNumber>5</convergerStepNumber>
+          <convergerStepNumber>4</convergerStepNumber>
           <diagonalPosition>2</diagonalPosition>
         </node>
         <node>
           <referenceUID>Coordinator</referenceUID>
           <processStepNumber>0</processStepNumber>
-          <convergerStepNumber>8</convergerStepNumber>
+          <convergerStepNumber>7</convergerStepNumber>
           <diagonalPosition>0</diagonalPosition>
         </node>
         <node>
           <referenceUID>D2</referenceUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
           <diagonalPosition>4</diagonalPosition>
         </node>
         <node>
@@ -606,18 +638,30 @@
   <architectureElements>
     <parameters>
       <initialGuessCouplingVariables>
+        <initialGuessCouplingVariable uID="/data_schema/architectureNodes/initialGuessCouplingVariables/data_schemaCopy/y1">
+          <relatedParameterUID>/data_schema/y1</relatedParameterUID>
+          <label>y1^{c0}</label>
+        </initialGuessCouplingVariable>
         <initialGuessCouplingVariable uID="/data_schema/architectureNodes/initialGuessCouplingVariables/data_schemaCopy/y2">
           <relatedParameterUID>/data_schema/y2</relatedParameterUID>
           <label>y2^{c0}</label>
         </initialGuessCouplingVariable>
       </initialGuessCouplingVariables>
       <finalCouplingVariables>
+        <finalCouplingVariable uID="/data_schema/architectureNodes/finalCouplingVariables/data_schemaCopy/y1">
+          <relatedParameterUID>/data_schema/y1</relatedParameterUID>
+          <label>y1^*</label>
+        </finalCouplingVariable>
         <finalCouplingVariable uID="/data_schema/architectureNodes/finalCouplingVariables/data_schemaCopy/y2">
           <relatedParameterUID>/data_schema/y2</relatedParameterUID>
           <label>y2^*</label>
         </finalCouplingVariable>
       </finalCouplingVariables>
       <couplingCopyVariables>
+        <couplingCopyVariable uID="/data_schema/architectureNodes/couplingCopyVariables/data_schemaCopy/y1">
+          <relatedParameterUID>/data_schema/y1</relatedParameterUID>
+          <label>y1^c</label>
+        </couplingCopyVariable>
         <couplingCopyVariable uID="/data_schema/architectureNodes/couplingCopyVariables/data_schemaCopy/y2">
           <relatedParameterUID>/data_schema/y2</relatedParameterUID>
           <label>y2^c</label>

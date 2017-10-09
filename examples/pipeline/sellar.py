@@ -71,6 +71,7 @@ def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_v
     fpg_order = rcg_order[:]
 
     mdao_definition = 'MDF-GS'
+    mdao_definition = 'IDF'
     mdao_architecture, convergence_type, allow_unconverged_couplings = get_mdao_setup(mdao_definition)
     pf = 'problem_formulation'
     fpg.graph[pf] = dict()
@@ -106,7 +107,10 @@ def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_v
 
     mdg_order = fpg_order[:]
     mdg_order.insert(0, 'Optimizer')
-    mdg_order.insert(1, 'Converger')
+    if mdao_definition != 'IDF':
+        mdg_order.insert(1, 'Converger')
+    else:
+        mdg_order.append('Gc')
 
     cmdows_file = 'MDG_' + mdao_definition
     mdg.save(cmdows_file,
@@ -186,7 +190,7 @@ if __name__ == '__main__':
     base_file = os.path.join(out, 'base.xml')
 
     kb_path = kb_deploy()
-    cmdows_path = kb_to_cmdows(kb_path, out)
+    cmdows_path = kb_to_cmdows(kb_path, out, False, False, False)
     model = LEGOModel(cmdows_path, kb_path, out, base_file)
     prob = Problem(model)
 

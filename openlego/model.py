@@ -29,7 +29,7 @@ from lxml import etree
 from lxml.etree import _Element, _ElementTree
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
     LinearRunOnce, NonLinearRunOnce, ExecComp
-from typing import Union, Optional, List, Any, Dict
+from typing import Union, Optional, List, Any, Dict, Tuple
 
 from openlego.discipline import AbstractDiscipline
 from openlego.components import DisciplineComponent
@@ -261,7 +261,7 @@ class LEGOModel(Group):
                 cls = getattr(mod, name)  # type: AbstractDiscipline.__class__
                 if not issubclass(cls, AbstractDiscipline):
                     raise RuntimeError
-            except:
+            except Exception:
                 raise RuntimeError(
                     'Unable to process CMDOWS file: no proper discipline found for design competence with name %s'
                     % name)
@@ -395,12 +395,12 @@ class LEGOModel(Group):
                 initial = np.zeros(self.variable_sizes[name])
 
             if name in self.coupling_vars:
-                # If this is a coupling variable the bounds are -1e99 and 1e99
-                b = 1e99*np.ones(self.variable_sizes[name])
-                bounds = [-b, b]
-
-                # Change the name to the name stated for the copy of this coupling variable
-                name = self.coupling_vars[name]['copy']
+                # If this is a coupling variable the bounds are -1e99 and 1e99 and it should not be normalized
+                design_vars.update(
+                    {self.coupling_vars[name]['copy']: {'initial': initial,
+                                                        'lower': -1e99*np.ones(self.variable_sizes[name]),
+                                                        'upper': 1e99*np.ones(self.variable_sizes[name]),
+                                                        'ref0': None, 'ref': None}})
             else:
                 # Obtain the lower and upper bounds
                 bounds = 2 * [None]  # type: List[Optional[str]]
@@ -413,10 +413,10 @@ class LEGOModel(Group):
                             if not self.does_value_fit(name, bounds[index]):
                                 raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
 
-            # Add the design variable to the dict
-            design_vars.update({name: {'initial': initial,
-                                       'lower': bounds[0], 'upper': bounds[1],
-                                       'ref0': bounds[0], 'ref': bounds[1]}})
+                # Add the design variable to the dict
+                design_vars.update({name: {'initial': initial,
+                                           'lower': bounds[0], 'upper': bounds[1],
+                                           'ref0': bounds[0], 'ref': bounds[1]}})
         return design_vars
 
     @CachedProperty
@@ -431,9 +431,14 @@ class LEGOModel(Group):
                 name = xpath_to_param(convar.find('parameterUID').text)
 
                 if name in self.coupling_var_cons.values():
+                    # If this is a coupling variable consistency constraint, equals should just be zero
                     for key, value in self.coupling_var_cons.items():
                         if name == value:
-                            con['equals'] = np.zeros(self.variable_sizes[key])
+                            size = self.variable_sizes[key]
+                            if size == 1:
+                                con['equals'] = 0.
+                            else:
+                                con['equals'] = np.zeros(self.variable_sizes[key])
                             break
                 else:
                     # Obtain the reference value of the constraint
@@ -506,7 +511,7 @@ class LEGOModel(Group):
                 discipline_component = self.discipline_components[uid]
 
                 # Change input variable names if they are provided as copies of coupling variables
-                promotes = ['*']
+                promotes = ['*']  # type: List[Union[str, Tuple[str, str]]]
                 if not self.has_converger:
                     for i in discipline_component.inputs_from_xml.keys():
                         if i in self.coupling_vars:
@@ -539,11 +544,16 @@ class LEGOModel(Group):
         elem_ccf = self.elem_arch_elems.find('executableBlocks/consistencyConstraintFunctions')
         if elem_ccf is not None:
             group = Group()
+
+            # Loop over all consistencyConstraintFunction elements
             for child in elem_ccf:
                 uid = child.attrib['uID']
                 xpaths = []
+
+                # Loop over all coupling variables which need to be constraint by this consistencyConstraintFunction
                 for value in self.elem_cmdows.xpath(
-                                r'workflow/dataGraph/edges/edge[toExecutableBlockUID="{}"]/toParameterUID/text()'.format(uid)):
+                        'workflow/dataGraph/edges/edge[toExecutableBlockUID="{}"]/fromParameterUID/text()'.format(uid)):
+                    # Only add a given variable once
                     if 'architectureNodes' not in value and value not in xpaths:
                         xpaths.append(value)
 
@@ -551,14 +561,16 @@ class LEGOModel(Group):
                         size = self.variable_sizes[name]
                         coupling_var = self.coupling_vars[name]
 
+                        if size == 1:
+                            val = 0.
+                        else:
+                            val = np.zeros(size)
+
+                        # Add an ExecComp to the Group for this equality constraint
                         group.add_subsystem(
-                            'Gc_ ' + name,
-                            ExecComp('{} = {}/{} - 1.'.format(coupling_var['con'], coupling_var['copy'], name),
-                                     g=np.zeros(size),
-                                     y1=np.zeros(size),
-                                     y2=np.zeros(size)),
-                            ['*'])
-                        group.add_constraint(coupling_var['con'], equals=np.zeros(size))
+                            uid + '_' + name.replace(':', ''),
+                            ExecComp('g = y_c - y', g=val, y_c=val, y=val),
+                            [('g', coupling_var['con']), ('y_c', coupling_var['copy']), ('y', name)])
             return group
         return None
 
@@ -578,7 +590,7 @@ class LEGOModel(Group):
         # Add system constants
         for name, shape in self.system_inputs.items():
             if name not in self.design_vars.keys():
-                coordinator.add_output(name, shape=shape)  # TODO: val = ?
+                coordinator.add_output(name, shape=shape)
 
         return coordinator
 
@@ -604,15 +616,15 @@ class LEGOModel(Group):
         # Put the blocks in the correct order
         self.set_order(list(self.system_order))
 
-        # Set the design variables
+        # Add the design variables
         for name, value in self.design_vars.items():
             self.add_design_var(name, lower=value['lower'], upper=value['upper'], ref0=value['ref0'], ref=value['ref'])
 
-        # Set the constraints
+        # Add the constraints
         for name, value in self.constraints.items():
             self.add_constraint(name, lower=value['lower'], upper=value['upper'], equals=value['equals'])
 
-        # Set the objective
+        # Add the objective
         self.add_objective(self.objective)
 
     def initialize_from_xml(self, xml):

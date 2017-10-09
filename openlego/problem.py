@@ -27,7 +27,7 @@ import warnings
 
 from lxml import etree
 from lxml.etree import _Element, _ElementTree
-from openmdao.api import Problem, Group, LinearGaussSeidel, NLGaussSeidel, IndepVarComp, Driver
+from openmdao.api import Problem, Group, LinearGaussSeidel, NLGaussSeidel, IndepVarComp, Driver, ExecComp
 from typing import Union, Optional, List, Any, Dict
 
 from openlego.discipline import AbstractDiscipline
@@ -215,6 +215,23 @@ class CMDOWSProblem(Problem):
         return params
 
     @CachedProperty
+    def elem_arch_elems(self):
+        # type: () -> _Element
+        """:obj:`etree._Element`: The architectureElements element of the CMDOWS file."""
+        arch_elems = self.elem_cmdows.find('architectureElements')
+        if arch_elems is None:
+            raise Exception('cmdows does not contain (valid) architecture elements')
+        return arch_elems
+
+    @CachedProperty
+    def has_converger(self):
+        # type: () -> bool
+        """:obj:`bool`: True if there is a converger, False if not."""
+        if self.elem_arch_elems.find('converger') is not None:
+            return True
+        return False
+
+    @CachedProperty
     def discipline_components(self):
         # type: () -> Dict[str, DisciplineComponent]
         """:obj:`dict`: Dictionary of discipline components by their design competence ``uID`` from CMDOWS.
@@ -257,6 +274,44 @@ class CMDOWSProblem(Problem):
         return variable_sizes
 
     @CachedProperty
+    def coupling_vars(self):
+        # type: () -> Dict[str, Dict[str, str]]
+        """:obj:`dict`: Dictionary with coupling variables."""
+        coupling_vars = dict()
+
+        # First create a map between related param and coupling copy var
+        for var in self.elem_arch_elems.iter('couplingCopyVariable'):
+            related_param = var.find('relatedParameterUID').text
+            coupling_vars.update({xpath_to_param(related_param): xpath_to_param(var.attrib['uID'])})
+
+        # Then update dict with corresponding consitency constraint var
+        for convar in self.elem_arch_elems.iter('consistencyConstraintVariable'):
+            param = xpath_to_param(convar.find('relatedParameterUID').text)
+            if param not in coupling_vars:
+                raise RuntimeError('invalid cmdows file')
+
+            coupling_vars.update({param: {'copy': coupling_vars[param], 'con': xpath_to_param(convar.attrib['uID'])}})
+        return coupling_vars
+
+    @CachedProperty
+    def coupling_var_copies(self):
+        # type: () -> Dict[str, str]
+        """:obj:`dict`: Dictionary with coupling variable copies."""
+        coupling_var_copies = dict()
+        for var, value in self.coupling_vars.items():
+            coupling_var_copies.update({var: value['copy']})
+        return coupling_var_copies
+
+    @CachedProperty
+    def coupling_var_cons(self):
+        # type: () -> Dict[str, str]
+        """:obj:`dict`: Dictionary with coupling variable constraints."""
+        coupling_var_cons = dict()
+        for var, value in self.coupling_vars.items():
+            coupling_var_cons.update({var: value['con']})
+        return coupling_var_cons
+
+    @CachedProperty
     def block_order(self):
         # type: () -> List[str]
         """:obj:`list` of :obj:`str`: List of executable block ``uIDs`` in the order specified in the CMDOWS file."""
@@ -290,6 +345,8 @@ class CMDOWSProblem(Problem):
                     coupled_group_set = True
             elif block in self.discipline_components:
                 _system_order.append(block)
+        if self.consistency_constraint_group is not None:
+            _system_order.append('consistency_constraints')
         return _system_order
 
     @CachedProperty
@@ -327,17 +384,26 @@ class CMDOWSProblem(Problem):
                 warnings.warn('no nominalValue given for designVariable "%s". Default is all zeros.' % name)
                 initial = np.zeros(self.variable_sizes[name])
 
-            # Obtain the lower and upper bounds
-            bounds = 2 * [None]  # type: List[Optional[str]]
-            limit_range = desvar.find('validRanges/limitRange')
-            if limit_range is not None:
-                for index, bnd, in enumerate(['minimum', 'maximum']):
-                    elem = limit_range.find(bnd)
-                    if elem is not None:
-                        bounds[index] = parse_cmdows_value(elem)
-                        if not self.does_value_fit(name, bounds[index]):
-                            raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
+            if name in self.coupling_vars:
+                # If this is a coupling variable the bounds are -1e99 and 1e99
+                b = 1e99*np.ones(self.variable_sizes[name])
+                bounds = [-b, b]
 
+                # Change the name to the name stated for the copy of this coupling variable
+                name = self.coupling_vars[name]['copy']
+            else:
+                # Obtain the lower and upper bounds
+                bounds = 2 * [None]  # type: List[Optional[str]]
+                limit_range = desvar.find('validRanges/limitRange')
+                if limit_range is not None:
+                    for index, bnd, in enumerate(['minimum', 'maximum']):
+                        elem = limit_range.find(bnd)
+                        if elem is not None:
+                            bounds[index] = parse_cmdows_value(elem)
+                            if not self.does_value_fit(name, bounds[index]):
+                                raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
+
+            # Add the design variable to the dict
             design_vars.update({name: {'initial': initial,
                                        'lower': bounds[0], 'upper': bounds[1],
                                        'adder': -bounds[0], 'scaler': 1./(bounds[1] - bounds[0])}})
@@ -354,44 +420,51 @@ class CMDOWSProblem(Problem):
                 con = {'lower': None, 'upper': None, 'equals': None}
                 name = xpath_to_param(convar.find('parameterUID').text)
 
-                # Obtain the reference value of the constraint
-                constr_ref = convar.find('referenceValue')  # type: etree._Element
-                if constr_ref is not None:
-                    ref = parse_cmdows_value(constr_ref)
-                    if isinstance(ref, str):
-                        raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
-                    elif not self.does_value_fit(name, ref):
-                        warnings.warn('incompatible size of constraint "%s". Will assume the same for all.' % name)
-                        ref = np.ones(self.variable_sizes[name]) * np.atleast_1d(ref)[0]
+                if name in self.coupling_var_cons.values():
+                    for key, value in self.coupling_var_cons.items():
+                        if name == value:
+                            con['equals'] = np.zeros(self.variable_sizes[key])
+                            break
                 else:
-                    warnings.warn('no referenceValue given for constraint "%s". Default is all zeros.' % name)
-                    ref = np.zeros(self.variable_sizes[name])
-
-                # Process the constraint type
-                constr_type = convar.find('constraintType')
-                if constr_type is not None:
-                    if constr_type.text == 'inequality':
-                        constr_oper = convar.find('constraintOperator')
-                        if constr_oper is not None:
-                            oper = constr_oper.text
-                            if oper == '>=' or oper == '>':
-                                con['lower'] = ref
-                            elif oper == '<=' or oper == '<':
-                                con['upper'] = ref
-                            else:
-                                raise ValueError('invalid constraintOperator "%s" for constraint "%s"' % (oper, name))
-                        else:
-                            warnings.warn('no constraintOperator given for inequality constraint. Default is "&lt;=".')
-                            con['upper'] = ref
-                    elif constr_type.text == 'equality':
-                        if convar.find('constraintOperator') is not None:
-                            warnings.warn('constraintOperator given for an equalityConstraint will be ignored')
-                        con['equals'] = ref
+                    # Obtain the reference value of the constraint
+                    constr_ref = convar.find('referenceValue')  # type: etree._Element
+                    if constr_ref is not None:
+                        ref = parse_cmdows_value(constr_ref)
+                        if isinstance(ref, str):
+                            raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
+                        elif not self.does_value_fit(name, ref):
+                            warnings.warn('incompatible size of constraint "%s". Will assume the same for all.' % name)
+                            ref = np.ones(self.variable_sizes[name]) * np.atleast_1d(ref)[0]
                     else:
-                        raise ValueError('invalid constraintType "%s" for constraint "%s".' % (constr_type.text, name))
-                else:
-                    warnings.warn('no constraintType specified for constraint "%s". Default is a <= inequality.')
-                    con['upper'] = ref
+                        warnings.warn('no referenceValue given for constraint "%s". Default is all zeros.' % name)
+                        ref = np.zeros(self.variable_sizes[name])
+
+                    # Process the constraint type
+                    constr_type = convar.find('constraintType')
+                    if constr_type is not None:
+                        if constr_type.text == 'inequality':
+                            constr_oper = convar.find('constraintOperator')
+                            if constr_oper is not None:
+                                oper = constr_oper.text
+                                if oper == '>=' or oper == '>':
+                                    con['lower'] = ref
+                                elif oper == '<=' or oper == '<':
+                                    con['upper'] = ref
+                                else:
+                                    raise ValueError('invalid constraintOperator "%s" for constraint "%s"' % (oper, name))
+                            else:
+                                warnings.warn(
+                                    'no constraintOperator given for inequality constraint. Default is "&lt;=".')
+                                con['upper'] = ref
+                        elif constr_type.text == 'equality':
+                            if convar.find('constraintOperator') is not None:
+                                warnings.warn('constraintOperator given for an equalityConstraint will be ignored')
+                            con['equals'] = ref
+                        else:
+                            raise ValueError('invalid constraintType "%s" for constraint "%s".' % (constr_type.text, name))
+                    else:
+                        warnings.warn('no constraintType specified for constraint "%s". Default is a <= inequality.')
+                        con['upper'] = ref
 
                 # Add constraint to the dictionary
                 constraints.update({name: con})
@@ -419,17 +492,62 @@ class CMDOWSProblem(Problem):
         if self.coupled_blocks:
             coupled_group = Group()
             for uid in self.coupled_blocks:
-                coupled_group.add(uid, self.discipline_components[uid], ['*'])
+                # Get the correct DisciplineComponent
+                discipline_component = self.discipline_components[uid]
+
+                # Change input variable names if they are provided as copies of coupling variables
+                promotes = ['*']
+                if not self.has_converger:
+                    for i in discipline_component.inputs_from_xml.keys():
+                        if i in self.coupling_vars:
+                            promotes.append((i, self.coupling_vars[i]['copy']))
+
+                # Add the DisciplineComponent to the group
+                coupled_group.add(uid, self.discipline_components[uid], promotes)
 
             # Find the convergence type of the coupled group
-            conv_type = self.elem_problem_def.find('problemFormulation/convergerType').text
-            if conv_type == 'Gauss-Seidel':
-                coupled_group.ln_solver = LinearGaussSeidel()
-                coupled_group.ln_solver.options['maxiter'] = 10
-                coupled_group.nl_solver = NLGaussSeidel()
+            if self.has_converger:
+                conv_type = self.elem_problem_def.find('problemFormulation/convergerType').text
+                if conv_type == 'Gauss-Seidel':
+                    coupled_group.ln_solver = LinearGaussSeidel()
+                    coupled_group.ln_solver.options['maxiter'] = 10
+                    coupled_group.nl_solver = NLGaussSeidel()
+                else:
+                    raise RuntimeError('Specified convergerType "%s" is not supported.' % conv_type)
             else:
-                raise RuntimeError('Specified convergerType "%s" is not supported.' % conv_type)
+                pass
+                # coupled_group.linear_solver = LinearRunOnce()
+                # coupled_group.nonlinear_solver = NonLinearRunOnce()
             return coupled_group
+        return None
+
+    @CachedProperty
+    def consistency_constraint_group(self):
+        # type: () -> Optional[Group]
+        """:obj:`Group`, optional: Group containing ExecComps for the consistency constraints."""
+        elem_ccf = self.elem_arch_elems.find('executableBlocks/consistencyConstraintFunctions')
+        if elem_ccf is not None:
+            group = Group()
+            for child in elem_ccf:
+                uid = child.attrib['uID']
+                xpaths = []
+                for value in self.elem_cmdows.xpath(
+                                r'workflow/dataGraph/edges/edge[toExecutableBlockUID="{}"]/toParameterUID/text()'.format(uid)):
+                    if 'architectureNodes' not in value and value not in xpaths:
+                        xpaths.append(value)
+
+                        name = xpath_to_param(value)
+                        size = self.variable_sizes[name]
+                        coupling_var = self.coupling_vars[name]
+
+                        group.add(
+                            'Gc_ ' + name,
+                            ExecComp('{} = {}/{} - 1.'.format(coupling_var['con'], coupling_var['copy'], name),
+                                     g=np.zeros(size),
+                                     y1=np.zeros(size),
+                                     y2=np.zeros(size)),
+                            ['*'])
+            return group
         return None
 
     @CachedProperty
@@ -465,7 +583,7 @@ class CMDOWSProblem(Problem):
         root.deriv_options['step_calc'] = 'relative'
 
         # Add the coordinator
-        root.add('coordinator', self.coordinator, ['*'])
+        self.add_subsystem('coordinator', self.coordinator, ['*'])
 
         # Add all pre-coupling and post-coupling components
         for name, component in self.discipline_components.items():
@@ -475,6 +593,10 @@ class CMDOWSProblem(Problem):
         # Add the coupled group
         if self.coupled_group is not None:
             root.add('coupled_group', self.coupled_group, ['*'])
+
+        # Add the consistency constraint group
+        if self.consistency_constraint_group is not None:
+            root.add('consistency_constraints', self.consistency_constraint_group, ['*'])
 
         # Put the blocks in the correct order
         root.set_order(list(self.system_order))

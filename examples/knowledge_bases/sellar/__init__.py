@@ -32,19 +32,16 @@ base_file_path = os.path.join(dir_path, 'sellar-base.xml')
 
 root_tag = 'data_schema'
 x_root = '/' + root_tag
-x_geometry = '/'.join([x_root, 'geometry'])
-x_analyses = '/'.join([x_root, 'analyses'])
-x_settings = '/'.join([x_root, 'settings'])
 
-x_z1 = '/'.join([x_geometry, 'z1'])
-x_z2 = '/'.join([x_geometry, 'z2'])
-x_x1 = '/'.join([x_geometry, 'x1'])
+x_z1 = '/'.join([x_root, 'z1'])
+x_z2 = '/'.join([x_root, 'z2'])
+x_x1 = '/'.join([x_root, 'x1'])
 
-x_y1 = '/'.join([x_analyses, 'y1'])
-x_y2 = '/'.join([x_analyses, 'y2'])
-x_f1 = '/'.join([x_analyses, 'f1'])
-x_g1 = '/'.join([x_analyses, 'g1'])
-x_g2 = '/'.join([x_analyses, 'g2'])
+x_y1 = '/'.join([x_root, 'y1'])
+x_y2 = '/'.join([x_root, 'y2'])
+x_f1 = '/'.join([x_root, 'f1'])
+x_g1 = '/'.join([x_root, 'g1'])
+x_g2 = '/'.join([x_root, 'g2'])
 
 from examples.knowledge_bases.sellar.D1 import D1
 from examples.knowledge_bases.sellar.D2 import D2

@@ -8,12 +8,13 @@ from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, S
 
 if __name__ == '__main__':
     # 0. Select a CMDOWS file
-    if True:
+    i = 0
+    if i == 0:
         CMDOWS_file = 'sellar-MDG_MDF-GS.xml'                           # MDF with a Gauss-Seidel converger
-    else:
+    elif i == 1:
         CMDOWS_file = 'sellar-MDG_MDF-J.xml'                            # MDF with a Jacobi converger
-
-    CMDOWS_file = 'sellar-MDG_IDF.xml'
+    else:
+        CMDOWS_file = 'sellar-MDG_IDF.xml'                              # IDF architecture
 
     # 1. Create Problem
     prob = Problem()                                                    # Create an instance of the Problem class
@@ -29,13 +30,12 @@ if __name__ == '__main__':
     driver = prob.driver = ScipyOptimizer()                             # Use a SciPy for the optimization
     driver.options['optimizer'] = 'SLSQP'                               # Use the SQP algorithm
     driver.options['disp'] = True                                       # Print the result
-    driver.options['tol'] = 1.0e-3                                      # Use a termination tolerance of 0.1%
-    driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}   # Display iterations and set the func. tolerance
+    driver.opt_settings = {'disp': True, 'iprint': 2}                   # Display iterations
 
     # 4. Setup the Problem
     prob.setup()                                                        # Call the OpenMDAO setup() method
-    model.coupled_group.linear_solver.options['maxiter'] = 16           # Increase maxiter of the linear solver
-    model.coupled_group.nonlinear_solver.options['maxiter'] = 16        # Increase maxiter of the nonlinear solver
+    model.coupled_group.linear_solver.options['maxiter'] = 17           # Increase maxiter of the linear solver
+    model.coupled_group.nonlinear_solver.options['maxiter'] = 17        # Increase maxiter of the nonlinear solver
     prob.run_model()                                                    # Run the model once to initialize the variables
     model.initialize_from_xml('sellar-input.xml')                       # Set the initial values from an XML file
 

@@ -12,33 +12,18 @@
 <xs:element name="f1" type="xs:decimal"/>
 
 <!-- definition of complex elements -->
-<xs:element name="geometry">
+
+<xs:element name="data_schema">
   <xs:complexType>
     <xs:all>
       <xs:element ref="x1" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="z1" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="z2" minOccurs="0" maxOccurs="1"/>
-    </xs:all>
-  </xs:complexType>
-</xs:element>
-
-<xs:element name="analyses">
-  <xs:complexType>
-    <xs:all>
       <xs:element ref="y1" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="y2" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="g1" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="g2" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="f1" minOccurs="0" maxOccurs="1"/>
-    </xs:all>
-  </xs:complexType>
-</xs:element>
-
-<xs:element name="data_schema">
-  <xs:complexType>
-    <xs:all>
-      <xs:element ref="geometry" minOccurs="0" maxOccurs="1"/>
-      <xs:element ref="analyses" minOccurs="0" maxOccurs="1"/>
     </xs:all>
   </xs:complexType>
 </xs:element>

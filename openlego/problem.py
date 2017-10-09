@@ -66,7 +66,7 @@ class CMDOWSProblem(Problem):
     """
 
     def __init__(self, cmdows_path=None, kb_path=None, driver=None, data_folder=None, base_xml_file=None):
-        # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
+        # type: (Optional[str], Optional[str], Optional[Driver], Optional[str], Optional[str]) -> None
         """Initialize a CMDOWS Problem from a given CMDOWS file and knowledge base.
 
         It is also possible to specify where (temporary) data should be stored, and if a base XML
@@ -227,7 +227,7 @@ class CMDOWSProblem(Problem):
     def has_converger(self):
         # type: () -> bool
         """:obj:`bool`: True if there is a converger, False if not."""
-        if self.elem_arch_elems.find('converger') is not None:
+        if self.elem_arch_elems.find('executableBlocks/convergers/converger') is not None:
             return True
         return False
 
@@ -282,7 +282,7 @@ class CMDOWSProblem(Problem):
         # First create a map between related param and coupling copy var
         for var in self.elem_arch_elems.iter('couplingCopyVariable'):
             related_param = var.find('relatedParameterUID').text
-            coupling_vars.update({xpath_to_param(related_param): xpath_to_param(var.attrib['uID'])})
+            coupling_vars.update({xpath_to_param(related_param): {'copy': xpath_to_param(var.attrib['uID'])}})
 
         # Then update dict with corresponding consitency constraint var
         for convar in self.elem_arch_elems.iter('consistencyConstraintVariable'):
@@ -290,7 +290,8 @@ class CMDOWSProblem(Problem):
             if param not in coupling_vars:
                 raise RuntimeError('invalid cmdows file')
 
-            coupling_vars.update({param: {'copy': coupling_vars[param], 'con': xpath_to_param(convar.attrib['uID'])}})
+            coupling_vars.update({param: {'copy': coupling_vars[param]['copy'],
+                                          'con': xpath_to_param(convar.attrib['uID'])}})
         return coupling_vars
 
     @CachedProperty
@@ -306,9 +307,11 @@ class CMDOWSProblem(Problem):
     def coupling_var_cons(self):
         # type: () -> Dict[str, str]
         """:obj:`dict`: Dictionary with coupling variable constraints."""
-        coupling_var_cons = dict()
-        for var, value in self.coupling_vars.items():
-            coupling_var_cons.update({var: value['con']})
+        coupling_var_cons = None
+        if 'con' in self.coupling_vars.values()[0]:
+            coupling_var_cons = dict()
+            for var, value in self.coupling_vars.items():
+                coupling_var_cons.update({var: value['con']})
         return coupling_var_cons
 
     @CachedProperty
@@ -387,10 +390,10 @@ class CMDOWSProblem(Problem):
             if name in self.coupling_vars:
                 # If this is a coupling variable the bounds are -1e99 and 1e99 and it should not be normalized
                 design_vars.update(
-                    {self.coupling_vars[name]['copy']: {'initial': initial,
-                                                        'lower': -1e99*np.ones(self.variable_sizes[name]),
-                                                        'upper': 1e99*np.ones(self.variable_sizes[name]),
-                                                        'adder': None, 'scaler': None}})
+                    {self.coupling_var_copies[name]: {'initial': initial,
+                                                      'lower': -1e99*np.ones(self.variable_sizes[name]),
+                                                      'upper': 1e99*np.ones(self.variable_sizes[name]),
+                                                      'adder': 0., 'scaler': 1.}})
             else:
                 # Obtain the lower and upper bounds
                 bounds = 2 * [None]  # type: List[Optional[str]]
@@ -420,7 +423,7 @@ class CMDOWSProblem(Problem):
                 con = {'lower': None, 'upper': None, 'equals': None}
                 name = xpath_to_param(convar.find('parameterUID').text)
 
-                if name in self.coupling_var_cons.values():
+                if self.coupling_var_cons is not None and name in self.coupling_var_cons.values():
                     # If this is a coupling variable consistency constraint, equals should just be zero
                     for key, value in self.coupling_var_cons.items():
                         if name == value:
@@ -429,6 +432,8 @@ class CMDOWSProblem(Problem):
                                 con['equals'] = 0.
                             else:
                                 con['equals'] = np.zeros(self.variable_sizes[key])
+
+                            name = 'gc_{}'.format(key.replace(':', ''))
                             break
                 else:
                     # Obtain the reference value of the constraint
@@ -496,19 +501,45 @@ class CMDOWSProblem(Problem):
         """
         if self.coupled_blocks:
             coupled_group = Group()
+
+            order = [uid for uid in self.block_order if uid in self.coupled_blocks]
             for uid in self.coupled_blocks:
                 # Get the correct DisciplineComponent
                 discipline_component = self.discipline_components[uid]
 
                 # Change input variable names if they are provided as copies of coupling variables
-                promotes = ['*']  # type: List[Union[str, Tuple[str, str]]]
+                promotes = []
                 if not self.has_converger:
                     for i in discipline_component.inputs_from_xml.keys():
-                        if i in self.coupling_vars:
-                            promotes.append((i, self.coupling_vars[i]['copy']))
+                        if i not in self.coupling_vars:
+                            promotes.append(i)
+                        else:
+                            size = self.variable_sizes[i]
+                            if size == 1:
+                                val = 0.
+                            else:
+                                val = np.zeros(size)
+
+                            name = 'in_' + i.replace(':', '')
+                            coupled_group.add(name,
+                                              ExecComp('{} = {}'.format(i, self.coupling_var_copies[i]),
+                                                       {i: val, self.coupling_var_copies[i]: val}),
+                                              [self.coupling_var_copies[i]])
+                            order.insert(order.index(uid), name)
+                    for i in discipline_component.outputs_from_xml.keys():
+                        promotes.append(i)
+                else:
+                    promotes = ['*']
 
                 # Add the DisciplineComponent to the group
                 coupled_group.add(uid, self.discipline_components[uid], promotes)
+
+                if not self.has_converger:
+                    for i in discipline_component.inputs_from_xml.keys():
+                        if i in self.coupling_vars:
+                            coupled_group.connect('in_{}.{}'.format(i.replace(':', ''), i), '{}.{}'.format(uid, i))
+
+            coupled_group.set_order(order)
 
             # Find the convergence type of the coupled group
             if self.has_converger:
@@ -558,8 +589,9 @@ class CMDOWSProblem(Problem):
                         # Add an ExecComp to the Group for this equality constraint
                         group.add(
                             uid + '_' + name.replace(':', ''),
-                            ExecComp('g = y_c - y', g=val, y_c=val, y=val),
-                            [('g', coupling_var['con']), ('y_c', coupling_var['copy']), ('y', name)])
+                            ExecComp('gc_{} = {} - {}'.format(name.replace(':', ''), coupling_var['copy'], name),
+                                     {'gc_{}'.format(name.replace(':', '')): val, coupling_var['copy']: val, name: val}),
+                            ['*'])
             return group
         return None
 
@@ -596,7 +628,7 @@ class CMDOWSProblem(Problem):
         root.deriv_options['step_calc'] = 'relative'
 
         # Add the coordinator
-        self.add_subsystem('coordinator', self.coordinator, ['*'])
+        root.add('coordinator', self.coordinator, ['*'])
 
         # Add all pre-coupling and post-coupling components
         for name, component in self.discipline_components.items():

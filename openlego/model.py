@@ -237,7 +237,7 @@ class LEGOModel(Group):
     def has_converger(self):
         # type: () -> bool
         """:obj:`bool`: True if there is a converger, False if not."""
-        if self.elem_arch_elems.find('converger') is not None:
+        if self.elem_arch_elems.find('executableBlocks/convergers/converger') is not None:
             return True
         return False
 
@@ -316,9 +316,11 @@ class LEGOModel(Group):
     def coupling_var_cons(self):
         # type: () -> Dict[str, str]
         """:obj:`dict`: Dictionary with coupling variable constraints."""
-        coupling_var_cons = dict()
-        for var, value in self.coupling_vars.items():
-            coupling_var_cons.update({var: value['con']})
+        coupling_var_cons = None
+        if 'con' in self.coupling_vars.values()[0]:
+            coupling_var_cons = dict()
+            for var, value in self.coupling_vars.items():
+                coupling_var_cons.update({var: value['con']})
         return coupling_var_cons
 
     @CachedProperty
@@ -430,7 +432,7 @@ class LEGOModel(Group):
                 con = {'lower': None, 'upper': None, 'equals': None}
                 name = xpath_to_param(convar.find('parameterUID').text)
 
-                if name in self.coupling_var_cons.values():
+                if self.coupling_var_cons is not None and name in self.coupling_var_cons.values():
                     # If this is a coupling variable consistency constraint, equals should just be zero
                     for key, value in self.coupling_var_cons.items():
                         if name == value:

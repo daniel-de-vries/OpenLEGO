@@ -24,6 +24,7 @@ from __future__ import print_function
 import imp
 import numpy as np
 import warnings
+import re
 
 from lxml import etree
 from lxml.etree import _Element, _ElementTree
@@ -35,6 +36,10 @@ from openlego.discipline import AbstractDiscipline
 from openlego.components import DisciplineComponent
 from openlego.xml import xpath_to_param, xml_to_dict
 from openlego.util import CachedProperty, parse_cmdows_value
+
+
+re_sys_name_char = re.compile(r'[^_a-zA-Z0-9]')
+re_sys_name_starts = re.compile(r'^[a-zA-Z]')
 
 
 class LEGOModel(Group):
@@ -568,9 +573,15 @@ class LEGOModel(Group):
                         else:
                             val = np.zeros(size)
 
+                        sys_name = re_sys_name_char.sub('', self.elem_arch_elems.xpath(
+                            'parameters/consistencyConstraintVariables/' +
+                            'consistencyConstraintVariable[@uID="{}"]/label/text()'.format(coupling_var['con']))[0])
+                        while not re_sys_name_starts.match(sys_name):
+                            sys_name = sys_name[1:]
+
                         # Add an ExecComp to the Group for this equality constraint
                         group.add_subsystem(
-                            uid + '_' + name.replace(':', ''),
+                            sys_name,
                             ExecComp('g = y_c - y', g=val, y_c=val, y=val),
                             [('g', coupling_var['con']), ('y_c', coupling_var['copy']), ('y', name)])
             return group

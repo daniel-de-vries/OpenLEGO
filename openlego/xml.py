@@ -34,27 +34,12 @@ pttrn_attr_val = r'([-.0-9:A-Z_a-z]+?)'
 pttrn_attr_name = r'([:A-Z_a-z][0-9:A-Z_a-z]*?)'
 
 # Expressions used to replace illegal characters in an XPath to legal characters within an OpenMDAO variable name.
-# They have to be executed in this order when going from XPaths to variables, and in reversed order the other way.
-# If they are not executed in this order the transformation may not be reversible.
-repl_sep = ':_:'                 # A path seperator (/) becomes :_:
-repl_atr = r':__:\1:__:\2'       # An attribute ([@name="value"]) becomes :__:name:__:value
-repl_ind = r':__:__\1'           # An index ([2]) becomes :__:__2
-repl_min = ':___:'               # A minus (-) becomes :___:
-repl_dot = ':____'               # A dot (.) becomes :____
-
-repl_sep_inv = '/'
-repl_atr_inv = r'[@\1="\2"]'
-repl_ind_inv = r'[\1]'
+repl_dot = ':_:'               # A dot (.) becomes :_:
 repl_dot_inv = '.'
-repl_min_inv = '-'
 
 # Regular expressions to match attributes and indices within valid XPaths
 re_atr = re.compile(r'\[@' + pttrn_attr_name + "=['\"]" + pttrn_attr_val + "['\"]\]")
 re_ind = re.compile(r'\[([0-9]+?)\]')
-
-# Regular expressions to match attributes and indices within OpenMDAO variables transformed from xpaths
-re_atr_inv = re.compile(r':__:' + pttrn_attr_val + ':__:' + pttrn_attr_val + r'(?=:_|$)')
-re_ind_inv = re.compile(r':__:__([0-9]+?)(?=:|$)')
 
 parser = etree.XMLParser(remove_blank_text=True, encoding='utf-8')
 find_text = etree.XPath('//text()')
@@ -74,12 +59,7 @@ def xpath_to_param(xpath):
         str
             Valid ``OpenMDAO`` parameter name.
     """
-    param = xpath[1:]
-    param = param.replace(repl_sep_inv, repl_sep)
-    param = re_atr.sub(repl_atr, param)
-    param = re_ind.sub(repl_ind, param)
-    param = param.replace(repl_min_inv, repl_min)
-    param = param.replace(repl_dot_inv, repl_dot)
+    param = xpath.replace(repl_dot_inv, repl_dot)
     return param
 
 
@@ -100,11 +80,6 @@ def param_to_xpath(param):
             Corresponding XML XPath.
     """
     xpath = param.replace(repl_dot, repl_dot_inv)
-    xpath = xpath.replace(repl_min, repl_min_inv)
-    xpath = re_ind_inv.sub(repl_ind_inv, xpath)
-    xpath = re_atr_inv.sub(repl_atr_inv, xpath)
-    xpath = xpath.replace(repl_sep, repl_sep_inv)
-    xpath = '/' + xpath
     return xpath
 
 

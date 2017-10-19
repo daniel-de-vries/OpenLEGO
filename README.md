@@ -63,3 +63,5 @@ can be run.
 *OpenLEGO* is being developed by [Daniël de Vries](https://www.linkedin.com/in/dani%C3%ABl-de-vries-07495661/) as part
 of an MSc thesis at the [TU Delft](https://www.tudelft.nl/). This current state of this work should be considered as an early
 beta and is subject to change. Feel free to post any feedback on the code, suggestions for new features, and general ideas.
+
+NOTE: OpenLEGO was not developed under the umbrella of the AGILE project and did not receive funding from it.

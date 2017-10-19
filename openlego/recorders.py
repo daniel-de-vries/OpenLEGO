@@ -241,10 +241,10 @@ class BaseIterationPlotter(BaseRecorder):
         pass
 
     def record_iteration_driver_passing_vars(self, object_requesting_recording, desvars, responses, objectives,
-                                             constraints, metadata):
+                                             constraints, sysvars, metadata):
         super(BaseIterationPlotter, self).record_iteration_driver_passing_vars(object_requesting_recording,
-                                                                                      desvars, responses, objectives,
-                                                                                      constraints, metadata)
+                                                                               desvars, responses, objectives,
+                                                                               constraints, sysvars, metadata)
         self._record_iteration_driver(metadata)
 
     def record_iteration_driver(self, object_requesting_recording, metadata):

@@ -35,7 +35,7 @@ def kb_deploy():
 
     :returns: path to the deployed knowledge base
     """
-    from examples.knowledge_bases.sellar import deploy
+    from openlego.test_suite.test_examples.knowledge_bases.sellar import deploy
     deploy()
     return os.path.join(dir_path, '..', 'knowledge_bases', 'sellar')
 
@@ -54,7 +54,7 @@ def kb_to_cmdows(kb_path, out_path, create_pdfs=False, open_pdfs=False, create_v
     from kadmos.graph import FundamentalProblemGraph
     from kadmos.knowledgebase import KnowledgeBase
     from kadmos.utilities.general import get_mdao_setup
-    from examples.knowledge_bases.sellar import x_z1, x_z2, x_x1, x_f1, x_g1, x_g2
+    from openlego.test_suite.test_examples.knowledge_bases.sellar import x_z1, x_z2, x_x1, x_f1, x_g1, x_g2
 
     # KB
     kb_path = os.path.split(kb_path)
@@ -164,7 +164,7 @@ def generate_init_xml(xml_path, z1, z2, x1):
     :param x1: initial value of the x1 parameter
     """
     from openlego.utils.xml_utils import xml_safe_create_element
-    from examples.knowledge_bases.sellar import root_tag, x_x1, x_z1, x_z2
+    from openlego.test_suite.test_examples.knowledge_bases.sellar import root_tag, x_x1, x_z1, x_z2
     from lxml import etree
 
     root = etree.Element(root_tag)

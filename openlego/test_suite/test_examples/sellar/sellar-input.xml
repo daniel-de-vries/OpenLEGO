@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<data_schema>
+    <x1>5.0</x1>
+    <z1>1.0</z1>
+    <z2>5.0</z2>
+    <architectureNodes>
+        <couplingCopyVariables>
+            <data_schemaCopy>
+                <y1>5.0</y1>
+                <y2>5.0</y2>
+            </data_schemaCopy>
+        </couplingCopyVariables>
+    </architectureNodes>
+</data_schema>

@@ -26,8 +26,9 @@ from collections import OrderedDict
 import numpy as np
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
-from openlego.recorders import BaseIterationPlotter
 from typing import Optional, List
+
+from openlego.recorders import BaseIterationPlotter
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
@@ -217,9 +218,9 @@ def kb_deploy(n_wing_segments=2, n_load_cases=3):
         str
             Path to the folder of the deployed knowledge base.
     """
-    from examples.knowledge_bases.wing_opt import deploy
+    from openlego.test_suite.test_examples.wing_opt.kb import deploy
     deploy(n_wing_segments, n_load_cases)
-    return os.path.join(dir_path, '..', 'knowledge_bases', 'wing_opt')
+    return os.path.join(dir_path, '..', 'knowledge_bases', 'kb')
 
 
 def kb_to_cmdows(kb_path, out_path, n_wing_segments=2, create_pdfs=False, open_pdfs=False, create_vistoms=False):
@@ -254,7 +255,7 @@ def kb_to_cmdows(kb_path, out_path, n_wing_segments=2, create_pdfs=False, open_p
     from kadmos.graph import FundamentalProblemGraph
     from kadmos.knowledgebase import KnowledgeBase
     from kadmos.utilities.general import get_mdao_setup
-    from examples.knowledge_bases.wing_opt.disciplines.xpaths import x_c, x_epsilon, x_b, \
+    from openlego.test_suite.test_examples.wing_opt.kb.disciplines.xpaths import x_c, x_epsilon, x_b, \
         x_xsi_fs, x_xsi_rs, x_t_fs, x_t_rs, x_t_ts, x_t_bs, \
         x_obj_m_fuel, x_con_sigmas, x_con_exposed_area
 
@@ -394,7 +395,7 @@ def generate_init_xml(xml_path, n_wing_segments=2, load_cases=None):
             List of load cases in the form of tuples with (Mach number, altitude, load factor).
     """
     from openlego.utils.xml_utils import xml_safe_create_element
-    from examples.knowledge_bases.wing_opt.disciplines.xpaths import x_m_fixed, x_m_payload, x_m_mlw, \
+    from openlego.test_suite.test_examples.wing_opt.kb.disciplines.xpaths import x_m_fixed, x_m_payload, x_m_mlw, \
         x_f_m_sys, x_f_m_wings, x_R, x_SFC, x_m_fuel_res, x_CDfus, x_CDother, \
         x_m_fuel_init, x_sigma_yield, x_m_wing_init, x_S_ref_init, x_CL_buffet, \
         x_M, x_H, x_n, x_ml_timeout, \
@@ -492,7 +493,7 @@ class WingDesignPlotter(BaseIterationPlotter):
             Coordinates of the front and rear spar vertices.
     """
 
-    from examples.knowledge_bases.wing_opt.disciplines.xpaths import x_c, x_epsilon, x_b,\
+    from openlego.test_suite.test_examples.wing_opt.kb.disciplines.xpaths import x_c, x_epsilon, x_b,\
         x_Lambda, x_Gamma, x_incidence, x_xsi_fs, x_xsi_rs
     from openlego.utils.xml_utils import xpath_to_param
 
@@ -658,7 +659,7 @@ if __name__ == '__main__':
 
     # Pipeline: Knowledgebase -> KADMOS -> CMDOWS file -> OpenMDAO Problem
     kb_path = kb_deploy(n_ws, n_lc)
-    cmdows_path = kb_to_cmdows('../knowledge_bases/wing_opt', out, n_ws, True)
+    cmdows_path = kb_to_cmdows('../knowledge_bases/kb', out, n_ws, True)
     # cmdows_problem = CMDOWSProblem(cmdows_path, kb_path, out, base_file)
 
     # Manually fix the exposed area equality contraint

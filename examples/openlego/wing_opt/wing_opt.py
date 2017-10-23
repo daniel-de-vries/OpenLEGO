@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     # 2. Create the LEGOModel
     model = prob.model = LEGOModel('wing_opt_MDG_MDF_GS.xml',           # CMDOWS file
-                                   '../../knowledge_bases/wing_opt',    # Knowledge base
+                                   '../../knowledge_bases/kb',    # Knowledge base
                                    '',                                  # Output directory
                                    'wing_opt_output.xml')               # Output file
 

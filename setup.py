@@ -19,12 +19,13 @@ This file contains the setup code for the OpenLEGO package.
 """
 from setuptools import setup
 
-version = '1.0.0dev1'
+version = '1.0.0'
 
 
 def readme():
     with open('README.md') as f:
         return f.read()
+
 
 setup(
     name='openlego',
@@ -32,28 +33,39 @@ setup(
     description='An Open-source link between the AGILE project and the OpenMDAO framework',
     long_description=readme(),
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha'
-        'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.5',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: Apache Software License',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: POSIX :: Linux',
+        'Operating System :: Microsoft :: Windows',
         'Topic :: Scientific/Engineering',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6'
     ],
     keywords='optimization agile multidisciplinary kadmos openmdao engineering xml cpacs',
     url='https://github.com/daniel-de-vries/OpenLEGO',
-    # TODO: download_url='https://github.com/some/git/repo/dist/' + version + '.tar.gzip',
+    download_url='https://github.com/daniel-de-vries/OpenLEGO/tarball/' + version,
     author='Daniël de Vries',
     author_email='danieldevries6@gmail.com',
     license='Apache Software License',
-    packages=['openlego'],
+    packages=[
+        'openlego',
+        'openlego.core',
+        'openlego.recorders',
+        'openlego.utils',
+        'openlego.docs',
+        'openlego.test_suite',
+        'openlego.test_suite.test_examples'
+    ],
     install_requires=[
         'kadmos==0.7',
-        'openmdao==2.0.0',
+        'openmdao==2.0.2',
         'lxml',
         'numpy',
         'matplotlib'
     ],
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
     include_package_data=True,
     zip_safe=False
 )

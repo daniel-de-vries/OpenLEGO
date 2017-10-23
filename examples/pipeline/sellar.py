@@ -17,12 +17,10 @@ limitations under the License.
 
 This file contains the code to create and run the test Sellar case.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
-import os
 import logging
+import os
 
 from typing import Optional
 
@@ -165,7 +163,7 @@ def generate_init_xml(xml_path, z1, z2, x1):
     :param z2: initial value of the z2 parameter
     :param x1: initial value of the x1 parameter
     """
-    from openlego.xml import xml_safe_create_element
+    from openlego.utils.xml_utils import xml_safe_create_element
     from examples.knowledge_bases.sellar import root_tag, x_x1, x_z1, x_z2
     from lxml import etree
 
@@ -183,7 +181,7 @@ if __name__ == '__main__':
     from shutil import copyfile
     from openmdao.api import ScipyOptimizer, Problem
     from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
-    from openlego.model import LEGOModel
+    from openlego.api import LEGOModel
 
     out = os.path.join(dir_path, 'output')
     xml = os.path.join(out, 'input.xml')

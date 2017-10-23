@@ -26,9 +26,8 @@ from collections import OrderedDict
 import numpy as np
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
+from openlego.recorders import BaseIterationPlotter
 from typing import Optional, List
-
-from openlego.Recorders import BaseIterationPlotter
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
@@ -218,9 +217,9 @@ def kb_deploy(n_wing_segments=2, n_load_cases=3):
         str
             Path to the folder of the deployed knowledge base.
     """
-    from examples.kb.kb_wing_opt import deploy
+    from examples.knowledge_bases.wing_opt import deploy
     deploy(n_wing_segments, n_load_cases)
-    return os.path.join(dir_path, 'kb', 'kb_wing_opt')
+    return os.path.join(dir_path, '..', 'knowledge_bases', 'wing_opt')
 
 
 def kb_to_cmdows(kb_path, out_path, n_wing_segments=2, create_pdfs=False, open_pdfs=False, create_vistoms=False):
@@ -255,7 +254,7 @@ def kb_to_cmdows(kb_path, out_path, n_wing_segments=2, create_pdfs=False, open_p
     from kadmos.graph import FundamentalProblemGraph
     from kadmos.knowledgebase import KnowledgeBase
     from kadmos.utilities.general import get_mdao_setup
-    from examples.kb.kb_wing_opt.disciplines.xpaths import x_c, x_epsilon, x_b, \
+    from examples.knowledge_bases.wing_opt.disciplines.xpaths import x_c, x_epsilon, x_b, \
         x_xsi_fs, x_xsi_rs, x_t_fs, x_t_rs, x_t_ts, x_t_bs, \
         x_obj_m_fuel, x_con_sigmas, x_con_exposed_area
 
@@ -298,10 +297,9 @@ def kb_to_cmdows(kb_path, out_path, n_wing_segments=2, create_pdfs=False, open_p
         upper_bounds[i] = variables[desvar]['upper'].tolist()
         nominal_values[i] = variables[desvar]['value'].tolist()
 
-    fpg.mark_as_design_variable(desvars,
-                                lower_bounds=lower_bounds,
-                                nominal_values=nominal_values,
-                                upper_bounds=upper_bounds)
+    fpg.mark_as_design_variables(desvars,
+                                 lower_bounds=lower_bounds, upper_bounds=upper_bounds,
+                                 nominal_values=nominal_values)
 
     special_output_nodes = [
         # x_obj_m_wing,
@@ -317,9 +315,9 @@ def kb_to_cmdows(kb_path, out_path, n_wing_segments=2, create_pdfs=False, open_p
     fpg.mark_as_objective(objective)
 
     constraints = special_output_nodes[1:]
-    con_lower_bounds = len(constraints) * [-1e99]
-    con_upper_bounds = len(constraints) * [0.]
-    fpg.mark_as_constraint(constraints, lower_bounds=con_lower_bounds, upper_bounds=con_upper_bounds)
+    operators = len(special_output_nodes[1:-1]) * ['<='] + ['==']
+    ref_values = len(special_output_nodes[1:]) * [0.]
+    fpg.mark_as_constraints(constraints, operators=operators, reference_values=ref_values)
 
     output_nodes = fpg.find_all_nodes(subcategory='all outputs')
     for output_node in output_nodes:
@@ -395,8 +393,8 @@ def generate_init_xml(xml_path, n_wing_segments=2, load_cases=None):
         load_cases : list of (float, float, float), optional
             List of load cases in the form of tuples with (Mach number, altitude, load factor).
     """
-    from openlego.xmlutils import xml_safe_create_element
-    from examples.kb.kb_wing_opt.disciplines.xpaths import x_m_fixed, x_m_payload, x_m_mlw, \
+    from openlego.utils.xml_utils import xml_safe_create_element
+    from examples.knowledge_bases.wing_opt.disciplines.xpaths import x_m_fixed, x_m_payload, x_m_mlw, \
         x_f_m_sys, x_f_m_wings, x_R, x_SFC, x_m_fuel_res, x_CDfus, x_CDother, \
         x_m_fuel_init, x_sigma_yield, x_m_wing_init, x_S_ref_init, x_CL_buffet, \
         x_M, x_H, x_n, x_ml_timeout, \
@@ -494,9 +492,9 @@ class WingDesignPlotter(BaseIterationPlotter):
             Coordinates of the front and rear spar vertices.
     """
 
-    from examples.kb.kb_wing_opt.disciplines.xpaths import x_c, x_epsilon, x_b,\
+    from examples.knowledge_bases.wing_opt.disciplines.xpaths import x_c, x_epsilon, x_b,\
         x_Lambda, x_Gamma, x_incidence, x_xsi_fs, x_xsi_rs
-    from openlego.xmlutils import xpath_to_param
+    from openlego.utils.xml_utils import xpath_to_param
 
     p_c = xpath_to_param(x_c)
     p_epsilon = xpath_to_param(x_epsilon)
@@ -629,21 +627,16 @@ class WingDesignPlotter(BaseIterationPlotter):
 
 if __name__ == '__main__':
     from shutil import copyfile
-    from openlego.xmlutils import xpath_to_param
-    from examples.kb.kb_wing_opt.disciplines.xpaths import x_m_fuel, x_m_wing, \
-        x_t_fs, x_t_rs, x_t_ts, x_t_bs, x_con_exposed_area
-    from openmdao.api import ScipyOptimizer
-    from openmdao.recorders.sqlite_recorder import SqliteRecorder
-    from openlego.Recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter, VOIPlotter
-    from openlego.CMDOWSProblem import CMDOWSProblem
-    from openlego.BoundsNormalizedDriver import normalized_to_bounds
+    from openlego.utils.xml_utils import xpath_to_param
+
+    # from openlego.BoundsNormalizedDriver import normalized_to_bounds
 
     # Problem settings
     n_ws = 2
     n_lc = 3
 
     # Output paths and files
-    out = os.path.join(dir_path, 'output')
+    out = os.path.join(dir_path, '../output')
     xml = os.path.join(out, 'input.xml')
     base_file = os.path.join(out, 'base.xml')
     data_file = os.path.join(out, 'data.db')
@@ -656,59 +649,59 @@ if __name__ == '__main__':
     copyfile(xml, base_file)
 
     # Create a driver for the problem
-    driver = normalized_to_bounds(ScipyOptimizer)()
-    driver.options['optimizer'] = 'SLSQP'
-    driver.options['maxiter'] = 1000
-    driver.options['disp'] = True
-    driver.options['tol'] = 1.0e-3
-    driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}
+    # driver = normalized_to_bounds(ScipyOptimizer)()
+    # driver.options['optimizer'] = 'SLSQP'
+    # driver.options['maxiter'] = 1000
+    # driver.options['disp'] = True
+    # driver.options['tol'] = 1.0e-3
+    # driver.opt_settings = {'disp': True, 'iprint': 2, 'ftol': 1.0e-3}
 
     # Pipeline: Knowledgebase -> KADMOS -> CMDOWS file -> OpenMDAO Problem
     kb_path = kb_deploy(n_ws, n_lc)
-    cmdows_path = kb_to_cmdows(kb_path, out, n_ws)
-    cmdows_problem = CMDOWSProblem(cmdows_path, kb_path, driver, out, base_file)
+    cmdows_path = kb_to_cmdows('../knowledge_bases/wing_opt', out, n_ws, True)
+    # cmdows_problem = CMDOWSProblem(cmdows_path, kb_path, out, base_file)
 
     # Manually fix the exposed area equality contraint
-    cmdows_problem.driver._cons[xpath_to_param(x_con_exposed_area)]['lower'] = None
-    cmdows_problem.driver._cons[xpath_to_param(x_con_exposed_area)]['upper'] = None
-    cmdows_problem.driver._cons[xpath_to_param(x_con_exposed_area)]['equals'] = 0.
-
-    # Create and setup all recorders for the OpenMDAO Problem
-    recorder = SqliteRecorder(data_file)
-    cmdows_problem.driver.add_recorder(recorder)
-
-    desvar_plotter = NormalizedDesignVarPlotter(cmdows_problem.driver)
-    desvar_plotter.options['save_on_close'] = True
-    desvar_plotter.save_settings['path'] = os.path.join(out, 'desvar.png')
-
-    constr_plotter = ConstraintsPlotter(cmdows_problem.driver)
-    constr_plotter.options['save_on_close'] = True
-    constr_plotter.save_settings['path'] = os.path.join(out, 'constr.png')
-
-    objvar_plotter = SimpleObjectivePlotter(cmdows_problem.driver)
-    objvar_plotter.options['save_on_close'] = True
-    objvar_plotter.save_settings['path'] = os.path.join(out, 'objvar.png')
-
-    voi_plotter = VOIPlotter()
-    voi_plotter.options['save_on_close'] = True
-    voi_plotter.save_settings['path'] = os.path.join(out, 'vois.png')
-    voi_plotter.options['includes'] = [xpath_to_param(x_m_fuel), xpath_to_param(x_m_wing)]
-    voi_plotter.options['legend'] = ['Fuel mass', 'Wing mass']
-    voi_plotter.options['labels'] = ['m_F, [kg]', 'm_wing, [kg]']
-
-    wing_des_plotter = WingDesignPlotter()
-    wing_des_plotter.options['save_on_close'] = True
-    wing_des_plotter.save_settings['path'] = os.path.join(out, 'wing.png')
-
-    cmdows_problem.driver.add_recorder(desvar_plotter)
-    cmdows_problem.driver.add_recorder(constr_plotter)
-    cmdows_problem.driver.add_recorder(objvar_plotter)
-    cmdows_problem.driver.add_recorder(voi_plotter)
-    cmdows_problem.driver.add_recorder(wing_des_plotter)
-
-    # Setup the OpenMDAO Problem
-    cmdows_problem.setup()
-    cmdows_problem.initialize_from_xml(xml)
+    # cmdows_problem.driver._cons[xpath_to_param(x_con_exposed_area)]['lower'] = None
+    # cmdows_problem.driver._cons[xpath_to_param(x_con_exposed_area)]['upper'] = None
+    # cmdows_problem.driver._cons[xpath_to_param(x_con_exposed_area)]['equals'] = 0.
+    #
+    # # Create and setup all recorders for the OpenMDAO Problem
+    # recorder = SqliteRecorder(data_file)
+    # cmdows_problem.driver.add_recorder(recorder)
+    #
+    # desvar_plotter = NormalizedDesignVarPlotter(cmdows_problem.driver)
+    # desvar_plotter.options['save_on_close'] = True
+    # desvar_plotter.save_settings['path'] = os.path.join(out, 'desvar.png')
+    #
+    # constr_plotter = ConstraintsPlotter(cmdows_problem.driver)
+    # constr_plotter.options['save_on_close'] = True
+    # constr_plotter.save_settings['path'] = os.path.join(out, 'constr.png')
+    #
+    # objvar_plotter = SimpleObjectivePlotter(cmdows_problem.driver)
+    # objvar_plotter.options['save_on_close'] = True
+    # objvar_plotter.save_settings['path'] = os.path.join(out, 'objvar.png')
+    #
+    # voi_plotter = VOIPlotter()
+    # voi_plotter.options['save_on_close'] = True
+    # voi_plotter.save_settings['path'] = os.path.join(out, 'vois.png')
+    # voi_plotter.options['includes'] = [xpath_to_param(x_m_fuel), xpath_to_param(x_m_wing)]
+    # voi_plotter.options['legend'] = ['Fuel mass', 'Wing mass']
+    # voi_plotter.options['labels'] = ['m_F, [kg]', 'm_wing, [kg]']
+    #
+    # wing_des_plotter = WingDesignPlotter()
+    # wing_des_plotter.options['save_on_close'] = True
+    # wing_des_plotter.save_settings['path'] = os.path.join(out, 'wing.png')
+    #
+    # cmdows_problem.driver.add_recorder(desvar_plotter)
+    # cmdows_problem.driver.add_recorder(constr_plotter)
+    # cmdows_problem.driver.add_recorder(objvar_plotter)
+    # cmdows_problem.driver.add_recorder(voi_plotter)
+    # cmdows_problem.driver.add_recorder(wing_des_plotter)
+    #
+    # # Setup the OpenMDAO Problem
+    # cmdows_problem.setup()
+    # cmdows_problem.initialize_from_xml(xml)
 
     # Run the problem
 
@@ -722,14 +715,14 @@ if __name__ == '__main__':
     # cmdows_problem.run_once()
     # print('Initial value m_wing: %f kg' % cmdows_problem.root.unknowns[xpath_to_param(x_m_wing)])
 
-    cmdows_problem.run()
-    print('Optimal value m_fuel: %f kg' % cmdows_problem.root.unknowns[xpath_to_param(x_m_fuel)])
-    print('Final value m_wing: %f kg' % cmdows_problem.root.unknowns[xpath_to_param(x_m_wing)])
-    print('Optimal thicknesses for minimal m_wing: t_fs = %s, t_rs = %s, t_ts = %s, t_bs = %s' % (
-        str(cmdows_problem.root.unknowns[xpath_to_param(x_t_fs)]),
-        str(cmdows_problem.root.unknowns[xpath_to_param(x_t_rs)]),
-        str(cmdows_problem.root.unknowns[xpath_to_param(x_t_ts)]),
-        str(cmdows_problem.root.unknowns[xpath_to_param(x_t_bs)])))
-
-    # Finally clean up the problem
-    cmdows_problem.cleanup()
+    # cmdows_problem.run()
+    # print('Optimal value m_fuel: %f kg' % cmdows_problem.root.unknowns[xpath_to_param(x_m_fuel)])
+    # print('Final value m_wing: %f kg' % cmdows_problem.root.unknowns[xpath_to_param(x_m_wing)])
+    # print('Optimal thicknesses for minimal m_wing: t_fs = %s, t_rs = %s, t_ts = %s, t_bs = %s' % (
+    #     str(cmdows_problem.root.unknowns[xpath_to_param(x_t_fs)]),
+    #     str(cmdows_problem.root.unknowns[xpath_to_param(x_t_rs)]),
+    #     str(cmdows_problem.root.unknowns[xpath_to_param(x_t_ts)]),
+    #     str(cmdows_problem.root.unknowns[xpath_to_param(x_t_bs)])))
+    #
+    # # Finally clean up the problem
+    # cmdows_problem.cleanup()

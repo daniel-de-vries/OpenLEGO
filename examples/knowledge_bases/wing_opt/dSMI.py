@@ -25,6 +25,7 @@ from examples.knowledge_bases.wing_opt.disciplines.dAEDalus import SteadyModelIn
 class dSMI(SteadyModelInitializer):
     pass
 
+
 if __name__ == '__main__':
     n_ws = 2
     n_lc = 3

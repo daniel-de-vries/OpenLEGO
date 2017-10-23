@@ -25,6 +25,7 @@ from examples.knowledge_bases.wing_opt.disciplines.WingObjectModel import WingOb
 class WOM(WingObjectModel):
     pass
 
+
 if __name__ == '__main__':
     n_ws = 2
 

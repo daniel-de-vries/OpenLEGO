@@ -27,11 +27,11 @@ import matlab.engine
 import numpy as np
 from lxml import etree
 
-from examples.knowledge_bases.wing_opt.disciplines.xpaths import *
 from examples.knowledge_bases.wing_opt.disciplines.WingObjectModel import WingObjectModel
-from openlego.discipline import AbstractDiscipline
-from openlego.util import try_hard
-from openlego.xml import xml_safe_create_element
+from examples.knowledge_bases.wing_opt.disciplines.xpaths import *
+from openlego.api import AbstractDiscipline
+from openlego.utils.general_utils import try_hard
+from openlego.utils.xml_utils import xml_safe_create_element
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 _mles = {}

@@ -17,17 +17,15 @@ limitations under the License.
 
 This file contains the definition of the Sellar F1 discipline.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
-from lxml import etree
 from math import exp
 
-from openlego.discipline import AbstractDiscipline
-from openlego.xml import xml_safe_create_element
+from lxml import etree
 
 from examples.knowledge_bases.sellar import root_tag, x_x1, x_y1, x_y2, x_z2, x_f1
+from openlego.api import AbstractDiscipline
+from openlego.utils.xml_utils import xml_safe_create_element
 
 
 class F1(AbstractDiscipline):

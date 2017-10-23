@@ -25,6 +25,7 @@ from examples.knowledge_bases.wing_opt.disciplines.ProblemDefinition import Cons
 class ConstraintFunctions(Constraints):
     pass
 
+
 if __name__ == '__main__':
     n_ws = 2
 

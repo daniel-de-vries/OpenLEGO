@@ -17,17 +17,15 @@ limitations under the License.
 
 This file contains a set of XML utility functions.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import re
-import numpy as np
-
 from collections import OrderedDict
+from shutil import copyfile
+
+import numpy as np
 from lxml import etree
 from typing import Optional, Union, List
-from shutil import copyfile
 
 # Patterns for XML attribute names and values
 pttrn_attr_val = r'([-.0-9:A-Z_a-z]+?)'

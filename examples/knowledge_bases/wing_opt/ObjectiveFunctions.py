@@ -25,6 +25,7 @@ from examples.knowledge_bases.wing_opt.disciplines.ProblemDefinition import Obje
 class ObjectiveFunctions(Objectives):
     pass
 
+
 if __name__ == '__main__':
     objs = ObjectiveFunctions()
     objs.deploy()

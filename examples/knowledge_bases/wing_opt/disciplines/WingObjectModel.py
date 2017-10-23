@@ -26,10 +26,9 @@ import numpy as np
 from lxml import etree
 from typing import Optional, Union, Tuple, Sized
 
-from openlego.discipline import AbstractDiscipline
-from openlego.components import xml_safe_create_element
-
 from examples.knowledge_bases.wing_opt.disciplines.xpaths import *
+from openlego.api import AbstractDiscipline
+from openlego.utils.xml_utils import xml_safe_create_element
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 

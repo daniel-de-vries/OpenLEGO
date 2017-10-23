@@ -24,9 +24,9 @@ import os
 from lxml import etree
 from numpy import sqrt, expm1
 
-from examples.knowledge_bases.wing_opt.disciplines.xpaths import *
 from examples.knowledge_bases.wing_opt.disciplines.dAEDalus import LoadCaseSpecific
-from openlego.xml import xml_safe_create_element
+from examples.knowledge_bases.wing_opt.disciplines.xpaths import *
+from openlego.utils.xml_utils import xml_safe_create_element
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 

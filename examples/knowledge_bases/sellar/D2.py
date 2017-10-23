@@ -17,16 +17,13 @@ limitations under the License.
 
 This file contains the definition of the Sellar D2 discipline.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 from lxml import etree
 
-from openlego.discipline import AbstractDiscipline
-from openlego.xml import xml_safe_create_element
-
 from examples.knowledge_bases.sellar import root_tag, x_y1, x_y2, x_z1, x_z2
+from openlego.api import AbstractDiscipline
+from openlego.utils.xml_utils import xml_safe_create_element
 
 
 class D2(AbstractDiscipline):

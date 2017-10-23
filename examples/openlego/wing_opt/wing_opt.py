@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 from openmdao.api import Problem, ScipyOptimizer
-from openlego.model import LEGOModel
+from openlego.api import LEGOModel
 from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
 
 

@@ -17,10 +17,7 @@ limitations under the License.
 
 This file contains all the XPaths and utility string constants used by the dAEDalus disciplines.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
+from __future__ import absolute_import, division, print_function
 
 sigma_names = ['sigma_fs', 'sigma_rs', 'sigma_ts', 'sigma_bs']
 

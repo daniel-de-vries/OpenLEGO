@@ -17,15 +17,13 @@ limitations under the License.
 
 This file contains code to clean and deploy the knowledge base of the test Sellar case.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import os
 import sys
-
 from shutil import copyfile
-from openlego.xml import xml_merge
+
+from openlego.utils.xml_utils import xml_merge
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 base_file_path = os.path.join(dir_path, 'sellar-base.xml')

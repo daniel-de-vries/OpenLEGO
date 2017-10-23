@@ -17,26 +17,23 @@ limitations under the License.
 
 This file contains the definition of the `LEGOModel` class.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import imp
-import numpy as np
-import warnings
 import re
+import warnings
 
+import numpy as np
 from lxml import etree
 from lxml.etree import _Element, _ElementTree
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
     LinearRunOnce, NonLinearRunOnce, ExecComp
 from typing import Union, Optional, List, Any, Dict, Tuple
 
-from openlego.discipline import AbstractDiscipline
-from openlego.components import DisciplineComponent
-from openlego.xml import xpath_to_param, xml_to_dict
-from openlego.util import CachedProperty, parse_cmdows_value
-
+from openlego.utils.general_utils import CachedProperty, parse_cmdows_value
+from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
+from .abstract_discipline import AbstractDiscipline
+from .discipline_component import DisciplineComponent
 
 re_sys_name_char = re.compile(r'[^_a-zA-Z0-9]')
 re_sys_name_starts = re.compile(r'^[a-zA-Z]')
@@ -350,23 +347,6 @@ class LEGOModel(Group):
         return _coupled_blocks
 
     @CachedProperty
-    def system_order(self):
-        # type: () -> List[str]
-        """:obj:`list` of :obj:`str`: List system names in the order specified in the CMDOWS file."""
-        _system_order = ['coordinator']
-        coupled_group_set = False
-        for block in self.block_order:
-            if block in self.coupled_blocks:
-                if not coupled_group_set:
-                    _system_order.append('coupled_group')
-                    coupled_group_set = True
-            elif block in self.discipline_components:
-                _system_order.append(block)
-        if self.consistency_constraint_group is not None:
-            _system_order.append('consistency_constraints')
-        return _system_order
-
-    @CachedProperty
     def system_inputs(self):
         # type: () -> Dict[str, int]
         """:obj:`dict`: Dictionary containing the system input sizes by their names."""
@@ -586,6 +566,23 @@ class LEGOModel(Group):
                             [('g', coupling_var['con']), ('y_c', coupling_var['copy']), ('y', name)])
             return group
         return None
+
+    @CachedProperty
+    def system_order(self):
+        # type: () -> List[str]
+        """:obj:`list` of :obj:`str`: List system names in the order specified in the CMDOWS file."""
+        _system_order = ['coordinator']
+        coupled_group_set = False
+        for block in self.block_order:
+            if block in self.coupled_blocks:
+                if not coupled_group_set:
+                    _system_order.append('coupled_group')
+                    coupled_group_set = True
+            elif block in self.discipline_components:
+                _system_order.append(block)
+        if self.consistency_constraint_group is not None:
+            _system_order.append('consistency_constraints')
+        return _system_order
 
     @CachedProperty
     def coordinator(self):

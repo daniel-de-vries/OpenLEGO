@@ -17,26 +17,23 @@ limitations under the License.
 
 This file contains code to clean and deploy the knowledge base of the test wing optimization case.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-from examples.knowledge_bases.wing_opt.WOM import WOM
-from examples.knowledge_bases.wing_opt.dSMI import dSMI
-from examples.knowledge_bases.wing_opt.dSAMI import dSAMI
-from examples.knowledge_bases.wing_opt.dSAA import dSAA
-from examples.knowledge_bases.wing_opt.dSSA import dSSA
-from examples.knowledge_bases.wing_opt.dSLD import dSLD
-from examples.knowledge_bases.wing_opt.dLC import dLC
-from examples.knowledge_bases.wing_opt.FWE import FWE
-from examples.knowledge_bases.wing_opt.ConstraintFunctions import ConstraintFunctions
-from examples.knowledge_bases.wing_opt.ObjectiveFunctions import ObjectiveFunctions
+from __future__ import absolute_import, division, print_function
 
 import os
 import sys
-
 from shutil import copyfile
-from openlego.xml import xml_merge
+
+from examples.knowledge_bases.wing_opt.ConstraintFunctions import ConstraintFunctions
+from examples.knowledge_bases.wing_opt.FWE import FWE
+from examples.knowledge_bases.wing_opt.ObjectiveFunctions import ObjectiveFunctions
+from examples.knowledge_bases.wing_opt.WOM import WOM
+from examples.knowledge_bases.wing_opt.dLC import dLC
+from examples.knowledge_bases.wing_opt.dSAA import dSAA
+from examples.knowledge_bases.wing_opt.dSAMI import dSAMI
+from examples.knowledge_bases.wing_opt.dSLD import dSLD
+from examples.knowledge_bases.wing_opt.dSMI import dSMI
+from examples.knowledge_bases.wing_opt.dSSA import dSSA
+from openlego.utils.xml_utils import xml_merge
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 base_file_path = os.path.join(dir_path, 'wing_opt-base.xml')

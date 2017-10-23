@@ -17,9 +17,7 @@ limitations under the License.
 
 This file contains the definition of the AbstractDiscipline interface class.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import abc
 import inspect

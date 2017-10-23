@@ -81,7 +81,7 @@ def solve_sellar(cmdows_file):
 
     # 8. Cleanup the Problem afterwards
     prob.cleanup()                                                  # Clear all resources and close the plots
-    model.invalidate()
+    model.invalidate()                                              # Clear the cached properties of the LEGOModel
 
 
 class TestSellar(unittest.TestCase):
@@ -97,3 +97,7 @@ class TestSellar(unittest.TestCase):
     def test_idf(self):
         """Solve the Sellar problem using the IDF architecture."""
         solve_sellar('sellar-MDG_IDF.xml')
+
+
+if __name__ == '__main__':
+    unittest.main()

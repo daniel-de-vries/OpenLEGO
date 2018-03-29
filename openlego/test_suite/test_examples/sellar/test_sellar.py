@@ -24,7 +24,6 @@ import unittest
 from openmdao.api import Problem, ScipyOptimizer
 
 from openlego.api import LEGOModel
-from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
 
 
 def solve_sellar(cmdows_file):
@@ -53,6 +52,9 @@ def solve_sellar(cmdows_file):
     model.initialize_from_xml('sellar-input.xml')                   # Set the initial values from an XML file
 
     # 5. Create and attach some Recorders (Optional)
+    """
+    from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
+    
     desvar_plotter = NormalizedDesignVarPlotter()                   # Create a plotter for the design variables
     desvar_plotter.options['save_on_close'] = True                  # Should this plot be saved automatically?
     desvar_plotter.save_settings['path'] = 'desvar.png'             # Set the filename of the image file
@@ -68,6 +70,7 @@ def solve_sellar(cmdows_file):
     driver.add_recorder(desvar_plotter)                             # Attach the design variable plotter
     driver.add_recorder(convar_plotter)                             # Attach the constraint variable plotter
     driver.add_recorder(objvar_plotter)                             # Attach the objective variable plotter
+    """
 
     # 6. Solve the Problem
     prob.run_driver()                                               # Run the optimization

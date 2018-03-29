@@ -26,8 +26,6 @@ from openlego.utils.xml_utils import xml_safe_create_element
 from openlego.test_suite.test_examples.sellar.kb import root_tag, x_x1, x_y1, x_y2, x_z1, x_z2
 from openlego.partials.partials import Partials
 
-import openlego.test_suite.test_examples.sellar.store as store
-
 
 class D1(AbstractDiscipline):
 
@@ -69,8 +67,6 @@ class D1(AbstractDiscipline):
 
     @staticmethod
     def execute(in_file, out_file):
-        store.count[0] += 1
-        store.sleep()
         doc = etree.parse(in_file)
         z1 = float(doc.xpath(x_z1)[0].text)
         z2 = float(doc.xpath(x_z2)[0].text)

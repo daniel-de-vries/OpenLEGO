@@ -24,6 +24,9 @@ from lxml import etree
 from openlego.api import AbstractDiscipline
 from openlego.utils.xml_utils import xml_safe_create_element
 from openlego.test_suite.test_examples.sellar.kb import root_tag, x_y1, x_y2, x_z1, x_z2
+from openlego.partials.partials import Partials
+
+import openlego.test_suite.test_examples.sellar.store as store
 
 
 class D2(AbstractDiscipline):
@@ -35,6 +38,10 @@ class D2(AbstractDiscipline):
     @property
     def description(self):
         return u'Second discipline of the Sellar problem'
+
+    @property
+    def supplies_partials(self):
+        return True
 
     def generate_input_xml(self):
         root = etree.Element(root_tag)
@@ -54,8 +61,15 @@ class D2(AbstractDiscipline):
 
         return etree.tostring(doc, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
+    def generate_partials_xml(self):
+        partials = Partials()
+        partials.declare_partials(x_y2, [x_y1, x_z1, x_z2])
+        return partials.get_string()
+
     @staticmethod
     def execute(in_file, out_file):
+        store.count[1] += 1
+        store.sleep()
         doc = etree.parse(in_file)
         z1 = float(doc.xpath(x_z1)[0].text)
         z2 = float(doc.xpath(x_z2)[0].text)
@@ -68,10 +82,13 @@ class D2(AbstractDiscipline):
         xml_safe_create_element(doc, x_y2, y2)
         doc.write(out_file, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
+    @staticmethod
+    def linearize(in_file, partials_file):
+        doc = etree.parse(in_file)
+        y1 = float(doc.xpath(x_y1)[0].text)
 
+        dy2_dy1 = .5 * float(((y1 > 0) - (y1 < 0))) / abs(y1)**.5
 
-
-
-
-
-
+        partials = Partials()
+        partials.declare_partials(x_y2, [x_y1, x_z1, x_z2], [dy2_dy1, 1., 1.])
+        partials.write(partials_file)

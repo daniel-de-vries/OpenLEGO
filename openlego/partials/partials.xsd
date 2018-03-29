@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        elementFormDefault="qualified"
+>
+
+    <!-- parameterType: an element with a parameterUID child element -->
+    <xs:complexType name="parameterType">
+        <xs:sequence>
+            <xs:element name="uid" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        Unique identifier of the parameter this element refers to.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="value" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        Value of the sensitivity of the current parameter to this variable.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:simpleContent>
+                        <xs:extension base="xs:string">
+                            <xs:attribute name="mapType" />
+                        </xs:extension>
+                    </xs:simpleContent>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- dependentParamType: an extended parameterType with a number of partialType children -->
+    <xs:complexType name="dependentParamType">
+        <xs:annotation>
+            <xs:documentation>
+                This element defines the sensitivities of a parameter.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="parameterType">
+                <xs:sequence>
+                    <xs:element name="partials">
+                        <xs:annotation>
+                            <xs:documentation>
+                                A list of sensitivities of this parameter w.r.t. parameters it depends on.
+                            </xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element name="partial" minOccurs="0" maxOccurs="unbounded" type="parameterType" />
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <!-- Definition of the overall schema -->
+    <xs:element name="partials">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="parameter" minOccurs="0" maxOccurs="unbounded" type="dependentParamType" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

@@ -29,6 +29,7 @@ from typing import Optional, Union, Tuple, Sized
 from openlego.api import AbstractDiscipline
 from openlego.test_suite.test_examples.wing_opt.kb.disciplines.xpaths import *
 from openlego.utils.xml_utils import xml_safe_create_element
+from openlego.partials.partials import Partials
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -407,6 +408,10 @@ class WingObjectModel(AbstractDiscipline):
     def description(self):
         return 'Wing object model'
 
+    @property
+    def supplies_partials(self):
+        return True
+
     def generate_input_xml(self):
         # type: () -> str
         root = etree.Element('cpacs')
@@ -430,8 +435,8 @@ class WingObjectModel(AbstractDiscipline):
 
         xml_safe_create_element(doc, x_m_fixed, 0.)
         xml_safe_create_element(doc, x_m_payload, 0.)
-        xml_safe_create_element(doc, x_m_wing_copy, 0.)
-        xml_safe_create_element(doc, x_m_fuel_copy, 0.)
+        xml_safe_create_element(doc, x_m_wing, 0.)
+        xml_safe_create_element(doc, x_m_fuel, 0.)
         xml_safe_create_element(doc, x_m_mlw, 0.)
         xml_safe_create_element(doc, x_f_m_sys, 0.)
         xml_safe_create_element(doc, x_f_m_wings, 0.)
@@ -445,6 +450,157 @@ class WingObjectModel(AbstractDiscipline):
         _3 = np.zeros((3, self.n_wing_segments + 1))
 
         return WingObjectModel.write_data(0, 0, _1, _1, _1, _3, _1, _1, _2, _2, _2, _2, _2, 0, 0, 0, 0, 0, 0, 0, _2)
+
+    def generate_partials_xml(self):
+        partials = Partials()
+
+        partials.declare_partials(x_ref_area, x_c)
+        partials.declare_partials(x_ref_area, x_b)
+        partials.declare_partials(x_ref_length, x_c)
+
+        for i in range(self.n_wing_segments + 1):
+            _x_sec = x_sec % i
+            x_trans = '/'.join([_x_sec, 'transformation'])
+
+            x_scaling = '/'.join([x_trans, 'scaling'])
+            partials.declare_partials('/'.join([x_scaling, 'x']), x_c)
+            partials.declare_partials('/'.join([x_scaling, 'y']), x_c)
+            partials.declare_partials('/'.join([x_scaling, 'z']), x_c)
+            partials.declare_partials('/'.join([x_scaling, 'z']), x_tc)
+
+            x_rotation = '/'.join([x_trans, 'rotation'])
+            if i != 0:
+                partials.declare_partials('/'.join([x_rotation, 'y']), x_epsilon)
+            partials.declare_partials('/'.join([x_rotation, 'y']), x_incidence)
+
+            x_translation = '/'.join([x_trans, 'translation'])
+            partials.declare_partials('/'.join([x_translation, 'x']), x_c)
+            partials.declare_partials('/'.join([x_translation, 'y']), x_c)
+            partials.declare_partials('/'.join([x_translation, 'z']), x_c)
+
+            partials.declare_partials('/'.join([x_translation, 'x']), x_epsilon)
+            partials.declare_partials('/'.join([x_translation, 'y']), x_epsilon)
+            partials.declare_partials('/'.join([x_translation, 'z']), x_epsilon)
+
+            partials.declare_partials('/'.join([x_translation, 'x']), x_incidence)
+            partials.declare_partials('/'.join([x_translation, 'y']), x_incidence)
+            partials.declare_partials('/'.join([x_translation, 'z']), x_incidence)
+
+            if i != 1:
+                partials.declare_partials('/'.join([x_translation, 'x']), x_Gamma)
+                partials.declare_partials('/'.join([x_translation, 'y']), x_Gamma)
+                partials.declare_partials('/'.join([x_translation, 'z']), x_Gamma)
+
+                partials.declare_partials('/'.join([x_translation, 'x']), x_Lambda)
+                partials.declare_partials('/'.join([x_translation, 'y']), x_Lambda)
+                partials.declare_partials('/'.join([x_translation, 'z']), x_Lambda)
+
+                partials.declare_partials('/'.join([x_translation, 'x']), x_b)
+                partials.declare_partials('/'.join([x_translation, 'y']), x_b)
+                partials.declare_partials('/'.join([x_translation, 'z']), x_b)
+
+        for i in range(self.n_wing_segments):
+            partials.declare_partials(x_fs_web_t % (i, i), x_t_fs)
+            partials.declare_partials(x_fs_lowerCap_t % (i, i), x_t_bs)
+            partials.declare_partials(x_fs_upperCap_t % (i, i), x_t_ts)
+            partials.declare_partials(x_rs_web_t % (i, i), x_t_rs)
+            partials.declare_partials(x_rs_lowerCap_t % (i, i), x_t_bs)
+            partials.declare_partials(x_rs_upperCap_t % (i, i), x_t_ts)
+
+            partials.declare_partials(x_fs_r_xsi % (i, i), x_xsi_fs)
+            partials.declare_partials(x_rs_r_xsi % (i, i), x_xsi_rs)
+            partials.declare_partials(x_fs_t_xsi % (i, i), x_xsi_fs)
+            partials.declare_partials(x_rs_t_xsi % (i, i), x_xsi_rs)
+
+        x_md = '{0}[@uID="{1}"]/mass'
+        x_m = '/'.join(['{0}', x_md.format('massDescription', '{0}')])
+        x_mass = '/'.join([x_mbd, x_m])
+        x_moem = x_mass.format('mOEM')
+        x_mem = '/'.join([x_moem[:-34], x_m.format('mEM')])
+        x_sys = '/'.join([x_mem[:-33], x_m.format('mSystems')])
+
+        x_m_struct = '/'.join([x_mem[:-33], x_m.format('mStructure')])
+        x_m_wings = '/'.join([x_m_struct[:-40], x_m.format('mWingsStructure')])
+        _x_m_wing = '/'.join([x_m_wings[:-45], x_m.format('mWingStructure')])
+
+        partials.declare_partials('/'.join([x_mbd, 'fuel/massDescription[@uID="mFuel"]/mass']), x_m_fuel)
+        partials.declare_partials('/'.join([x_mbd, 'payload/massDescription[@uID="mPayload"]/mass']), x_m_fuel)
+        partials.declare_partials(x_moem, [x_m_wing, x_m_fixed])
+        partials.declare_partials(x_mem, [x_m_wing, x_m_fixed])
+        partials.declare_partials(x_sys, [x_m_wing, x_m_fixed, x_f_m_sys])
+
+        partials.declare_partials(x_m_struct, [x_m_wing, x_m_fixed, x_f_m_sys])
+        partials.declare_partials(x_m_wings, [x_m_wing, x_f_m_wings])
+        partials.declare_partials(_x_m_wing, x_m_wing)
+
+        for i in range(self.n_wing_segments):
+            x_m_compseg = '/'.join([_x_m_wing[:-44], 'mComponentSegment[{:d}]'.format(i + 1)])
+
+            partials.declare_partials(
+                '/'.join([x_m_compseg, x_md.format('massDescription', 'mWing_{:d}'.format(i))]),
+                [x_c, x_xsi_fs, x_xsi_rs, x_b, x_t_skin, x_rho_skin, x_m_wing])
+
+            partials.declare_partials(
+                '/'.join([x_m_compseg, 'mWingBox', x_md.format('massDescription', 'mWingbox_{:d}'.format(i))]),
+                [x_c, x_xsi_fs, x_xsi_rs, x_b, x_m_wing])
+
+            partials.declare_partials(
+                '/'.join([x_mSkins % (i + 1), 'mSkins', x_md.format('massDescription', 'mSkins_{:d}'.format(i))]),
+                [x_c, x_xsi_fs, x_xsi_rs, x_b, x_t_skin, x_rho_skin])
+
+        x_des = '/'.join([x_mbd, 'designMasses'])
+        partials.declare_partials('/'.join([x_des, x_md.format('mMLM', 'mMLM')]), x_m_mlw)
+        partials.declare_partials('/'.join([x_des, x_md.format('mMRM', 'mMRM')]),
+                                  [x_m_fuel, x_m_wing, x_m_fixed, x_m_payload])
+        partials.declare_partials('/'.join([x_des, x_md.format('mTOM', 'mTOM')]),
+                                  [x_m_fuel, x_m_wing, x_m_fixed, x_m_payload])
+        partials.declare_partials('/'.join([x_des, x_md.format('mZFM', 'mZFM')]),
+                                  [x_m_wing, x_m_fixed, x_m_payload])
+
+        return partials.get_string()
+
+    @staticmethod
+    def read_data(file):
+        tree = etree.parse(file)
+
+        c = np.array(tree.xpath(x_c)[0].text.split(';'), dtype=float)
+        tc = np.array(tree.xpath(x_tc)[0].text.split(';'), dtype=float)
+        epsilon = np.array(tree.xpath(x_epsilon)[0].text.split(';'), dtype=float)
+        b = np.array(tree.xpath(x_b)[0].text.split(';'), dtype=float)
+        sweep = np.array(tree.xpath(x_Lambda)[0].text.split(';'), dtype=float)
+        dihed = np.array(tree.xpath(x_Gamma)[0].text.split(';'), dtype=float)
+        xsi_fs = np.array(tree.xpath(x_xsi_fs)[0].text.split(';'), dtype=float)
+        xsi_rs = np.array(tree.xpath(x_xsi_rs)[0].text.split(';'), dtype=float)
+        t_fs = np.array(tree.xpath(x_t_fs)[0].text.split(';'), dtype=float)
+        t_rs = np.array(tree.xpath(x_t_rs)[0].text.split(';'), dtype=float)
+        t_ts = np.array(tree.xpath(x_t_ts)[0].text.split(';'), dtype=float)
+        t_bs = np.array(tree.xpath(x_t_bs)[0].text.split(';'), dtype=float)
+        incidence = np.array(tree.xpath(x_incidence)[0].text.split(';'), dtype=float)
+        t_skin = np.array(tree.xpath(x_t_skin)[0].text.split(';'), dtype=float)
+        rho_skin = np.array(tree.xpath(x_rho_skin)[0].text.split(';'), dtype=float)
+
+        m_fuel = tree.xpath(x_m_fuel)
+        if not m_fuel:
+            m_fuel = 0.  # float(tree.xpath(x_m_fuel_init)[0].text)
+        else:
+            m_fuel = float(m_fuel[0].text)
+
+        m_wing = tree.xpath(x_m_wing)
+        if not m_wing:
+            m_wing = 0.  # float(tree.xpath(x_m_wing_init)[0].text)
+        else:
+            m_wing = float(m_wing[0].text)
+
+        m_fixed = float(tree.xpath(x_m_fixed)[0].text)
+        m_payload = float(tree.xpath(x_m_payload)[0].text)
+        m_mlw = float(tree.xpath(x_m_mlw)[0].text)
+        f_m_sys = float(tree.xpath(x_f_m_sys)[0].text)
+        f_m_wings = float(tree.xpath(x_f_m_wings)[0].text)
+
+        return c, tc, epsilon, b, sweep, dihed, \
+               xsi_fs, xsi_rs, t_fs, t_rs, t_ts, t_bs, \
+               incidence, t_skin, rho_skin, \
+               m_fuel, m_wing, m_fixed, m_payload, m_mlw, f_m_sys, f_m_wings
 
     @staticmethod
     def write_data(*args):
@@ -582,37 +738,10 @@ class WingObjectModel(AbstractDiscipline):
     @staticmethod
     def execute(in_file, out_file='WOM-output-loc.xml'):
         """Translate the reduced model parameters to CPACS format."""
-        tree = etree.parse(in_file)
-
-        c = np.array(tree.xpath(x_c)[0].text.split(';'), dtype=float)
-        tc = np.array(tree.xpath(x_tc)[0].text.split(';'), dtype=float)
-        epsilon = np.array(tree.xpath(x_epsilon)[0].text.split(';'), dtype=float)
-        b = np.array(tree.xpath(x_b)[0].text.split(';'), dtype=float)
-        sweep = np.array(tree.xpath(x_Lambda)[0].text.split(';'), dtype=float)
-        dihed = np.array(tree.xpath(x_Gamma)[0].text.split(';'), dtype=float)
-        xsi_fs = np.array(tree.xpath(x_xsi_fs)[0].text.split(';'), dtype=float)
-        xsi_rs = np.array(tree.xpath(x_xsi_rs)[0].text.split(';'), dtype=float)
-        t_fs = np.array(tree.xpath(x_t_fs)[0].text.split(';'), dtype=float)
-        t_rs = np.array(tree.xpath(x_t_rs)[0].text.split(';'), dtype=float)
-        t_ts = np.array(tree.xpath(x_t_ts)[0].text.split(';'), dtype=float)
-        t_bs = np.array(tree.xpath(x_t_bs)[0].text.split(';'), dtype=float)
-        incidence = np.array(tree.xpath(x_incidence)[0].text.split(';'), dtype=float)
-        t_skin = np.array(tree.xpath(x_t_skin)[0].text.split(';'), dtype=float)
-        rho_skin = np.array(tree.xpath(x_rho_skin)[0].text.split(';'), dtype=float)
-
-        m_fuel = float(tree.xpath(x_m_fuel_copy)[0].text)
-        m_wing = float(tree.xpath(x_m_wing_copy)[0].text)
-
-        if m_fuel == 0.:
-            m_fuel = float(tree.xpath(x_m_fuel_init)[0].text)
-        if m_wing == 0.:
-            m_wing = float(tree.xpath(x_m_wing_init)[0].text)
-
-        m_fixed = float(tree.xpath(x_m_fixed)[0].text)
-        m_payload = float(tree.xpath(x_m_payload)[0].text)
-        m_mlw = float(tree.xpath(x_m_mlw)[0].text)
-        f_m_sys = float(tree.xpath(x_f_m_sys)[0].text)
-        f_m_wings = float(tree.xpath(x_f_m_wings)[0].text)
+        c, tc, epsilon, b, sweep, dihed, \
+            xsi_fs, xsi_rs, t_fs, t_rs, t_ts, t_bs, \
+            incidence, t_skin, rho_skin, \
+            m_fuel, m_wing, m_fixed, m_payload, m_mlw, f_m_sys, f_m_wings = WingObjectModel.read_data(in_file)
 
         n_wing_segments = len(b)
 
@@ -659,3 +788,274 @@ class WingObjectModel(AbstractDiscipline):
                                          m_fuel, m_wing, m_fixed, m_payload, m_mlw, f_m_sys, f_m_wings, m_wingbox)
         with open(out_file, 'w') as f:
             f.write(xml)
+
+    @staticmethod
+    def linearize(in_file, partials_file):
+        c, tc, epsilon, b, sweep, dihed, \
+            xsi_fs, xsi_rs, t_fs, t_rs, t_ts, t_bs, \
+            incidence, t_skin, rho_skin, \
+            m_fuel, m_wing, m_fixed, m_payload, m_mlw, f_m_sys, f_m_wings = WingObjectModel.read_data(in_file)
+
+        n_ws = len(b)
+        partials = Partials()
+
+        # Reference values
+        dSref_dc = np.zeros(len(c))
+        dSref_dc[:-1] += b
+        dSref_dc[1:] += b
+        partials.declare_partials(x_ref_area, x_c, dSref_dc)
+
+        dSref_db = c[:-1] + c[1:]
+        partials.declare_partials(x_ref_area, x_b, dSref_db)
+
+        dcref_dc = np.eye(n_ws + 1, n_ws + 1)
+        c_ref = c[:]
+        for i in range(0, n_ws):
+            dcref_dc = 2. / 3. * (
+                (c_ref[:-1] + c_ref[1:])
+                * (2. * c_ref[:-1] * dcref_dc[:, :-1] + c_ref[:-1] * dcref_dc[:, :-1]
+                   + c_ref[1:] * dcref_dc[:, 1:] + 2 * c_ref[1:] * dcref_dc[:, 1:])
+                - (c_ref[:-1] ** 2 + c_ref[:-1] * c_ref[1:] + c_ref[1:] ** 2) * (dcref_dc[:, :-1] + dcref_dc[:, 1:])
+            ) / (c_ref[:-1] + c_ref[1:]) ** 2
+            c_ref = 2. / 3. * (c_ref[:-1] ** 2 + c_ref[:-1] * c_ref[1:] + c_ref[1:] ** 2) / (c_ref[1:] + c_ref[:-1])
+        partials.declare_partials(x_ref_length, x_c, dcref_dc.flatten())
+
+        # Geometry
+        de = np.concatenate(([0.], np.ones(len(epsilon))))
+        twist = np.concatenate(([0.], epsilon)) + incidence
+
+        c_twist, s_twist = np.cos(twist), np.sin(twist)
+
+        dx_le = np.zeros((3, n_ws + 1))
+        dx_le[0, :] = -.25 * c
+
+        dct_di, dst_di = -np.sin(twist), np.cos(twist)
+        dct_de, dst_de = dct_di * de, dst_di * de
+
+        c_sweep, s_sweep = np.cos(sweep), np.sin(sweep)
+        c_dihed, s_dihed = np.cos(dihed), np.sin(dihed)
+
+        dcs_ds, dss_ds = -np.sin(sweep), np.cos(sweep)
+        dcd_dd, dsd_dd = -np.sin(dihed), np.cos(dihed)
+
+        dx_c4 = np.zeros((3, n_ws))
+        dx_c4[1, :] = b[:]
+
+        dxle_dd = np.zeros(3)
+        dxle_ds = np.zeros(3)
+        dxle_db = np.zeros(3)
+
+        for i in range(n_ws + 1):
+            _x_sec = x_sec % i
+            x_trans = '/'.join([_x_sec, 'transformation'])
+
+            x_scaling = '/'.join([x_trans, 'scaling'])
+            dc = np.zeros(n_ws + 1)
+            dc[i] = 1.
+            partials.declare_partials('/'.join([x_scaling, 'x']), x_c, dc)
+            partials.declare_partials('/'.join([x_scaling, 'z']), x_c, dc * tc)
+            partials.declare_partials('/'.join([x_scaling, 'z']), x_tc, dc * c)
+
+            x_rotation = '/'.join([x_trans, 'rotation'])
+            if i != 0:
+                de = np.zeros(2)
+                de[i - 1] = 180./np.pi
+                partials.declare_partials('/'.join([x_rotation, 'y']), x_epsilon, de)
+            partials.declare_partials('/'.join([x_rotation, 'y']), x_incidence, 180./np.pi)
+
+            rot_twist = np.matrix([(c_twist[i], 0, s_twist[i]), (0, 1, 0), (-s_twist[i], 0, c_twist[i])])
+            drt_di = np.matrix([(dct_di[i], 0, dst_di[i]), (0, 1, 0), (-dst_di[i], 0, dct_di[i])])
+
+            dxle_dc = np.asarray(np.matmul(rot_twist, dx_le[:, i] / c[i])).flatten()
+            dxle_di = np.asarray(np.matmul(drt_di, dx_le[:, i])).flatten()
+
+            d = np.zeros(n_ws + 1)
+            d[i] = 1.
+
+            x_translation = '/'.join([x_trans, 'translation'])
+            partials.declare_partials('/'.join([x_translation, 'x']), x_c, dxle_dc[0] * d)
+            partials.declare_partials('/'.join([x_translation, 'y']), x_c, dxle_dc[1] * d)
+            partials.declare_partials('/'.join([x_translation, 'z']), x_c, dxle_dc[2] * d)
+
+            if i != 0:
+                drt_de = np.matrix([(dct_de[i], 0, dst_de[i]), (0, 1, 0), (-dst_de[i], 0, dct_de[i])])
+                dxle_de = np.asarray(np.matmul(drt_de, dx_le[:, i])).flatten()
+
+                d = np.zeros(n_ws)
+                d[i - 1] = 1.
+
+                partials.declare_partials('/'.join([x_translation, 'x']), x_epsilon, dxle_de[0] * d)
+                partials.declare_partials('/'.join([x_translation, 'y']), x_epsilon, dxle_de[1] * d)
+                partials.declare_partials('/'.join([x_translation, 'z']), x_epsilon, dxle_de[2] * d)
+
+            partials.declare_partials('/'.join([x_translation, 'x']), x_incidence, dxle_di[0])
+            partials.declare_partials('/'.join([x_translation, 'y']), x_incidence, dxle_di[1])
+            partials.declare_partials('/'.join([x_translation, 'z']), x_incidence, dxle_di[2])
+
+            if i < n_ws:
+                d = np.zeros(n_ws)
+                d[i] = 1.
+
+                rot_sweep = np.matrix([(c_sweep[i], s_sweep[i], 0), (-s_sweep[i], c_sweep[i], 0), (0, 0, 1)])
+                rot_dihed = np.matrix([(1, 0, 0), (0, c_dihed[i], -s_dihed[i]), (0, s_dihed[i], c_dihed[i])])
+
+                drs_ds = np.matrix([(dcs_ds[i], dss_ds[i], 0), (-dss_ds[i], dcs_ds[i], 0), (0, 0, 1)])
+                drd_dd = np.matrix([(1, 0, 0), (0, dcd_dd[i], -dsd_dd[i]), (0, dsd_dd[i], dcd_dd[i])])
+
+                dxle_dd += np.asarray(np.matmul(drd_dd * rot_sweep, dx_c4[:, i])).flatten()
+                dxle_ds += np.asarray(np.matmul(rot_dihed * drs_ds, dx_c4[:, i])).flatten()
+                dxle_db += np.asarray(np.matmul(rot_dihed * rot_sweep, dx_c4[:, i] / b[i])).flatten()
+
+                partials.declare_partials('/'.join([x_translation, 'x']), x_Gamma, dxle_dd[0] * d)
+                partials.declare_partials('/'.join([x_translation, 'y']), x_Gamma, dxle_dd[1] * d)
+                partials.declare_partials('/'.join([x_translation, 'z']), x_Gamma, dxle_dd[2] * d)
+
+                partials.declare_partials('/'.join([x_translation, 'x']), x_Lambda, dxle_ds[0] * d)
+                partials.declare_partials('/'.join([x_translation, 'y']), x_Lambda, dxle_ds[1] * d)
+                partials.declare_partials('/'.join([x_translation, 'z']), x_Lambda, dxle_ds[2] * d)
+
+                partials.declare_partials('/'.join([x_translation, 'x']), x_b, dxle_db[0] * d)
+                partials.declare_partials('/'.join([x_translation, 'y']), x_b, dxle_db[1] * d)
+                partials.declare_partials('/'.join([x_translation, 'z']), x_b, dxle_db[2] * d)
+
+        # Structures
+        for i in range(n_ws):
+            d = np.zeros(2)
+            d[i] = 1.
+
+            partials.declare_partials(x_fs_web_t % (i, i), x_t_fs, d)
+            partials.declare_partials(x_fs_lowerCap_t % (i, i), x_t_bs, d)
+            partials.declare_partials(x_fs_upperCap_t % (i, i), x_t_ts, d)
+            partials.declare_partials(x_rs_web_t % (i, i), x_t_rs, d)
+            partials.declare_partials(x_rs_lowerCap_t % (i, i), x_t_bs, d)
+            partials.declare_partials(x_rs_upperCap_t % (i, i), x_t_ts, d)
+
+            d = np.zeros(3)
+            d[i] = 1.
+
+            partials.declare_partials(x_fs_r_xsi % (i, i), x_xsi_fs, d)
+            partials.declare_partials(x_rs_r_xsi % (i, i), x_xsi_rs, d)
+
+            d[i] = 0.
+            d[i + 1] = 1.
+
+            partials.declare_partials(x_fs_t_xsi % (i, i), x_xsi_fs, d)
+            partials.declare_partials(x_rs_t_xsi % (i, i), x_xsi_rs, d)
+
+        # Weights
+        length_out = c * (1. - xsi_rs + xsi_fs)
+        area_out = 0.5 * (length_out[:-1] + length_out[1:]) * b
+        m_skin = 2. * area_out * t_skin * rho_skin
+
+        m_wingbox = m_wing * area_out / sum(area_out)
+
+        m_empty = m_wing + m_fixed
+        m_sys = m_empty * f_m_sys
+        m_struct = m_empty - m_sys
+        m_wing = m_wing * (1. - f_m_sys)
+
+        x_md = '{0}[@uID="{1}"]/mass'
+        x_m = '/'.join(['{0}', x_md.format('massDescription', '{0}')])
+        x_mass = '/'.join([x_mbd, x_m])
+        x_moem = x_mass.format('mOEM')
+        x_mem = '/'.join([x_moem[:-34], x_m.format('mEM')])
+        x_sys = '/'.join([x_mem[:-33], x_m.format('mSystems')])
+
+        x_m_struct = '/'.join([x_mem[:-33], x_m.format('mStructure')])
+        x_m_wings = '/'.join([x_m_struct[:-40], x_m.format('mWingsStructure')])
+        _x_m_wing = '/'.join([x_m_wings[:-45], x_m.format('mWingStructure')])
+
+        partials.declare_partials('/'.join([x_mbd, 'fuel/massDescription[@uID="mFuel"]/mass']), x_m_fuel, 1.)
+        partials.declare_partials('/'.join([x_mbd, 'payload/massDescription[@uID="mPayload"]/mass']), x_m_fuel, 1.)
+        partials.declare_partials(x_moem, [x_m_wing, x_m_fixed], [1., 1.])
+        partials.declare_partials(x_mem, [x_m_wing, x_m_fixed], [1., 1.])
+        partials.declare_partials(x_sys, [x_m_wing, x_m_fixed, x_f_m_sys], [f_m_sys, f_m_sys, m_empty])
+
+        partials.declare_partials(x_m_struct, [x_m_wing, x_m_fixed, x_f_m_sys], [1. - f_m_sys, 1. - f_m_sys, -m_empty])
+        partials.declare_partials(x_m_wings, [x_m_wing, x_f_m_wings], [f_m_wings, m_wing])
+        partials.declare_partials(_x_m_wing, x_m_wing, 1.)
+
+        dlout_dc = 1. - xsi_fs + xsi_rs
+        dlout_dxsifs = -c
+        dlout_dxsirs = c
+
+        dAout_db = area_out / b
+        dmskin_db = 2 * dAout_db * t_skin * rho_skin
+
+        dmskin_dtskin = m_skin / t_skin
+        dmskin_drhoskin = m_skin / rho_skin
+
+        dmwingbox_db = m_wing * (sum(area_out) * dAout_db - area_out * sum(dAout_db)) / sum(area_out) ** 2
+        dmwingbox_dmwing = m_wingbox / m_wing
+
+        dmcs_db = dmskin_db + dmwingbox_db
+        dmcs_dtskin = dmskin_dtskin
+        dmcs_drhoskin = dmskin_drhoskin
+        dmcs_dmwing = dmwingbox_dmwing
+
+        dAout_dc = np.zeros((n_ws, n_ws + 1))
+        dAout_dxsifs = np.zeros((n_ws, n_ws + 1))
+        dAout_dxsirs = np.zeros((n_ws, n_ws + 1))
+
+        dmskin_dc = np.zeros((n_ws, n_ws + 1))
+        dmskin_dxsifs = np.zeros((n_ws, n_ws + 1))
+        dmskin_dxsirs = np.zeros((n_ws, n_ws + 1))
+
+        dmwingbox_dc = np.zeros((n_ws, n_ws + 1))
+        dmwingbox_dxsifs = np.zeros((n_ws, n_ws + 1))
+        dmwingbox_dxsirs = np.zeros((n_ws, n_ws + 1))
+
+        for i in range(n_ws):
+            d = np.zeros(n_ws + 1)
+            d[i] = 1.
+            d[i + 1] = 1.
+
+            dAout_dc[i] = .5 * b[i] * dlout_dc * d
+            dAout_dxsifs[i] = .5 * b[i] * dlout_dxsifs * d
+            dAout_dxsirs[i] = .5 * b[i] * dlout_dxsirs * d
+
+            dmskin_dc[i] = 2 * dAout_dc[i] * t_skin * rho_skin
+            dmskin_dxsifs[i] = 2 * dAout_dxsifs[i] * t_skin * rho_skin
+            dmskin_dxsirs[i] = 2 * dAout_dxsirs[i] * t_skin * rho_skin
+
+            dmwingbox_dc[i] = m_wing * (sum(area_out) * dAout_dc[i] - area_out[i] * np.sum(dAout_dc, 0)) / sum(area_out) ** 2
+            dmwingbox_dxsifs[i] = m_wing * (sum(area_out) * dAout_dxsifs[i] - area_out[i] * np.sum(dAout_dxsifs, 0)) / sum(area_out) ** 2
+            dmwingbox_dxsirs[i] = m_wing * (sum(area_out) * dAout_dxsirs[i] - area_out[i] * np.sum(dAout_dxsirs, 0)) / sum(area_out) ** 2
+
+            dmcs_dc = dmskin_dc[i] + dmwingbox_dc[i]
+            dmcs_dxsifs = dmskin_dxsifs[i] + dmwingbox_dxsifs[i]
+            dmcs_dxsirs = dmskin_dxsirs[i] + dmwingbox_dxsirs[i]
+
+            x_m_compseg = '/'.join([_x_m_wing[:-44], 'mComponentSegment[{:d}]'.format(i + 1)])
+
+            partials.declare_partials(
+                '/'.join([x_m_compseg, x_md.format('massDescription', 'mWing_{:d}'.format(i))]),
+                [x_c, x_xsi_fs, x_xsi_rs, x_b, x_t_skin, x_rho_skin, x_m_wing],
+                [dmcs_dc, dmcs_dxsifs, dmcs_dxsirs, dmcs_db[i], dmcs_dtskin[i], dmcs_drhoskin[i], dmcs_dmwing[i]]
+            )
+
+            partials.declare_partials(
+                '/'.join([x_m_compseg, 'mWingBox', x_md.format('massDescription', 'mWingbox_{:d}'.format(i))]),
+                [x_c, x_xsi_fs, x_xsi_rs, x_b, x_m_wing],
+                [dmwingbox_dc[i], dmwingbox_dxsifs[i], dmwingbox_dxsirs[i], dmwingbox_db[i], dmwingbox_dmwing[i]]
+            )
+
+            partials.declare_partials(
+                '/'.join([x_mSkins % (i + 1), 'mSkins', x_md.format('massDescription', 'mSkins_{:d}'.format(i))]),
+                [x_c, x_xsi_fs, x_xsi_rs, x_b, x_t_skin, x_rho_skin],
+                [dmskin_dc[i], dmskin_dxsifs[i], dmskin_dxsirs[i], dmskin_db[i], dmskin_dtskin[i], dmskin_drhoskin[i]]
+            )
+
+        x_des = '/'.join([x_mbd, 'designMasses'])
+        partials.declare_partials('/'.join([x_des, x_md.format('mMLM', 'mMLM')]), x_m_mlw, 1.)
+        partials.declare_partials('/'.join([x_des, x_md.format('mMRM', 'mMRM')]),
+                                  [x_m_fuel, x_m_wing, x_m_fixed, x_m_payload],
+                                  [1.01, 1.01, 1.01, 1.01])
+        partials.declare_partials('/'.join([x_des, x_md.format('mTOM', 'mTOM')]),
+                                  [x_m_fuel, x_m_wing, x_m_fixed, x_m_payload],
+                                  [1., 1., 1., 1.])
+        partials.declare_partials('/'.join([x_des, x_md.format('mZFM', 'mZFM')]),
+                                  [x_m_wing, x_m_fixed, x_m_payload],
+                                  [1., 1., 1.])
+
+        partials.write(partials_file)

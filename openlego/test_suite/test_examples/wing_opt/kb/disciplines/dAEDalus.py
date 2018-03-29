@@ -22,8 +22,10 @@ from __future__ import absolute_import, division, print_function
 import abc
 import os
 import time
+import hashlib
 
-import matlab.engine
+import matlab
+from matlab.engine import start_matlab, MatlabExecutionError
 import numpy as np
 from openlego.test_suite.test_examples.wing_opt.kb.disciplines.WingObjectModel import WingObjectModel
 from lxml import etree
@@ -38,6 +40,21 @@ _mles = {}
 
 n_seg_x = 10
 n_seg_y = 20
+
+
+def start_new_matlab_engine():
+    """Ensure the Matlab engine is renewed once the MATLAB_TIMEOUT is expired.
+
+    This function uses the try_hard() function from the framework.util module to ensure Matlab is started
+    successfully when it needs to be.
+    """
+    mle = try_hard(start_matlab, '-nodesktop -noslpash -nojvm')
+    timestamp = time.time()
+    mle.matlab.engine.shareEngine(nargout=0)
+    engine_name = mle.matlab.engine.engineName(nargout=1)
+    engine_id = int(hashlib.md5(engine_name).hexdigest()[0:7], 16)
+
+    return mle, engine_id, engine_name, timestamp
 
 
 class LoadCaseSpecific(AbstractDiscipline):
@@ -157,10 +174,7 @@ class SteadyModelInitializer(LoadCaseSpecific):
         xml_safe_create_element(doc, x_m_wing, 0.)
 
         for i in range(1, self.n_load_cases + 1):
-            xml_safe_create_element(doc, x_geom % i, 1)
-            xml_safe_create_element(doc, x_stru % i, 1)
-
-            xml_safe_create_element(doc, x_ml_name % i, 'engine_name')
+            xml_safe_create_element(doc, x_ml_id % i, 0)
             xml_safe_create_element(doc, x_ml_timestamp % i, 0.)
 
             for j in range(3):
@@ -181,7 +195,10 @@ class SteadyModelInitializer(LoadCaseSpecific):
         root = etree.Element('cpacs')
         doc_out = etree.ElementTree(root)
 
-        for i in range(1, LoadCaseSpecific.get_n_loadcases(doc_in) + 1):
+        n_lc = LoadCaseSpecific.get_n_loadcases(doc_in)
+        engine_ids = []
+        futures = n_lc * [None]
+        for i in range(1, n_lc + 1):
             timeout = SteadyModelInitializer.MATLAB_TIMEOUT
             elem_timeout = doc_in.xpath(x_ml_timeout % i)
             if len(elem_timeout):
@@ -193,58 +210,52 @@ class SteadyModelInitializer(LoadCaseSpecific):
                 timestamp = float(elem_timestamp[0].text)
 
             # Obtain the current matlab engine if it is still valid and exists
-            engine_name = ''
+            engine_id = 0
             mle = None
-            elem_ml_name = doc_in.xpath(x_ml_name % i)
-            if len(elem_ml_name):
-                engine_name = elem_ml_name[0].text
-                if engine_name in _mles:
+            elem_ml_id = doc_in.xpath(x_ml_id % i)
+            if len(elem_ml_id):
+                engine_id = int(float(elem_ml_id[0].text))
+                if engine_id in _mles:
                     if time.time() - timestamp < timeout:
-                        mle = _mles[engine_name]
+                        mle = _mles[engine_id]
                         mle.cd(dir_path)
                     else:
-                        _mles.pop(engine_name)
+                        _mles.pop(engine_id)
 
             # If a matlab engine was not connected to, start a new one and reset the timestamp
             if mle is None:
-                mle, engine_name, timestamp = SteadyModelInitializer.start_new_matlab_engine()
+                mle, engine_id, engine_name, timestamp = start_new_matlab_engine()
                 mle.cd(dir_path)
+                _mles.update({engine_id: mle})
 
-            # Call the matlab function
-            m_wing, initial_grid = mle.dAEDalusSteadyModelInitializer(
-                in_file, matlab.double([n_seg_x]), matlab.double([n_seg_y]), nargout=2)
-            initial_grid = np.array(initial_grid)
+            engine_ids.append(engine_id)
 
-            # Finally write the output to the output xml file
-            xml_safe_create_element(doc_out, x_m_wing, m_wing)
-            xml_safe_create_element(doc_out, x_m_wing_copy, m_wing)
-
-            for j in range(3):
-                xml_safe_create_element(doc_out, x_grid_initial[j] % i, initial_grid[j, :])
-
-            xml_safe_create_element(doc_out, x_geom % i, 1)
-            xml_safe_create_element(doc_out, x_stru % i, 1)
-
-            xml_safe_create_element(doc_out, x_ml_name % i, engine_name)
+            xml_safe_create_element(doc_out, x_ml_id % i, engine_id)
             xml_safe_create_element(doc_out, x_ml_timestamp % i, timestamp)
 
+            futures[i - 1] = mle.dAEDalusSteadyModelInitializer(
+                in_file, matlab.double([n_seg_x]), matlab.double([n_seg_y]), nargout=2, async=True)
+
+        # Remove any instances of the Matlab engine which aren't used anymore to free up memory
+        if len(_mles) > n_lc:
+            _ids = _mles.keys()
+            for _id in _ids:
+                if _id not in engine_ids:
+                    _mles.pop(_id)
+
+        for i, future in enumerate(futures):
+            if future is not None:
+                try:
+                    m_wing, initial_grid = future.result()
+                    initial_grid = np.array(initial_grid)
+                    xml_safe_create_element(doc_out, x_m_wing, m_wing)
+
+                    for j in range(3):
+                        xml_safe_create_element(doc_out, x_grid_initial[j] % (i + 1), initial_grid[j, :])
+                except MatlabExecutionError:
+                    break
+
         doc_out.write(out_file, encoding='utf-8', pretty_print=True, xml_declaration=True)
-
-    @staticmethod
-    def start_new_matlab_engine():
-        """Ensure the Matlab engine is renewed once the MATLAB_TIMEOUT is expired.
-
-        This function uses the try_hard() function from the framework.util module to ensure Matlab is started
-        successfully when it needs to be.
-        """
-        mle = try_hard(matlab.engine.start_matlab, '-nodesktop -noslpash -nojvm')
-        timestamp = time.time()
-        mle.matlab.engine.shareEngine(nargout=0)
-        engine_name = mle.matlab.engine.engineName(nargout=1)
-
-        _mles.update({engine_name: mle})
-
-        return mle, engine_name, timestamp
 
 
 class SteadyAerodynamicModelInitializer(LoadCaseSpecific):
@@ -279,8 +290,7 @@ class SteadyAerodynamicModelInitializer(LoadCaseSpecific):
             xml_safe_create_element(doc, x_H % i, 0.)
             xml_safe_create_element(doc, x_n % i, 0.)
 
-            xml_safe_create_element(doc, x_geom % i, 1)
-            xml_safe_create_element(doc, x_ml_name % i, 'engine_name')
+            xml_safe_create_element(doc, x_ml_id % i, 0)
 
         return etree.tostring(doc, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
@@ -296,8 +306,6 @@ class SteadyAerodynamicModelInitializer(LoadCaseSpecific):
             xml_safe_create_element(doc, x_CL % i, 0.)
             xml_safe_create_element(doc, x_CDf % i, 0.)
 
-            xml_safe_create_element(doc, x_aero % i, 1)
-
         return etree.tostring(doc, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
     @staticmethod
@@ -310,19 +318,30 @@ class SteadyAerodynamicModelInitializer(LoadCaseSpecific):
         root = etree.Element('cpacs')
         doc_out = etree.ElementTree(root)
 
-        for i in range(1, LoadCaseSpecific.get_n_loadcases(doc_in) + 1):
-            M = float(doc_in.xpath(x_M % i)[0].text)
-            H = float(doc_in.xpath(x_H % i)[0].text)
-            n = float(doc_in.xpath(x_n % i)[0].text)
+        n_lc = LoadCaseSpecific.get_n_loadcases(doc_in)
+        futures = n_lc * [None]
+        for i in range(1, n_lc + 1):
+            engine_id = int(float(doc_in.xpath(x_ml_id % i)[0].text))
+            if engine_id not in _mles:
+                break
+            else:
+                M = float(doc_in.xpath(x_M % i)[0].text)
+                H = float(doc_in.xpath(x_H % i)[0].text)
+                n = float(doc_in.xpath(x_n % i)[0].text)
 
-            engine_name = doc_in.xpath(x_ml_name % i)[0].text
+                futures[i - 1] = _mles[engine_id].dAEDalusSteadyAerodynamicModelInitializer(
+                    float(M), float(H), float(n), nargout=2, async=True)
 
-            mle = _mles[engine_name]
-            C_L, C_D_f = mle.dAEDalusSteadyAerodynamicModelInitializer(float(M), float(H), float(n), nargout=2)
-
-            xml_safe_create_element(doc_out, x_CL % i, C_L)
-            xml_safe_create_element(doc_out, x_CDf % i, C_D_f)
-            xml_safe_create_element(doc_out, x_aero % i, 1)
+        for i, future in enumerate(futures):
+            if future is None:
+                break
+            else:
+                try:
+                    C_L, C_D_f = future.result()
+                    xml_safe_create_element(doc_out, x_CL % (i + 1), C_L)
+                    xml_safe_create_element(doc_out, x_CDf % (i + 1), C_D_f)
+                except MatlabExecutionError:
+                    break
 
         doc_out.write(out_file, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
@@ -348,10 +367,7 @@ class SteadyAerodynamicAnalysis(LoadCaseSpecific):
 
         for i in range(1, self.n_load_cases + 1):
             xml_safe_create_element(doc, x_CL % i, 0.)
-
-            xml_safe_create_element(doc, x_geom % i, 1)
-            xml_safe_create_element(doc, x_aero % i, 1)
-            xml_safe_create_element(doc, x_ml_name % i, 'engine_name')
+            xml_safe_create_element(doc, x_ml_id % i, 0)
 
             for j in range(3):
                 xml_safe_create_element(doc, x_grid_initial[j] % i, np.zeros(2 * (n_seg_x + 1) * (n_seg_y + 1) * self.n_wing_segments))
@@ -383,27 +399,40 @@ class SteadyAerodynamicAnalysis(LoadCaseSpecific):
         root = etree.Element('cpacs')
         doc_out = etree.ElementTree(root)
 
-        for i in range(1, LoadCaseSpecific.get_n_loadcases(doc_in) + 1):
-            grid = 3 * [None]
-            s = 0.
-            for j in range(3):
-                g = np.array(doc_in.xpath(x_grid[j] % i)[0].text.split(';'), dtype=float).tolist()
-                s += np.sum(np.square(g))
-                grid[j] = g
-            if s == 0:
+        n_lc = LoadCaseSpecific.get_n_loadcases(doc_in)
+        futures = n_lc * [None]
+        for i in range(1, n_lc + 1):
+            engine_id = int(float(doc_in.xpath(x_ml_id % i)[0].text))
+            if engine_id not in _mles:
+                break
+            else:
+                grid = 3 * [None]
+                s = 0.
                 for j in range(3):
-                    grid[j] = np.array(doc_in.xpath(x_grid_initial[j] % i)[0].text.split(';'), dtype=float).tolist()
+                    g = np.array(doc_in.xpath(x_grid[j] % i)[0].text.split(';'), dtype=float).tolist()
+                    s += np.sum(np.square(g))
+                    grid[j] = g
+                if s == 0:
+                    for j in range(3):
+                        grid[j] = np.array(doc_in.xpath(x_grid_initial[j] % i)[0].text.split(';'), dtype=float).tolist()
 
-            C_L = float(doc_in.xpath(x_CL % i)[0].text)
+                C_L = float(doc_in.xpath(x_CL % i)[0].text)
 
-            engine_name = doc_in.xpath(x_ml_name % i)[0].text
+                futures[i - 1] = _mles[engine_id].dAEDalusSteadyAerodynamicAnalysis(
+                    matlab.double(grid), float(C_L), nargout=1, async=True)
 
-            mle = _mles[engine_name]
-            C_D_i = mle.dAEDalusSteadyAerodynamicAnalysis(matlab.double(grid), float(C_L), nargout=1)
+                for j in range(3):
+                    xml_safe_create_element(doc_out, x_grid_guess[j] % i, np.array(grid[j]))
 
-            xml_safe_create_element(doc_out, x_CDi % i, C_D_i)
-            for j in range(3):
-                xml_safe_create_element(doc_out, x_grid_guess[j] % i, grid[j])
+        for i, future in enumerate(futures):
+            if future is None:
+                break
+            else:
+                try:
+                    C_D_i = future.result()
+                    xml_safe_create_element(doc_out, x_CDi % (i + 1), C_D_i)
+                except MatlabExecutionError:
+                    break
 
         doc_out.write(out_file, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
@@ -427,10 +456,7 @@ class SteadyStructuralAnalysis(LoadCaseSpecific):
         doc = etree.ElementTree(root)
 
         for i in range(1, self.n_load_cases + 1):
-            xml_safe_create_element(doc, x_ml_name % i, 'engine_name')
-            xml_safe_create_element(doc, x_geom % i, 1)
-            xml_safe_create_element(doc, x_stru % i, 1)
-            xml_safe_create_element(doc, x_aero % i, 1)
+            xml_safe_create_element(doc, x_ml_id % i, 0)
             for j in range(3):
                 xml_safe_create_element(doc, x_grid_guess[j] % i, np.zeros(2 * (n_seg_x + 1) * (n_seg_y + 1) * self.n_wing_segments))
 
@@ -463,17 +489,31 @@ class SteadyStructuralAnalysis(LoadCaseSpecific):
         root = etree.Element('cpacs')
         doc_out = etree.ElementTree(root)
 
-        for i in range(1, LoadCaseSpecific.get_n_loadcases(doc_in) + 1):
-            engine_name = doc_in.xpath(x_ml_name % i)[0].text
-            mle = _mles[engine_name]
-            sigma_fs, sigma_rs, sigma_ts, sigma_bs, deflected_grid = mle.dAEDalusSteadyStructuralAnalysis(nargout=5)
+        n_lc = LoadCaseSpecific.get_n_loadcases(doc_in)
+        futures = n_lc * [None]
+        for i in range(1, n_lc + 1):
+            engine_id = int(float(doc_in.xpath(x_ml_id % i)[0].text))
+            if engine_id not in _mles:
+                break
+            else:
+                futures[i - 1] = _mles[engine_id].dAEDalusSteadyStructuralAnalysis(nargout=5, async=True)
 
-            sigmas = [sigma_fs, sigma_rs, sigma_ts, sigma_bs]
-            for j in range(4):
-                xml_safe_create_element(doc_out, x_sigmas_in[j] % i, np.array(sigmas[j]))
+        for i, future in enumerate(futures):
+            if future is None:
+                break
+            else:
+                try:
+                    sigma_fs, sigma_rs, sigma_ts, sigma_bs, deflected_grid = future.result()
+                    sigmas = [np.array(sigma_fs), np.array(sigma_rs), np.array(sigma_ts), np.array(sigma_bs)]
+                    deflected_grid = np.array(deflected_grid)
 
-            for j in range(3):
-                xml_safe_create_element(doc_out, x_grid[j] % i, np.array(deflected_grid[j]))
+                    for j in range(4):
+                        xml_safe_create_element(doc_out, x_sigmas_in[j] % (i + 1), sigmas[j])
+
+                    for j in range(3):
+                        xml_safe_create_element(doc_out, x_grid[j] % (i + 1), deflected_grid[j])
+                except MatlabExecutionError:
+                    break
 
         doc_out.write(out_file, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
@@ -561,9 +601,7 @@ class SteadyLiftDistribution(LoadCaseSpecific):
         doc = etree.ElementTree(root)
 
         for i in range(1, self.n_load_cases + 1):
-            xml_safe_create_element(doc, x_ml_name % i, 'engine_name')
-            xml_safe_create_element(doc, x_geom % i, 1)
-            xml_safe_create_element(doc, x_aero % i, 1)
+            xml_safe_create_element(doc, x_ml_id % i, 0)
 
         return etree.tostring(doc, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
@@ -591,12 +629,27 @@ class SteadyLiftDistribution(LoadCaseSpecific):
         root = etree.Element('cpacs')
         doc_out = etree.ElementTree(root)
 
-        for i in range(1, LoadCaseSpecific.get_n_loadcases(doc_in) + 1):
-            engine_name = doc_in.xpath(x_ml_name % i)[0].text
-            mle = _mles[engine_name]
-            y_norm, l_norm = mle.dAEDalusSteadyLiftDistribution(nargout=2)
+        n_lc = LoadCaseSpecific.get_n_loadcases(doc_in)
+        futures = n_lc * [None]
+        for i in range(1, n_lc + 1):
+            engine_id = int(float(doc_in.xpath(x_ml_id % i)[0].text))
+            if engine_id not in _mles:
+                break
+            else:
+                futures[i - 1] = _mles[engine_id].dAEDalusSteadyLiftDistribution(nargout=2, async=True)
 
-            xml_safe_create_element(doc_out, x_y_norm % i, np.array(y_norm))
-            xml_safe_create_element(doc_out, x_l_norm % i, np.array(l_norm))
+        for i, future in enumerate(futures):
+            if future is None:
+                break
+            else:
+                try:
+                    y_norm, l_norm = future.result()
+                    y_norm = np.array(y_norm)
+                    l_norm = np.array(l_norm)
+
+                    xml_safe_create_element(doc_out, x_y_norm % (i + 1), y_norm)
+                    xml_safe_create_element(doc_out, x_l_norm % (i + 1), l_norm)
+                except MatlabExecutionError:
+                    break
 
         doc_out.write(out_file, encoding='utf-8', pretty_print=True, xml_declaration=True)

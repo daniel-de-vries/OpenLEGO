@@ -81,6 +81,20 @@ def param_to_xpath(param):
     return xpath
 
 
+def value_to_xml(elem, value):
+    if isinstance(value, np.ndarray):
+        value = np.atleast_1d(value).flatten()
+
+    if isinstance(value, np.ndarray):
+        if value.size == 1:
+            elem.text = str(value[0])
+        else:
+            elem.text = ';'.join([str(v) for v in value[:]])
+            elem.attrib.update({'mapType': 'vector'})
+    else:
+        elem.text = str(value)
+
+
 def xml_to_dict(xml):
     # type: (Union[str, etree._ElementTree]) -> OrderedDict
     """Convert an XML file to a python dictionary with all valued elements as values with their full XPaths as keys.
@@ -107,15 +121,15 @@ def xml_to_dict(xml):
             parent = child.getparent()
 
             tag = child.tag
-            if parent is not None:
-                siblings = parent.findall(tag)
-                if len(siblings) > 1:
-                    tag += '[%d]' % (siblings.index(child) + 1)
-
             for name, value in child.items():
                 # Exclude special purpose attribute: mapType
                 if name != 'mapType':
                     tag += r'[@%s="%s"]' % (name, value)
+
+            if parent is not None:
+                siblings = parent.findall(tag)
+                if len(siblings) > 1:
+                    tag += '[%d]' % (siblings.index(child) + 1)
 
             xpath = '/'.join([tag, xpath])
             child = parent
@@ -245,17 +259,7 @@ def xml_safe_create_element(
 
     # If a value was supplied assign it to the deepest element in the XPath
     if value is not None:
-        if isinstance(value, np.ndarray):
-            value = np.atleast_1d(value).flatten()
-
-        if isinstance(value, np.ndarray):
-            if value.size == 1:
-                elem.text = str(value[0])
-            else:
-                elem.text = ';'.join([str(v) for v in value[:]])
-                elem.attrib.update({'mapType': 'vector'})
-        else:
-            elem.text = str(value)
+        value_to_xml(elem, value)
 
     return elem
 

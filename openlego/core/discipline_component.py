@@ -68,20 +68,23 @@ class DisciplineComponent(XMLComponent):
             generated here.
         """
         self._discipline = discipline
-        super(DisciplineComponent, self).__init__(self._discipline.in_file, self._discipline.out_file,
-                                                  data_folder, keep_files, base_file)
+        if discipline.supplies_partials:
+            super(DisciplineComponent, self).__init__(self._discipline.in_file,
+                                                      self._discipline.out_file,
+                                                      self._discipline.partials_file,
+                                                      data_folder, keep_files, base_file)
+        else:
+            super(DisciplineComponent, self).__init__(self._discipline.in_file,
+                                                      self._discipline.out_file,
+                                                      None,
+                                                      data_folder, keep_files, base_file)
+            self.partials_from_xml = None
 
     @property
     def discipline(self):
         # type: () -> AbstractDiscipline
         """:obj:`AbstractDiscipline`: Read-only reference to the specific discipline this `Component` wraps."""
         return self._discipline
-
-    def setup(self):
-        # type: () -> None
-        """Approximate all gradients using finite difference."""
-        super(DisciplineComponent, self).setup()
-        self.declare_partials('*', '*', method='fd')
 
     def execute(self, input_xml=None, output_xml=None):
         # type: (str, str) -> None
@@ -110,3 +113,25 @@ class DisciplineComponent(XMLComponent):
         if input_xml is None or output_xml is None:
             raise ValueError('Both an input_xml and output_xml path are expected.')
         self.discipline.execute(input_xml, output_xml)
+
+    def linearize(self, input_xml=None, partials_xml=None):
+        # type: (str, str) -> None
+        """Call the `linearize()` method of this `Component`'s discipline.
+
+        Parameters
+        ----------
+            input_xml : str
+                Path to the input XML file.
+
+            partials_xml : str
+                Path to the partials XML file.
+
+        Raises
+        ------
+            ValueError
+                If either no `input_xml` or `partials_xml` path was specified.
+        """
+        if self.discipline.supplies_partials:
+            if input_xml is None or partials_xml is None:
+                raise ValueError('Both an input_xml and a partials_xml path are expected.')
+            self.discipline.linearize(input_xml, partials_xml)

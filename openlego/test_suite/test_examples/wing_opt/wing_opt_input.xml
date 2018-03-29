@@ -34,7 +34,7 @@
         <C_D_other>0.005</C_D_other>
         <m_fuel_init>108508.0</m_fuel_init>
         <m_wing_init>49591.0</m_wing_init>
-        <S_ref_init>493.59604204</S_ref_init>
+        <WS_init>538.725956758</WS_init>
         <sigma_yield>276000000.0</sigma_yield>
         <C_L_buffet>0.525</C_L_buffet>
       </reference>

@@ -259,6 +259,7 @@ class BaseIterationPlotter(BaseRecorder):
                        self._objectives_values,
                        self._constraints_values,
                        metadata))
+        self.save_figure()
 
     def _record_iteration_system(self, metadata):
         self._in.send(('update',
@@ -266,6 +267,7 @@ class BaseIterationPlotter(BaseRecorder):
                        self._outputs,
                        self._resids,
                        metadata))
+        self.save_figure()
 
     def _record_iteration_solver(self, metadata):
         self._in.send(('update',
@@ -274,6 +276,7 @@ class BaseIterationPlotter(BaseRecorder):
                        self._outputs,
                        self._resids,
                        metadata))
+        self.save_figure()
 
     def save_figure(self, path=None, dpi=None, ar=None, width=None):
         # type: (Optional[str], Optional[int], Optional[float], Optional[int]) -> None

@@ -23,33 +23,33 @@ sigma_names = ['sigma_fs', 'sigma_rs', 'sigma_ts', 'sigma_bs']
 
 """ CPACS """
 x_vehicles = '/cpacs/vehicles'
-x_model = x_vehicles + r"/aircraft/model[@uID='model']"
+x_model = x_vehicles + '/aircraft/model[@uID="model"]'
 x_ref = '/'.join([x_model, 'reference'])
-x_wing = '/'.join([x_model, r"wings/wing[@uID='wing'][@symmetry='x-z-plane']"])
-x_sec = '/'.join([x_wing, r"sections/section[@uID='sec_%d']"])
-x_elem = '/'.join([x_sec, r"elements/element[@uID='elem_%d']"])
+x_wing = '/'.join([x_model, 'wings/wing[@symmetry="x-z-plane"][@uID="wing"]'])
+x_sec = '/'.join([x_wing, 'sections/section[@uID="sec_%d"]'])
+x_elem = '/'.join([x_sec, 'elements/element[@uID="elem_%d"]'])
 x_mbd = '/'.join([x_model, 'analyses/massBreakdown'])
 x_global = '/'.join([x_model, 'global'])
 x_perf = '/'.join([x_global, 'performanceTargets'])
 
 x_ref_area = '/'.join([x_ref, 'area'])
 x_ref_length = '/'.join([x_ref, 'length'])
-x_compseg = '/'.join([x_wing, r"componentSegments/componentSegment[@uID='compSeg_%d']"])
+x_compseg = '/'.join([x_wing, 'componentSegments/componentSegment[@uID="compSeg_%d"]'])
 x_struct = '/'.join([x_compseg, 'structure'])
 x_sparposs = '/'.join([x_struct, 'spars/sparPositions'])
-x_fs_r_xsi = '/'.join([x_sparposs, r"sparPosition[@uID='fs_%d_r']/xsi"])
-x_fs_t_xsi = '/'.join([x_sparposs, r"sparPosition[@uID='fs_%d_t']/xsi"])
-x_rs_r_xsi = '/'.join([x_sparposs, r"sparPosition[@uID='rs_%d_r']/xsi"])
-x_rs_t_xsi = '/'.join([x_sparposs, r"sparPosition[@uID='rs_%d_t']/xsi"])
+x_fs_r_xsi = '/'.join([x_sparposs, 'sparPosition[@uID="fs_%d_r"]/xsi'])
+x_fs_t_xsi = '/'.join([x_sparposs, 'sparPosition[@uID="fs_%d_t"]/xsi'])
+x_rs_r_xsi = '/'.join([x_sparposs, 'sparPosition[@uID="rs_%d_r"]/xsi'])
+x_rs_t_xsi = '/'.join([x_sparposs, 'sparPosition[@uID="rs_%d_t"]/xsi'])
 x_sparsegs = '/'.join([x_struct, 'spars/sparSegments'])
-x_fs_web_t = '/'.join([x_sparsegs, r"sparSegment[@uID='fs_%d']/sparCrossSection/web1/material/thickness"])
-x_fs_lowerCap_t = '/'.join([x_sparsegs, r"sparSegment[@uID='fs_%d']/sparCrossSection/lowerCap/material/thickness"])
-x_fs_upperCap_t = '/'.join([x_sparsegs, r"sparSegment[@uID='fs_%d']/sparCrossSection/upperCap/material/thickness"])
-x_rs_web_t = '/'.join([x_sparsegs, r"sparSegment[@uID='rs_%d']/sparCrossSection/web1/material/thickness"])
-x_rs_lowerCap_t = '/'.join([x_sparsegs, r"sparSegment[@uID='rs_%d']/sparCrossSection/lowerCap/material/thickness"])
-x_rs_upperCap_t = '/'.join([x_sparsegs, r"sparSegment[@uID='rs_%d']/sparCrossSection/upperCap/material/thickness"])
-x_mSkins = '/'.join([x_model, r"analyses/massBreakdown/mOEM/mEM/mStructure/mWingsStructure/"
-                            r"mWingStructure/mComponentSegment[%d]/mWingBox"])
+x_fs_web_t = '/'.join([x_sparsegs, 'sparSegment[@uID="fs_%d"]/sparCrossSection/web1/material/thickness'])
+x_fs_lowerCap_t = '/'.join([x_sparsegs, 'sparSegment[@uID="fs_%d"]/sparCrossSection/lowerCap/material/thickness'])
+x_fs_upperCap_t = '/'.join([x_sparsegs, 'sparSegment[@uID="fs_%d"]/sparCrossSection/upperCap/material/thickness'])
+x_rs_web_t = '/'.join([x_sparsegs, 'sparSegment[@uID="rs_%d"]/sparCrossSection/web1/material/thickness'])
+x_rs_lowerCap_t = '/'.join([x_sparsegs, 'sparSegment[@uID="rs_%d"]/sparCrossSection/lowerCap/material/thickness'])
+x_rs_upperCap_t = '/'.join([x_sparsegs, 'sparSegment[@uID="rs_%d"]/sparCrossSection/upperCap/material/thickness'])
+x_mSkins = '/'.join([x_model, 'analyses/massBreakdown/mOEM/mEM/mStructure/mWingsStructure/'
+                            'mWingStructure/mComponentSegment[%d]/mWingBox'])
 
 """ Wing optimization problem """
 x_opt = '/cpacs/toolspecific/wingOptimizationProblem'
@@ -82,6 +82,7 @@ x_m_payload = '/'.join([x_reference, 'm_payload'])
 x_f_m_sys = '/'.join([x_reference, 'f_m_sys'])
 x_f_m_wings = '/'.join([x_reference, 'f_m_wings'])
 x_m_mlw = '/'.join([x_reference, 'm_MLW'])
+x_m_mtow = '/'.join([x_reference, 'm_MTOW'])
 
 x_SFC = '/'.join([x_reference, 'SFC'])
 x_m_fuel_res = '/'.join([x_reference, 'm_fuel_res'])
@@ -91,16 +92,13 @@ x_R = '/'.join([x_reference, 'R'])
 
 x_rho_skin = '/'.join([x_reference, 'rho_skin'])
 x_sigma_yield = '/'.join([x_reference, 'sigma_yield'])
-x_S_ref_init = '/'.join([x_reference, 'S_ref_init'])
+x_WS_init = '/'.join([x_reference, 'WS_init'])
 x_CL_buffet = '/'.join([x_reference, 'C_L_buffet'])
 x_m_wing_init = '/'.join([x_reference, 'm_wing_init'])
 x_m_fuel_init = '/'.join([x_reference, 'm_fuel_init'])
 
-x_m_fuel_copy = '/'.join([x_reference, 'm_fuel'])
-x_m_wing_copy = '/'.join([x_reference, 'm_wing'])
-
 x_con_sigmas = ['/'.join([x_con, 'con_' + sigma]) for sigma in sigma_names]
-x_con_exposed_area = '/'.join([x_con, 'con_exposed_area'])
+x_con_WS = '/'.join([x_con, 'con_WS'])
 x_con_buffet = '/'.join([x_con, 'con_buffet'])
 
 x_obj_m_fuel = '/'.join([x_obj, 'obj_m_fuel'])
@@ -138,7 +136,7 @@ x_aero = '/'.join([x_loadcase, 'aerodynamic_model'])
 
 x_mle = '/'.join([x_loadcase, 'matlab_engine'])
 x_ml_timeout = '/'.join([x_mle, 'timeout'])
-x_ml_name = '/'.join([x_mle, 'name'])
+x_ml_id = '/'.join([x_mle, 'id'])
 x_ml_timestamp = '/'.join([x_mle, 'timestamp'])
 
 """ FWE """

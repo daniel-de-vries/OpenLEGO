@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<partials xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="file:///./partials.xsd">
+    <parameter>
+        <uid>y1</uid>
+        <partials>
+            <partial>
+                <uid>x1</uid>
+                <value>1.5</value>
+            </partial>
+            <partial>
+                <uid>x2</uid>
+                <value>-0.3</value>
+            </partial>
+        </partials>
+    </parameter>
+    <parameter>
+        <uid>y2</uid>
+        <partials>
+            <partial>
+                <uid>x1</uid>
+                <value>-2.4</value>
+            </partial>
+        </partials>
+    </parameter>
+</partials>

@@ -24,6 +24,8 @@ import inspect
 import json
 import os
 
+from openlego.partials.partials import Partials
+
 
 class AbstractDiscipline(object):
     """Defines the common interface for all disciplines within ``OpenLEGO``."""
@@ -83,6 +85,18 @@ class AbstractDiscipline(object):
         """:obj:`str`: Path of the information JSON file of this discipline."""
         return os.path.join(self.path, self.name + '-info.json')
 
+    @property
+    def partials_file(self):
+        # type: () -> str
+        """:obj:`str`: Path of the partials XML file of this discipline."""
+        return os.path.join(self.path, self.name + '-partials.xml')
+
+    @property
+    def supplies_partials(self):
+        # type: () -> bool
+        """Set to True to indicate this discipline supplies gradients."""
+        return False
+
     @abc.abstractmethod
     def generate_input_xml(self):
         # type: () -> str
@@ -130,15 +144,30 @@ class AbstractDiscipline(object):
                                                'description': 'main execution mode',
                                                'precision': self.precision}]}, indent=4)
 
+    def generate_partials_xml(self):
+        # type: () -> str
+        """Generate the template partials XML file for this discipline.
+
+        This method should be implemented to define for which inputs this discipline can provide the sensitivities.
+
+        Returns
+        -------
+            str
+                String representation of the template partials XML file.
+        """
+        return Partials().get_string()
+
     def deploy(self):
         # type: () -> None
-        """Deploy this discipline's template in-/output XML files and its information JSON file."""
+        """Deploy this discipline's template in-/output, partials XML files and its information JSON file."""
         with open(self.in_file, 'w') as f:
             f.write(self.generate_input_xml())
         with open(self.out_file, 'w') as f:
             f.write(self.generate_output_xml())
         with open(self.json_file, 'w') as f:
             f.write(self.generate_info_json())
+        with open(self.partials_file, 'w') as f:
+            f.write(self.generate_partials_xml())
 
     @staticmethod
     @abc.abstractmethod
@@ -157,3 +186,21 @@ class AbstractDiscipline(object):
                 Path to the output XML file.
         """
         raise NotImplementedError
+
+    @staticmethod
+    def linearize(in_file, partials_file):
+        # type: (str, str) -> None
+        """Compute the sensitivities of a given input XML file and write them to a given partials XML file.
+
+        This method should be implemented to define the linearization of a specific discipline. By default a discipline
+        is considered a 'black box', and no sensitivities are provided.
+
+        Parameters
+        ----------
+            in_file : str
+                Path to the input XML file.
+
+            partials_file : str
+                Path to the sensitivities XML file.
+        """
+        Partials().write(partials_file)

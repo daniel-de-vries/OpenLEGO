@@ -321,3 +321,16 @@ def normalized_to_bounds(driver):
                 return x
 
     return NormalizedDriver
+
+
+re_sys_name_char = re.compile(r'[^_a-zA-Z0-9]')
+re_sys_name_starts = re.compile(r'^[a-zA-Z]')
+
+
+def str_to_valid_sys_name(string):
+    # type: (str) -> str
+    """Ensures a given string is a valid OpenMDAO system name."""
+    sys_name = re_sys_name_char.sub('', string)
+    while not re_sys_name_starts.match(sys_name):
+        sys_name = sys_name[1:]
+    return sys_name

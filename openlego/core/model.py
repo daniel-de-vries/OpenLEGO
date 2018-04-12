@@ -30,13 +30,19 @@ from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, L
     LinearRunOnce, NonLinearRunOnce, ExecComp
 from typing import Union, Optional, List, Any, Dict, Tuple
 
-from openlego.utils.general_utils import CachedProperty, parse_cmdows_value
+from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str_to_valid_sys_name
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
 from .abstract_discipline import AbstractDiscipline
 from .discipline_component import DisciplineComponent
 
-re_sys_name_char = re.compile(r'[^_a-zA-Z0-9]')
-re_sys_name_starts = re.compile(r'^[a-zA-Z]')
+
+class InvalidCMDOWSFileError(ValueError):
+
+    def __init__(self, reason=None):
+        msg = 'Invalid CMDOWS file'
+        if reason is not None:
+            msg += ': {}'.format(reason)
+        super(InvalidCMDOWSFileError, self).__init__(msg)
 
 
 class LEGOModel(Group):
@@ -68,7 +74,7 @@ class LEGOModel(Group):
             Path to an XML file which should be kept up-to-date with the latest data describing the problem.
     """
 
-    def __init__(self, cmdows_path=None, kb_path=None, data_folder=None, base_xml_file=None, **kwargs):
+    def __init__(self, cmdows_path=None, kb_path='', data_folder=None, base_xml_file=None, **kwargs):
         # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
         """Initialize a CMDOWS Problem from a given CMDOWS file and knowledge base.
 
@@ -223,7 +229,7 @@ class LEGOModel(Group):
         """:obj:`etree._Element`: The problemRoles/parameters element of the CMDOWS file."""
         params = self.elem_cmdows.find('problemDefinition/problemRoles/parameters')
         if params is None:
-            raise Exception('cmdows does not contain (valid) parameters in the problemRoles')
+            raise InvalidCMDOWSFileError('does not contain (valid) parameters in the problemRoles')
         return params
 
     @CachedProperty
@@ -232,7 +238,7 @@ class LEGOModel(Group):
         """:obj:`etree._Element`: The architectureElements element of the CMDOWS file."""
         arch_elems = self.elem_cmdows.find('architectureElements')
         if arch_elems is None:
-            raise Exception('cmdows does not contain (valid) architecture elements')
+            raise InvalidCMDOWSFileError('does not contain (valid) architecture elements')
         return arch_elems
 
     @CachedProperty
@@ -264,7 +270,7 @@ class LEGOModel(Group):
                 if not issubclass(cls, AbstractDiscipline):
                     raise RuntimeError
             except Exception:
-                raise RuntimeError(
+                raise ValueError(
                     'Unable to process CMDOWS file: no proper discipline found for design competence with name %s'
                     % name)
             finally:
@@ -276,6 +282,82 @@ class LEGOModel(Group):
         return _discipline_components
 
     @CachedProperty
+    def mapped_parameters(self):
+        # type: () -> Dict[str, str]
+        """:obj:`dict`: Dictionary of parameters that are mapped in the CMDOWS file, for example as copies."""
+        mapped_params = dict()
+        for elem_category in self.elem_arch_elems.find('parameters').iterchildren():
+            for elem_param in elem_category.iterchildren():
+                param = elem_param.attrib['uID']
+                mapped = elem_param.find('relatedParameterUID').text
+                mapped_params.update({param: mapped})
+        return mapped_params
+
+    @CachedProperty
+    def mathematical_functions_inputs(self):
+        # type: () -> Dict[str, List[Tuple[str]]]
+        """:obj:`dict`: Dictionary of all mathematical function blocks with a list of their input variables."""
+        _inputs = dict()
+        for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
+            uid = mathematical_function.attrib['uID']
+
+            local_inputs = list()
+            for _input in mathematical_function.iter('input'):
+                input_name = xpath_to_param(_input.find('parameterUID').text)
+                eq_label = _input.find('equationLabel').text
+                local_inputs.append((eq_label, input_name))
+
+            _inputs.update({uid: local_inputs})
+        return _inputs
+
+    @CachedProperty
+    def mathematical_functions_groups(self):
+        # type: () -> Dict[str, Group]
+        """:obj:`dict`: Dictionary of execute components by their mathematical function ``uID`` from CMDOWS.
+        """
+        _mathematical_functions = dict()
+        for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
+            uid = mathematical_function.attrib['uID']
+            group = Group()
+
+            eq_mapping = dict()
+            for output in mathematical_function.iter('output'):
+                if output.find('equations') is not None:
+                    for equation in output.iter('equation'):
+                        if equation.attrib['language'] == 'Python':
+                            eq_uid = equation.getparent().attrib['uID']
+                            eq_expr = equation.text
+                            eq_output = xpath_to_param(output.find('parameterUID').text)
+
+                            promotes = list()
+                            for eq_label, input_name in self.mathematical_functions_inputs[uid]:
+                                if input_name in self.mapped_parameters:
+                                    input_name = self.mapped_parameters[input_name]
+
+                                if eq_label in eq_expr:
+                                    promotes.append((eq_label, input_name))
+
+                            eq_mapping.update({eq_uid: eq_output})
+                            group.add_subsystem(str_to_valid_sys_name(eq_uid),
+                                                ExecComp('output = ' + eq_expr),
+                                                promotes=promotes + [('output', eq_output), ])
+
+            extra_output_counter = 0
+            for output in mathematical_function.iter('output'):
+                eq_uid = output.find('equationsUID')
+                if eq_uid is not None:
+                    eq_uid = eq_uid.text
+                    eq_output = xpath_to_param(output.find('parameterUID').text)
+
+                    group.add_subsystem('extra_output_{}'.format(extra_output_counter),
+                                        ExecComp('output = input'),
+                                        promotes=[('output', eq_output), ('input', eq_mapping[eq_uid])])
+
+            _mathematical_functions.update({uid: group})
+
+        return _mathematical_functions
+
+    @CachedProperty
     def variable_sizes(self):
         # type: () -> Dict[str, int]
         """:obj:`dict`: Dictionary of the sizes of all variables by their names."""
@@ -283,6 +365,11 @@ class LEGOModel(Group):
         for component in self.discipline_components.values():
             for name, value in component.variables_from_xml.items():
                 variable_sizes.update({name: np.atleast_1d(value).size})
+
+        for local_inputs in self.mathematical_functions_inputs.values():
+            for _input in local_inputs:
+                variable_sizes.update({_input[1]: np.atleast_1d([0]).size})
+
         return variable_sizes
 
     @CachedProperty
@@ -300,7 +387,7 @@ class LEGOModel(Group):
         for convar in self.elem_arch_elems.iter('consistencyConstraintVariable'):
             param = xpath_to_param(convar.find('relatedParameterUID').text)
             if param not in coupling_vars:
-                raise RuntimeError('invalid cmdows file')
+                raise InvalidCMDOWSFileError()
 
             coupling_vars.update({param: {'copy': coupling_vars[param], 'con': xpath_to_param(convar.attrib['uID'])}})
         return coupling_vars
@@ -478,9 +565,9 @@ class LEGOModel(Group):
         """:obj:`str`: Name of the objective variable."""
         objvars = self.elem_params.find('objectiveVariables')
         if objvars is None:
-            raise Exception('cmdows does not contain (valid) objective variables')
+            raise InvalidCMDOWSFileError('does not contain (valid) objective variables')
         if len(objvars) > 1:
-            raise Exception('cmdows contains multiple objectives, but this is not supported')
+            raise InvalidCMDOWSFileError('contains multiple objectives, but this is not supported')
 
         return xpath_to_param(objvars[0].find('parameterUID').text)
 
@@ -494,18 +581,23 @@ class LEGOModel(Group):
         if self.coupled_blocks:
             coupled_group = Group()
             for uid in self.coupled_blocks:
-                # Get the correct DisciplineComponent
-                discipline_component = self.discipline_components[uid]
-
-                # Change input variable names if they are provided as copies of coupling variables
+                # Get the correct DisciplineComponent or MathematicalFunction
                 promotes = ['*']  # type: List[Union[str, Tuple[str, str]]]
-                if not self.has_converger:
-                    for i in discipline_component.inputs_from_xml.keys():
-                        if i in self.coupling_vars:
-                            promotes.append((i, self.coupling_vars[i]['copy']))
+                if uid in self.discipline_components:
+                    block = self.discipline_components[uid]
 
-                # Add the DisciplineComponent to the group
-                coupled_group.add_subsystem(uid, self.discipline_components[uid], promotes)
+                    # Change input variable names if they are provided as copies of coupling variables
+                    if not self.has_converger:
+                        for i in block.inputs_from_xml.keys():
+                            if i in self.coupling_vars:
+                                promotes.append((i, self.coupling_vars[i]['copy']))
+                elif uid in self.mathematical_functions_groups:
+                    block = self.mathematical_functions_groups[uid]
+                else:
+                    raise RuntimeError
+
+                # Add the block to the group
+                coupled_group.add_subsystem(str_to_valid_sys_name(uid), block, promotes)
 
             # Find the convergence type of the coupled group
             if self.has_converger:
@@ -517,7 +609,7 @@ class LEGOModel(Group):
                     coupled_group.linear_solver = LinearBlockJac()
                     coupled_group.nonlinear_solver = NonlinearBlockJac()
                 else:
-                    raise RuntimeError('Specified convergerType "%s" is not supported.' % conv_type)
+                    raise ValueError('Specified convergerType "%s" is not supported.' % conv_type)
             else:
                 coupled_group.linear_solver = LinearRunOnce()
                 coupled_group.nonlinear_solver = NonLinearRunOnce()
@@ -553,11 +645,9 @@ class LEGOModel(Group):
                         else:
                             val = np.zeros(size)
 
-                        sys_name = re_sys_name_char.sub('', self.elem_arch_elems.xpath(
+                        sys_name = str_to_valid_sys_name(self.elem_arch_elems.xpath(
                             'parameters/consistencyConstraintVariables/' +
                             'consistencyConstraintVariable[@uID="{}"]/label/text()'.format(coupling_var['con']))[0])
-                        while not re_sys_name_starts.match(sys_name):
-                            sys_name = sys_name[1:]
 
                         # Add an ExecComp to the Group for this equality constraint
                         group.add_subsystem(
@@ -573,15 +663,22 @@ class LEGOModel(Group):
         """:obj:`list` of :obj:`str`: List system names in the order specified in the CMDOWS file."""
         _system_order = ['coordinator']
         coupled_group_set = False
+        n = 0
         for block in self.block_order:
             if block in self.coupled_blocks:
+                n += 1
                 if not coupled_group_set:
                     _system_order.append('coupled_group')
                     coupled_group_set = True
-            elif block in self.discipline_components:
-                _system_order.append(block)
+            elif block in self.discipline_components or block in self.mathematical_functions_groups:
+                n += 1
+                _system_order.append(str_to_valid_sys_name(block))
+
+        if n < len(self.discipline_components) + len(self.mathematical_functions_groups):
+            raise InvalidCMDOWSFileError('executableBlocksOrder is incomplete')
         if self.consistency_constraint_group is not None:
             _system_order.append('consistency_constraints')
+
         return _system_order
 
     @CachedProperty
@@ -613,7 +710,10 @@ class LEGOModel(Group):
         # Add all pre-coupling and post-coupling components
         for name, component in self.discipline_components.items():
             if name not in self.coupled_blocks:
-                self.add_subsystem(name, component, ['*'])
+                self.add_subsystem(str_to_valid_sys_name(name), component, ['*'])
+        for name, component in self.mathematical_functions_groups.items():
+            if name not in self.coupled_blocks:
+                self.add_subsystem(str_to_valid_sys_name(name), component, ['*'])
 
         # Add the coupled group
         if self.coupled_group is not None:

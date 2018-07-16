@@ -27,10 +27,10 @@ import numpy as np
 from lxml import etree
 from lxml.etree import _Element, _ElementTree
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
-    LinearRunOnce, NonLinearRunOnce, ExecComp
+    LinearRunOnce, ExecComp, NonlinearRunOnce
 from typing import Union, Optional, List, Any, Dict, Tuple
 
-from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str_to_valid_sys_name
+from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str_to_valid_sys_name, parse_string
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
 from .abstract_discipline import AbstractDiscipline
 from .discipline_component import DisciplineComponent
@@ -102,7 +102,7 @@ class LEGOModel(Group):
 
         super(LEGOModel, self).__init__(**kwargs)
         self.linear_solver = LinearRunOnce()
-        self.nonlinear_solver = NonLinearRunOnce()
+        self.nonlinear_solver = NonlinearRunOnce()
 
     def __getattribute__(self, name):
         # type: (str) -> Any
@@ -250,6 +250,14 @@ class LEGOModel(Group):
         return False
 
     @CachedProperty
+    def objective_required(self):
+        # type: () -> bool
+        """:obj:`bool`: True if an objective value is required, False if not."""
+        if self.elem_arch_elems.find('executableBlocks/optimizers/optimizer') is not None:
+            return True
+        return False
+
+    @CachedProperty
     def discipline_components(self):
         # type: () -> Dict[str, DisciplineComponent]
         """:obj:`dict`: Dictionary of discipline components by their design competence ``uID`` from CMDOWS.
@@ -311,6 +319,22 @@ class LEGOModel(Group):
         return _inputs
 
     @CachedProperty
+    def mathematical_functions_outputs(self):
+        # type: () -> Dict[str, List[Tuple[str]]]
+        """:obj:`dict`: Dictionary of all mathematical function blocks with a list of their output variables."""
+        _outputs = dict()
+        for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
+            uid = mathematical_function.attrib['uID']
+
+            local_outputs = list()
+            for _output in mathematical_function.iter('output'):
+                output_name = xpath_to_param(_output.find('parameterUID').text)
+                local_outputs.append(output_name)
+
+            _outputs.update({uid: local_outputs})
+        return _outputs
+
+    @CachedProperty
     def mathematical_functions_groups(self):
         # type: () -> Dict[str, Group]
         """:obj:`dict`: Dictionary of execute components by their mathematical function ``uID`` from CMDOWS.
@@ -331,7 +355,8 @@ class LEGOModel(Group):
 
                             promotes = list()
                             for eq_label, input_name in self.mathematical_functions_inputs[uid]:
-                                if input_name in self.mapped_parameters:
+                                # TODO: This mapping of the input name should get a more sophisticated logic
+                                if input_name in self.mapped_parameters and input_name not in self.design_vars:
                                     input_name = self.mapped_parameters[input_name]
 
                                 if eq_label in eq_expr:
@@ -352,6 +377,7 @@ class LEGOModel(Group):
                     group.add_subsystem('extra_output_{}'.format(extra_output_counter),
                                         ExecComp('output = input'),
                                         promotes=[('output', eq_output), ('input', eq_mapping[eq_uid])])
+                    extra_output_counter += 1
 
             _mathematical_functions.update({uid: group})
 
@@ -369,6 +395,10 @@ class LEGOModel(Group):
         for local_inputs in self.mathematical_functions_inputs.values():
             for _input in local_inputs:
                 variable_sizes.update({_input[1]: np.atleast_1d([0]).size})
+
+        for local_outputs in self.mathematical_functions_outputs.values():
+            for _output in local_outputs:
+                variable_sizes.update({_output: np.atleast_1d([0]).size})
 
         return variable_sizes
 
@@ -468,29 +498,33 @@ class LEGOModel(Group):
                 warnings.warn('no nominalValue given for designVariable "%s". Default is all zeros.' % name)
                 initial = np.zeros(self.variable_sizes[name])
 
-            if name in self.coupling_vars:
-                # If this is a coupling variable the bounds are -1e99 and 1e99 and it should not be normalized
-                design_vars.update(
-                    {self.coupling_vars[name]['copy']: {'initial': initial,
-                                                        'lower': -1e99*np.ones(self.variable_sizes[name]),
-                                                        'upper': 1e99*np.ones(self.variable_sizes[name]),
-                                                        'ref0': None, 'ref': None}})
+            # if name in self.coupling_vars:
+            #     # If this is a coupling variable the bounds are -1e99 and 1e99 and it should not be normalized
+            #     design_vars.update(
+            #         {self.coupling_vars[name]['copy']: {'initial': initial,
+            #                                             'lower': -1e99*np.ones(self.variable_sizes[name]),
+            #                                             'upper': 1e99*np.ones(self.variable_sizes[name]),
+            #                                             'ref0': None, 'ref': None}})
+            # else:
+            # Obtain the lower and upper bounds
+            bounds = 2 * [None]  # type: List[Optional[str]]
+            limit_range = desvar.find('validRanges/limitRange')
+            if limit_range is not None:
+                for index, bnd, in enumerate(['minimum', 'maximum']):
+                    elem = limit_range.find(bnd)
+                    if elem is not None:
+                        bounds[index] = parse_cmdows_value(elem)
+                        if not self.does_value_fit(name, bounds[index]):
+                            raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
             else:
-                # Obtain the lower and upper bounds
-                bounds = 2 * [None]  # type: List[Optional[str]]
-                limit_range = desvar.find('validRanges/limitRange')
-                if limit_range is not None:
-                    for index, bnd, in enumerate(['minimum', 'maximum']):
-                        elem = limit_range.find(bnd)
-                        if elem is not None:
-                            bounds[index] = parse_cmdows_value(elem)
-                            if not self.does_value_fit(name, bounds[index]):
-                                raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
+                bounds[0] = None#-1e99*np.ones(self.variable_sizes[name])
+                bounds[1] = None#1e99*np.ones(self.variable_sizes[name])
 
-                # Add the design variable to the dict
-                design_vars.update({name: {'initial': initial,
-                                           'lower': bounds[0], 'upper': bounds[1],
-                                           'ref0': bounds[0], 'ref': bounds[1]}})
+            # Add the design variable to the dict
+            node_name = name if name not in self.coupling_vars else self.coupling_vars[name]['copy']
+            design_vars.update({node_name: {'initial': initial,
+                                            'lower': bounds[0], 'upper': bounds[1],
+                                            'ref0': bounds[0], 'ref': bounds[1]}})
         return design_vars
 
     @CachedProperty
@@ -517,16 +551,24 @@ class LEGOModel(Group):
                 else:
                     # Obtain the reference value of the constraint
                     constr_ref = convar.find('referenceValue')  # type: etree._Element
+                    ref_vals = []
                     if constr_ref is not None:
-                        ref = parse_cmdows_value(constr_ref)
-                        if isinstance(ref, str):
-                            raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
-                        elif not self.does_value_fit(name, ref):
-                            warnings.warn('incompatible size of constraint "%s". Will assume the same for all.' % name)
-                            ref = np.ones(self.variable_sizes[name]) * np.atleast_1d(ref)[0]
+                        refs_str = constr_ref.text
+                        if ';' in refs_str:
+                            refs = refs_str.split(';')
+                        else:
+                            refs = [refs_str]
+                        for ref in refs:
+                            ref_val = parse_string(ref)
+                            if isinstance(ref_val, str):
+                                raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
+                            elif not self.does_value_fit(name, ref_val):
+                                warnings.warn('incompatible size of constraint "%s". Will assume the same for all.' % name)
+                                ref_val = np.ones(self.variable_sizes[name]) * np.atleast_1d(ref_val)[0]
+                            ref_vals.append(ref_val)
                     else:
                         warnings.warn('no referenceValue given for constraint "%s". Default is all zeros.' % name)
-                        ref = np.zeros(self.variable_sizes[name])
+                        ref_vals = [np.zeros(self.variable_sizes[name])]
 
                     # Process the constraint type
                     constr_type = convar.find('constraintType')
@@ -534,21 +576,26 @@ class LEGOModel(Group):
                         if constr_type.text == 'inequality':
                             constr_oper = convar.find('constraintOperator')
                             if constr_oper is not None:
-                                oper = constr_oper.text
-                                if oper == '>=' or oper == '>':
-                                    con['lower'] = ref
-                                elif oper == '<=' or oper == '<':
-                                    con['upper'] = ref
+                                opers_str = constr_oper.text
+                                if ';' in opers_str:
+                                    opers = opers_str.split(';')
                                 else:
-                                    raise ValueError('invalid constraintOperator "%s" for constraint "%s"' % (oper, name))
+                                    opers = [opers_str]
+                                for idx, oper in enumerate(opers):
+                                    if oper == '>=' or oper == '>':
+                                        con['lower'] = ref_vals[idx]
+                                    elif oper == '<=' or oper == '<':
+                                        con['upper'] = ref_vals[idx]
+                                    else:
+                                        raise ValueError('invalid constraintOperator "%s" for constraint "%s"' % (oper, name))
                             else:
                                 warnings.warn(
                                     'no constraintOperator given for inequality constraint. Default is "&lt;=".')
-                                con['upper'] = ref
+                                con['upper'] = ref_vals[0]
                         elif constr_type.text == 'equality':
                             if convar.find('constraintOperator') is not None:
                                 warnings.warn('constraintOperator given for an equalityConstraint will be ignored')
-                            con['equals'] = ref
+                            con['equals'] = ref_vals[0]
                         else:
                             raise ValueError('invalid constraintType "%s" for constraint "%s".' % (constr_type.text, name))
                     else:
@@ -564,12 +611,15 @@ class LEGOModel(Group):
         # type: () -> str
         """:obj:`str`: Name of the objective variable."""
         objvars = self.elem_params.find('objectiveVariables')
-        if objvars is None:
-            raise InvalidCMDOWSFileError('does not contain (valid) objective variables')
-        if len(objvars) > 1:
-            raise InvalidCMDOWSFileError('contains multiple objectives, but this is not supported')
+        if self.objective_required:
+            if objvars is None:
+                raise InvalidCMDOWSFileError('does not contain (valid) objective variables')
+            if len(objvars) > 1:
+                raise InvalidCMDOWSFileError('contains multiple objectives, but this is not supported')
+            return xpath_to_param(objvars[0].find('parameterUID').text)
+        else:
+            pass
 
-        return xpath_to_param(objvars[0].find('parameterUID').text)
 
     @CachedProperty
     def coupled_group(self):
@@ -612,7 +662,7 @@ class LEGOModel(Group):
                     raise ValueError('Specified convergerType "%s" is not supported.' % conv_type)
             else:
                 coupled_group.linear_solver = LinearRunOnce()
-                coupled_group.nonlinear_solver = NonLinearRunOnce()
+                coupled_group.nonlinear_solver = NonlinearRunOnce()
             return coupled_group
         return None
 
@@ -735,7 +785,8 @@ class LEGOModel(Group):
             self.add_constraint(name, lower=value['lower'], upper=value['upper'], equals=value['equals'])
 
         # Add the objective
-        self.add_objective(self.objective)
+        if self.objective:
+            self.add_objective(self.objective)
 
     def initialize_from_xml(self, xml):
         # type: (Union[str, _ElementTree]) -> None

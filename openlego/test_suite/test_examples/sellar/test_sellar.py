@@ -23,7 +23,7 @@ import unittest
 
 from openmdao.api import Problem, ScipyOptimizer
 
-from openlego.api import LEGOModel
+from openlego.core.model import LEGOModel
 
 
 def solve_sellar(cmdows_file):

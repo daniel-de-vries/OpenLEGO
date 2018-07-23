@@ -220,8 +220,14 @@ class LEGOModel(Group):
     @CachedProperty
     def elem_problem_def(self):
         # type: () -> _Element
-        """:obj:`etree._Element`: The problemDefition element of this problem's CMDOWS file."""
+        """:obj:`etree._Element`: The problemDefition element of the CMDOWS file."""
         return self.elem_cmdows.find('problemDefinition')
+
+    @CachedProperty
+    def elem_workflow(self):
+        # type: () -> _Element
+        """:obj:`etree._Element`: The workflow element of the CMDOWS file."""
+        return self.elem_cmdows.find('workflow')
 
     @CachedProperty
     def elem_params(self):
@@ -448,7 +454,7 @@ class LEGOModel(Group):
         """:obj:`list` of :obj:`str`: List of executable block ``uIDs`` in the order specified in the CMDOWS file."""
         positions = list()
         uids = list()
-        for block in self.elem_problem_def.iterfind('problemFormulation/executableBlocksOrder/executableBlock'):
+        for block in self.elem_workflow.iterfind('processGraph/metadata/executableBlocksOrder/executableBlock'):
             uid = block.text
             positions.append(int(block.attrib['position']))
             uids.append(uid)

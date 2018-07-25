@@ -31,7 +31,8 @@ from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, L
 from typing import Union, Optional, List, Any, Dict, Tuple
 
 from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str_to_valid_sys_name, parse_string
-from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
+from openlego.utils.xml_utils import xpath_to_param, xml_to_dict, get_element_of_uid, dictify_loopnesting, \
+    get_related_parameter_uid
 from .abstract_discipline import AbstractDiscipline
 from .discipline_component import DisciplineComponent
 
@@ -248,6 +249,39 @@ class LEGOModel(Group):
         return arch_elems
 
     @CachedProperty
+    def elem_loopnesting(self):
+        # type: () -> _Element
+        """:obj:`etree._Element`: The loopNesting element of the CMDOWS file."""
+        loopnesting_elem = self.elem_workflow.find('processGraph/metadata/loopNesting')
+        if loopnesting_elem is None:
+            raise InvalidCMDOWSFileError('does not contain loopNesting element')
+        return loopnesting_elem
+
+    @CachedProperty
+    def has_optimizer(self):
+        # type: () -> bool
+        """:obj:`bool`: True if there is an optimizer, False if not."""
+        if self.elem_arch_elems.find('executableBlocks/optimizers/optimizer') is not None:
+            return True
+        return False
+
+    @CachedProperty
+    def has_doe(self):
+        # type: () -> bool
+        """:obj:`bool`: True if there is a DOE component, False if not."""
+        if self.elem_arch_elems.find('executableBlocks/does/doe') is not None:
+            return True
+        return False
+
+    @CachedProperty
+    def has_driver(self):
+        # type: () -> bool
+        """:obj:`bool`: True if there is a driver component (DOE or optimizer), False if not."""
+        if self.has_doe or self.has_optimizer:
+            return True
+        return False
+
+    @CachedProperty
     def has_converger(self):
         # type: () -> bool
         """:obj:`bool`: True if there is a converger, False if not."""
@@ -259,7 +293,7 @@ class LEGOModel(Group):
     def objective_required(self):
         # type: () -> bool
         """:obj:`bool`: True if an objective value is required, False if not."""
-        if self.elem_arch_elems.find('executableBlocks/optimizers/optimizer') is not None:
+        if self.has_optimizer:
             return True
         return False
 
@@ -302,8 +336,7 @@ class LEGOModel(Group):
         mapped_params = dict()
         for elem_category in self.elem_arch_elems.find('parameters').iterchildren():
             for elem_param in elem_category.iterchildren():
-                param = elem_param.attrib['uID']
-                mapped = elem_param.find('relatedParameterUID').text
+                param, mapped = get_related_parameter_uid(elem_param, self.elem_cmdows)
                 mapped_params.update({param: mapped})
         return mapped_params
 
@@ -416,10 +449,10 @@ class LEGOModel(Group):
 
         # First create a map between related param and coupling copy var
         for var in self.elem_arch_elems.iter('couplingCopyVariable'):
-            related_param = var.find('relatedParameterUID').text
-            coupling_vars.update({xpath_to_param(related_param): xpath_to_param(var.attrib['uID'])})
+            param, mapped = get_related_parameter_uid(var, self.elem_cmdows)
+            coupling_vars.update({xpath_to_param(mapped): xpath_to_param(param)})
 
-        # Then update dict with corresponding consitency constraint var
+        # Then update dict with corresponding consistency constraint var
         for convar in self.elem_arch_elems.iter('consistencyConstraintVariable'):
             param = xpath_to_param(convar.find('relatedParameterUID').text)
             if param not in coupling_vars:
@@ -470,6 +503,45 @@ class LEGOModel(Group):
         return _coupled_blocks
 
     @CachedProperty
+    def loopnesting_dict(self):
+        # type: () -> Dict[str, dict]
+        """:obj:`dict`: Dictionary of the loopNesting XML element."""
+        return dictify_loopnesting(self.elem_loopnesting)
+
+    @CachedProperty
+    def loopelement_details(self):
+        # type: () -> Dict[str]
+        """:obj:`dict` of :obj:`str`: Dictionary with mapping of loop elements specified in the CMDOWS file."""
+        _loopelement_details = {}
+        for elem in self.elem_arch_elems.iterfind('executableBlocks/coordinators/coordinator'):
+            _loopelement_details[elem.attrib['uID']] = 'coordinator'
+        for elem in self.elem_arch_elems.iterfind('executableBlocks/convergers/converger'):
+            _loopelement_details[elem.attrib['uID']] = 'converger'
+        for elem in self.elem_arch_elems.iterfind('executableBlocks/optimizers/optimizer'):
+            _loopelement_details[elem.attrib['uID']] = 'optimizer'
+        for elem in self.elem_arch_elems.iterfind('executableBlocks/does/doe'):
+            _loopelement_details[elem.attrib['uID']] = 'doe'
+        return _loopelement_details
+
+    @CachedProperty
+    def coupled_hierarchy(self):
+        # type: () -> List[str, dict]
+        """:obj:`list`: List containing the hierarchy of the coupled blocks for grouped convergence."""
+        return self.get_coupled_hierarchy(self.loopnesting_dict)
+
+    def get_coupled_hierarchy(self, hierarchy):
+        _coupled_hierarchy = []
+        for entry in hierarchy:
+            if isinstance(entry, dict):
+                keys = entry.keys()
+                assert len(keys) == 1, 'One key is expected in the dictionary of a process hierarchy.'
+                if self.loopelement_details[keys[0]] == 'converger':
+                    _coupled_hierarchy.append(entry)
+                else:
+                    return self.get_coupled_hierarchy(entry[keys[0]])
+        return _coupled_hierarchy
+
+    @CachedProperty
     def system_inputs(self):
         # type: () -> Dict[str, int]
         """:obj:`dict`: Dictionary containing the system input sizes by their names."""
@@ -488,8 +560,10 @@ class LEGOModel(Group):
         """:obj:`dict`: Dictionary containing the design variables' initial values, lower bounds, and upper bounds."""
         desvars = self.elem_params.find('designVariables')
         if desvars is None:
-            raise Exception('cmdows does not contain (valid) design variables')
-
+            if self.has_driver:
+                raise Exception('CMDOWS file {} does contain an optimizer, but no (valid) design variables'.format(self.cmdows_path))
+            else:
+                return {}
         design_vars = {}
         for desvar in desvars:
             name = xpath_to_param(desvar.find('parameterUID').text)
@@ -673,6 +747,29 @@ class LEGOModel(Group):
         return None
 
     @CachedProperty
+    def subsystem_optimization_groups(self):
+        # type: () -> Optional[list]
+        """:obj:`list`, optional: list containing groups of suboptimizations used in distributed architectures.
+
+        If not subsystem optimizations are required based on the CMDOWS file then this property is `None`.
+        """
+        if self.subsystem_optimizations:
+            pass
+            # Add inputs (standardized?)
+            # Add output
+            # Declare partials
+            # Set subproblem
+            # Define copies in params subsystem
+            # Define design variables
+            # Define components
+            # Connect everything together (through promotion?)
+            # Set subproblem optimizer
+            # Add design variables, objective, constraints
+            # Setup and final setup
+
+
+    # TODO: This can be removed, I think.
+    @CachedProperty
     def consistency_constraint_group(self):
         # type: () -> Optional[Group]
         """:obj:`Group`, optional: Group containing ExecComps for the consistency constraints."""
@@ -772,7 +869,11 @@ class LEGOModel(Group):
                 self.add_subsystem(str_to_valid_sys_name(name), component, ['*'])
 
         # Add the coupled group
-        if self.coupled_group is not None:
+        test1 = self.loopnesting_dict
+        test2 = self.coupled_hierarchy
+
+        # TODO: Start here to group the coupled functions based on the hierarchy...
+        if self.coupled_hierarchy:
             self.add_subsystem('coupled_group', self.coupled_group, ['*'])
 
         # Add the consistency constraint group

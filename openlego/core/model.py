@@ -22,6 +22,7 @@ from __future__ import absolute_import, division, print_function
 import imp
 import re
 import warnings
+from collections import OrderedDict
 
 import numpy as np
 from lxml import etree
@@ -700,19 +701,55 @@ class LEGOModel(Group):
         else:
             pass
 
-
-    @CachedProperty
-    def coupled_group(self):
-        # type: () -> Optional[Group]
+    def configure_coupled_groups(self, hierarchy, root=True):
+        # type: (List) -> Optional[Group]
         """:obj:`Group`, optional: Group wrapping the coupled blocks with a converger specified in the CMDOWS file.
 
-        If no coupled blocks are specified in the CMDOWS file this property is `None`.
+        This method enables the iterative configuration of groups of distributed convergers based on the convergence
+        hierarchy.
         """
-        if self.coupled_blocks:
+        # TODO: Should the case be checked where non-converged blocks are present in the coupled_hierarchy?
+        if not root:
             coupled_group = Group()
-            for uid in self.coupled_blocks:
+        for entry in hierarchy:
+            if isinstance(entry, dict):  # if entry specifies a coupled group
+                uid = entry.keys()[0]
+                if root:
+                    subsys = self.add_subsystem(str_to_valid_sys_name(uid), self.configure_coupled_groups(entry[uid], False), ['*'])
+                else:
+                    subsys = coupled_group.add_subsystem(str_to_valid_sys_name(uid), self.configure_coupled_groups(entry[uid], False), ['*'])
+                conv_elem = get_element_of_uid(self.elem_arch_elems, uid)
+                # Define linear solver
+                linsol_elem = conv_elem.find('settings/linearSolver')
+                if linsol_elem.find('method').text == 'Gauss-Seidel':
+                    linsol = subsys.linear_solver = LinearBlockGS()
+                elif linsol_elem.find('method').text == 'Jacobi':
+                    linsol = subsys.linear_solver = LinearBlockJac()
+                else:
+                    raise ValueError('Specified convergerType "{}" is not supported.'
+                                     .format(linsol_elem.find('method').text))
+                linsol.options['maxiter'] = int(linsol_elem.find('maximumIterations').text)
+                linsol.options['atol'] = float(linsol_elem.find('convergenceToleranceAbsolute').text)
+                linsol.options['rtol'] = float(linsol_elem.find('convergenceToleranceRelative').text)
+
+                # Define nonlinear solver
+                nonlinsol_elem = conv_elem.find('settings/nonlinearSolver')
+                if nonlinsol_elem.find('method').text == 'Gauss-Seidel':
+                    nonlinsol = subsys.nonlinear_solver = NonlinearBlockGS()
+                elif nonlinsol_elem.find('method').text == 'Jacobi':
+                    nonlinsol = subsys.nonlinear_solver = NonlinearBlockJac()
+                else:
+                    raise ValueError('Specified convergerType "{}" is not supported.'
+                                     .format(nonlinsol_elem.find('method').text))
+                nonlinsol.options['maxiter'] = int(nonlinsol_elem.find('maximumIterations').text)
+                nonlinsol.options['atol'] = float(nonlinsol_elem.find('convergenceToleranceAbsolute').text)
+                nonlinsol.options['rtol'] = float(nonlinsol_elem.find('convergenceToleranceRelative').text)
+            elif isinstance(entry, str):  # if entry specifies an executable block
+                if root:
+                    raise AssertionError('Code was not expected to get here for root == True.')
                 # Get the correct DisciplineComponent or MathematicalFunction
                 promotes = ['*']  # type: List[Union[str, Tuple[str, str]]]
+                uid = entry
                 if uid in self.discipline_components:
                     block = self.discipline_components[uid]
 
@@ -724,27 +761,17 @@ class LEGOModel(Group):
                 elif uid in self.mathematical_functions_groups:
                     block = self.mathematical_functions_groups[uid]
                 else:
-                    raise RuntimeError
-
+                    raise RuntimeError('uID {} not found in discipline_components, nor mathematical_functions_groups.'
+                                       .format(uid))
                 # Add the block to the group
                 coupled_group.add_subsystem(str_to_valid_sys_name(uid), block, promotes)
-
-            # Find the convergence type of the coupled group
-            if self.has_converger:
-                conv_type = self.elem_problem_def.find('problemFormulation/convergerType').text
-                if conv_type == 'Gauss-Seidel':
-                    coupled_group.linear_solver = LinearBlockGS()
-                    coupled_group.nonlinear_solver = NonlinearBlockGS()
-                elif conv_type == 'Jacobi':
-                    coupled_group.linear_solver = LinearBlockJac()
-                    coupled_group.nonlinear_solver = NonlinearBlockJac()
-                else:
-                    raise ValueError('Specified convergerType "%s" is not supported.' % conv_type)
             else:
-                coupled_group.linear_solver = LinearRunOnce()
-                coupled_group.nonlinear_solver = NonlinearRunOnce()
+                raise ValueError('Unexpected value type {} encountered in the coupled_hierarchy {}.'
+                                 .format(type(entry), hierarchy))
+        if root:
+            return subsys
+        else:
             return coupled_group
-        return None
 
     @CachedProperty
     def subsystem_optimization_groups(self):
@@ -768,7 +795,7 @@ class LEGOModel(Group):
             # Setup and final setup
 
 
-    # TODO: This can be removed, I think.
+    # TODO: This can be removed, I think (consistency constraint functions are now always mathematical functions...).
     @CachedProperty
     def consistency_constraint_group(self):
         # type: () -> Optional[Group]
@@ -821,7 +848,8 @@ class LEGOModel(Group):
             if block in self.coupled_blocks:
                 n += 1
                 if not coupled_group_set:
-                    _system_order.append('coupled_group')
+                    for entry in self.coupled_hierarchy:
+                        _system_order.append(str_to_valid_sys_name(entry.keys()[0]))
                     coupled_group_set = True
             elif block in self.discipline_components or block in self.mathematical_functions_groups:
                 n += 1
@@ -868,13 +896,9 @@ class LEGOModel(Group):
             if name not in self.coupled_blocks:
                 self.add_subsystem(str_to_valid_sys_name(name), component, ['*'])
 
-        # Add the coupled group
-        test1 = self.loopnesting_dict
-        test2 = self.coupled_hierarchy
-
-        # TODO: Start here to group the coupled functions based on the hierarchy...
+        # Add the coupled groups
         if self.coupled_hierarchy:
-            self.add_subsystem('coupled_group', self.coupled_group, ['*'])
+            self.configure_coupled_groups(self.coupled_hierarchy, True)
 
         # Add the consistency constraint group
         if self.consistency_constraint_group is not None:

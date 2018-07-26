@@ -475,12 +475,15 @@ class LEGOModel(Group):
     def coupling_var_cons(self):
         # type: () -> Dict[str, str]
         """:obj:`dict`: Dictionary with coupling variable constraints."""
-        coupling_var_cons = None
-        if 'con' in self.coupling_vars.values()[0]:
-            coupling_var_cons = dict()
-            for var, value in self.coupling_vars.items():
-                coupling_var_cons.update({var: value['con']})
-        return coupling_var_cons
+        coupling_var_cons = dict()
+        for var, value in self.coupling_vars.items():
+            if isinstance(value, dict):
+                if 'con' in value:
+                    coupling_var_cons.update({var: value['con']})
+        if coupling_var_cons:
+            return coupling_var_cons
+        else:
+            return None
 
     @CachedProperty
     def block_order(self):

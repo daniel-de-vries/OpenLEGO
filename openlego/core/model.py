@@ -20,9 +20,7 @@ This file contains the definition of the `LEGOModel` class.
 from __future__ import absolute_import, division, print_function
 
 import imp
-import re
 import warnings
-from collections import OrderedDict
 
 import numpy as np
 from lxml import etree
@@ -711,7 +709,8 @@ class LEGOModel(Group):
         This method enables the iterative configuration of groups of distributed convergers based on the convergence
         hierarchy.
         """
-        # TODO: Should the case be checked where non-converged blocks are present in the coupled_hierarchy?
+        # TODO: Should the case be checked where non-converged blocks are present in the coupled_hierarchy? YES
+        # TODO: KADMOS should be adjusted to account for invalid coupled blocks...
         if not root:
             coupled_group = Group()
         for entry in hierarchy:
@@ -797,49 +796,6 @@ class LEGOModel(Group):
             # Add design variables, objective, constraints
             # Setup and final setup
 
-
-    # TODO: This can be removed, I think (consistency constraint functions are now always mathematical functions...).
-    @CachedProperty
-    def consistency_constraint_group(self):
-        # type: () -> Optional[Group]
-        """:obj:`Group`, optional: Group containing ExecComps for the consistency constraints."""
-        elem_ccf = self.elem_arch_elems.find('executableBlocks/consistencyConstraintFunctions')
-        if elem_ccf is not None:
-            group = Group()
-
-            # Loop over all consistencyConstraintFunction elements
-            for child in elem_ccf:
-                uid = child.attrib['uID']
-                xpaths = []
-
-                # Loop over all coupling variables which need to be constraint by this consistencyConstraintFunction
-                for value in self.elem_cmdows.xpath(
-                        'workflow/dataGraph/edges/edge[toExecutableBlockUID="{}"]/fromParameterUID/text()'.format(uid)):
-                    # Only add a given variable once
-                    if 'architectureNodes' not in value and value not in xpaths:
-                        xpaths.append(value)
-
-                        name = xpath_to_param(value)
-                        size = self.variable_sizes[name]
-                        coupling_var = self.coupling_vars[name]
-
-                        if size == 1:
-                            val = 0.
-                        else:
-                            val = np.zeros(size)
-
-                        sys_name = str_to_valid_sys_name(self.elem_arch_elems.xpath(
-                            'parameters/consistencyConstraintVariables/' +
-                            'consistencyConstraintVariable[@uID="{}"]/label/text()'.format(coupling_var['con']))[0])
-
-                        # Add an ExecComp to the Group for this equality constraint
-                        group.add_subsystem(
-                            sys_name,
-                            ExecComp('g = y_c - y', g=val, y_c=val, y=val),
-                            [('g', coupling_var['con']), ('y_c', coupling_var['copy']), ('y', name)])
-            return group
-        return None
-
     @CachedProperty
     def system_order(self):
         # type: () -> List[str]
@@ -860,8 +816,6 @@ class LEGOModel(Group):
 
         if n < len(self.discipline_components) + len(self.mathematical_functions_groups):
             raise InvalidCMDOWSFileError('executableBlocksOrder is incomplete')
-        if self.consistency_constraint_group is not None:
-            _system_order.append('consistency_constraints')
 
         return _system_order
 
@@ -902,10 +856,6 @@ class LEGOModel(Group):
         # Add the coupled groups
         if self.coupled_hierarchy:
             self.configure_coupled_groups(self.coupled_hierarchy, True)
-
-        # Add the consistency constraint group
-        if self.consistency_constraint_group is not None:
-            self.add_subsystem('consistency_constraints', self.consistency_constraint_group, ['*'])
 
         # Put the blocks in the correct order
         self.set_order(list(self.system_order))

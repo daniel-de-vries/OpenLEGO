@@ -334,15 +334,17 @@ def get_related_parameter_uid(elem_param, full_xml):
 
 
 def get_element_of_uid(xml, uid):
+    # type: (etree._ElementTree, str) -> etree._ElementTree
     """Method to get the element based on a UID value.
 
-    # TODO: update docstring
-    :param uid: uID of element
-    :type uid: basestring
-    :param expected_tag: (optional) expected tag
-    :type expected_tag: str
-    :return: element
-    :rtype: str
+    Parameters
+    ----------
+        xml : :obj:`etree._ElementTree`
+            `etree._ElementTree` of an XML file where the uID should be found.
+
+        uid : str
+            uID to be found.
+
     """
     xpath_expression = get_uid_search_xpath(uid)
     els = xml.xpath(xpath_expression)

@@ -66,6 +66,7 @@ class BaseIterationPlotter(BaseRecorder):
         # type: () -> None
         """Initialize the class."""
         super(BaseIterationPlotter, self).__init__()
+        # TODO: why is this code commented out?
         #self.options.declare('save_on_close', False, desc='Set to True to save figure when closing the Recorder')
         self.save_settings = {'path': self.__class__.__name__ + '_figure.png',
                               'dpi': 600, 'ar': 1.61803398875, 'width': 4000}
@@ -79,6 +80,7 @@ class BaseIterationPlotter(BaseRecorder):
         self._toolbar = None
         self._fig = None
 
+        # TODO: why did this have to change from .options to .recording_options?
         self.recording_options['record_objectives'] = True
         self.recording_options['record_constraints'] = True
 

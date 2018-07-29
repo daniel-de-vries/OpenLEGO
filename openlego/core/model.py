@@ -30,8 +30,8 @@ from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, L
 from typing import Union, Optional, List, Any, Dict, Tuple
 
 from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str_to_valid_sys_name, parse_string
-from openlego.utils.xml_utils import xpath_to_param, xml_to_dict, get_element_of_uid, dictify_loopnesting, \
-    get_related_parameter_uid
+from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
+from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid, get_loop_nesting_dict
 from .abstract_discipline import AbstractDiscipline
 from .discipline_component import DisciplineComponent
 
@@ -248,7 +248,7 @@ class LEGOModel(Group):
         return arch_elems
 
     @CachedProperty
-    def elem_loopnesting(self):
+    def elem_loop_nesting(self):
         # type: () -> _Element
         """:obj:`etree._Element`: The loopNesting element of the CMDOWS file."""
         loopnesting_elem = self.elem_workflow.find('processGraph/metadata/loopNesting')
@@ -505,13 +505,13 @@ class LEGOModel(Group):
         return _coupled_blocks
 
     @CachedProperty
-    def loopnesting_dict(self):
+    def loop_nesting_dict(self):
         # type: () -> Dict[str, dict]
         """:obj:`dict`: Dictionary of the loopNesting XML element."""
-        return dictify_loopnesting(self.elem_loopnesting)
+        return get_loop_nesting_dict(self.elem_loop_nesting)
 
     @CachedProperty
-    def loopelement_details(self):
+    def loop_element_details(self):
         # type: () -> Dict[str]
         """:obj:`dict` of :obj:`str`: Dictionary with mapping of loop elements specified in the CMDOWS file."""
         _loopelement_details = {}
@@ -529,18 +529,20 @@ class LEGOModel(Group):
     def coupled_hierarchy(self):
         # type: () -> List[str, dict]
         """:obj:`list`: List containing the hierarchy of the coupled blocks for grouped convergence."""
-        return self.get_coupled_hierarchy(self.loopnesting_dict)
+        return self._get_coupled_hierarchy(self.loop_nesting_dict)
 
-    def get_coupled_hierarchy(self, hierarchy):
+    # TODO: add function signature description
+    # TODO: add function docstring
+    def _get_coupled_hierarchy(self, hierarchy):
         _coupled_hierarchy = []
         for entry in hierarchy:
             if isinstance(entry, dict):
                 keys = entry.keys()
                 assert len(keys) == 1, 'One key is expected in the dictionary of a process hierarchy.'
-                if self.loopelement_details[keys[0]] == 'converger':
+                if self.loop_element_details[keys[0]] == 'converger':
                     _coupled_hierarchy.append(entry)
                 else:
-                    return self.get_coupled_hierarchy(entry[keys[0]])
+                    return self._get_coupled_hierarchy(entry[keys[0]])
         return _coupled_hierarchy
 
     @CachedProperty
@@ -563,7 +565,9 @@ class LEGOModel(Group):
         desvars = self.elem_params.find('designVariables')
         if desvars is None:
             if self.has_driver:
-                raise Exception('CMDOWS file {} does contain an optimizer, but no (valid) design variables'.format(self.cmdows_path))
+                raise Exception(
+                    'CMDOWS file {} does contain an optimizer, but no (valid) design variables'.format(self.cmdows_path)
+                )
             else:
                 return {}
         design_vars = {}
@@ -580,6 +584,7 @@ class LEGOModel(Group):
                 warnings.warn('no nominalValue given for designVariable "%s". Default is all zeros.' % name)
                 initial = np.zeros(self.variable_sizes[name])
 
+            # TODO: remove code if it is no longer going to be used
             # if name in self.coupling_vars:
             #     # If this is a coupling variable the bounds are -1e99 and 1e99 and it should not be normalized
             #     design_vars.update(
@@ -645,7 +650,8 @@ class LEGOModel(Group):
                             if isinstance(ref_val, str):
                                 raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
                             elif not self.does_value_fit(name, ref_val):
-                                warnings.warn('incompatible size of constraint "%s". Will assume the same for all.' % name)
+                                warnings.warn(
+                                    'incompatible size of constraint "%s". Will assume the same for all.' % name)
                                 ref_val = np.ones(self.variable_sizes[name]) * np.atleast_1d(ref_val)[0]
                             ref_vals.append(ref_val)
                     else:
@@ -669,7 +675,8 @@ class LEGOModel(Group):
                                     elif oper == '<=' or oper == '<':
                                         con['upper'] = ref_vals[idx]
                                     else:
-                                        raise ValueError('invalid constraintOperator "%s" for constraint "%s"' % (oper, name))
+                                        raise ValueError(
+                                            'invalid constraintOperator "%s" for constraint "%s"' % (oper, name))
                             else:
                                 warnings.warn(
                                     'no constraintOperator given for inequality constraint. Default is "&lt;=".')
@@ -679,7 +686,8 @@ class LEGOModel(Group):
                                 warnings.warn('constraintOperator given for an equalityConstraint will be ignored')
                             con['equals'] = ref_vals[0]
                         else:
-                            raise ValueError('invalid constraintType "%s" for constraint "%s".' % (constr_type.text, name))
+                            raise ValueError(
+                                'invalid constraintType "%s" for constraint "%s".' % (constr_type.text, name))
                     else:
                         warnings.warn('no constraintType specified for constraint "%s". Default is a <= inequality.')
                         con['upper'] = ref
@@ -702,7 +710,7 @@ class LEGOModel(Group):
         else:
             pass
 
-    def configure_coupled_groups(self, hierarchy, root=True):
+    def _configure_coupled_groups(self, hierarchy, root=True):
         # type: (List) -> Optional[Group]
         """:obj:`Group`, optional: Group wrapping the coupled blocks with a converger specified in the CMDOWS file.
 
@@ -717,10 +725,12 @@ class LEGOModel(Group):
             if isinstance(entry, dict):  # if entry specifies a coupled group
                 uid = entry.keys()[0]
                 if root:
-                    subsys = self.add_subsystem(str_to_valid_sys_name(uid), self.configure_coupled_groups(entry[uid], False), ['*'])
+                    subsys = self.add_subsystem(str_to_valid_sys_name(uid),
+                                                self._configure_coupled_groups(entry[uid], False), ['*'])
                 else:
-                    subsys = coupled_group.add_subsystem(str_to_valid_sys_name(uid), self.configure_coupled_groups(entry[uid], False), ['*'])
-                conv_elem = get_element_of_uid(self.elem_arch_elems, uid)
+                    subsys = coupled_group.add_subsystem(str_to_valid_sys_name(uid),
+                                                         self._configure_coupled_groups(entry[uid], False), ['*'])
+                conv_elem = get_element_by_uid(self.elem_arch_elems, uid)
                 # Define linear solver
                 linsol_elem = conv_elem.find('settings/linearSolver')
                 if linsol_elem.find('method').text == 'Gauss-Seidel':
@@ -775,6 +785,7 @@ class LEGOModel(Group):
         else:
             return coupled_group
 
+    # TODO: implement this property
     @CachedProperty
     def subsystem_optimization_groups(self):
         # type: () -> Optional[list]
@@ -855,7 +866,7 @@ class LEGOModel(Group):
 
         # Add the coupled groups
         if self.coupled_hierarchy:
-            self.configure_coupled_groups(self.coupled_hierarchy, True)
+            self._configure_coupled_groups(self.coupled_hierarchy, True)
 
         # Put the blocks in the correct order
         self.set_order(list(self.system_order))

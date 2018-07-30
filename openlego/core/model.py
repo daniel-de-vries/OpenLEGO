@@ -26,12 +26,12 @@ import numpy as np
 from lxml import etree
 from lxml.etree import _Element, _ElementTree
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
-    LinearRunOnce, ExecComp, NonlinearRunOnce
+    LinearRunOnce, ExecComp, NonlinearRunOnce, DirectSolver
 from typing import Union, Optional, List, Any, Dict, Tuple
 
 from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str_to_valid_sys_name, parse_string
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
-from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid, get_loop_nesting_dict
+from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid, get_loop_nesting_obj
 from .abstract_discipline import AbstractDiscipline
 from .discipline_component import DisciplineComponent
 
@@ -500,7 +500,7 @@ class LEGOModel(Group):
         # type: () -> List[str]
         """:obj:`list` of :obj:`str`: List of ``uIDs`` of the coupled executable blocks specified in the CMDOWS file."""
         _coupled_blocks = []
-        for block in self.elem_problem_def.iterfind('problemRoles/executableBlocks/coupledBlocks/coupledBlock'):
+        for block in self.elem_arch_elems.iterfind('executableBlocks/coupledAnalyses/coupledAnalysis'):
             _coupled_blocks.append(block.text)
         return _coupled_blocks
 
@@ -508,7 +508,7 @@ class LEGOModel(Group):
     def loop_nesting_dict(self):
         # type: () -> Dict[str, dict]
         """:obj:`dict`: Dictionary of the loopNesting XML element."""
-        return get_loop_nesting_dict(self.elem_loop_nesting)
+        return get_loop_nesting_obj(self.elem_loop_nesting)
 
     @CachedProperty
     def loop_element_details(self):
@@ -527,13 +527,14 @@ class LEGOModel(Group):
 
     @CachedProperty
     def coupled_hierarchy(self):
-        # type: () -> List[str, dict]
+        # type: () -> List[dict]
         """:obj:`list`: List containing the hierarchy of the coupled blocks for grouped convergence."""
         return self._get_coupled_hierarchy(self.loop_nesting_dict)
 
-    # TODO: add function signature description
-    # TODO: add function docstring
     def _get_coupled_hierarchy(self, hierarchy):
+        # type: (List) -> List[dict]
+        """:obj:`list`: List containing the hierarchy of the coupled functions which defines the hierarchy of converged
+        groups."""
         _coupled_hierarchy = []
         for entry in hierarchy:
             if isinstance(entry, dict):
@@ -584,15 +585,6 @@ class LEGOModel(Group):
                 warnings.warn('no nominalValue given for designVariable "%s". Default is all zeros.' % name)
                 initial = np.zeros(self.variable_sizes[name])
 
-            # TODO: remove code if it is no longer going to be used
-            # if name in self.coupling_vars:
-            #     # If this is a coupling variable the bounds are -1e99 and 1e99 and it should not be normalized
-            #     design_vars.update(
-            #         {self.coupling_vars[name]['copy']: {'initial': initial,
-            #                                             'lower': -1e99*np.ones(self.variable_sizes[name]),
-            #                                             'upper': 1e99*np.ones(self.variable_sizes[name]),
-            #                                             'ref0': None, 'ref': None}})
-            # else:
             # Obtain the lower and upper bounds
             bounds = 2 * [None]  # type: List[Optional[str]]
             limit_range = desvar.find('validRanges/limitRange')
@@ -604,8 +596,8 @@ class LEGOModel(Group):
                         if not self.does_value_fit(name, bounds[index]):
                             raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
             else:
-                bounds[0] = None#-1e99*np.ones(self.variable_sizes[name])
-                bounds[1] = None#1e99*np.ones(self.variable_sizes[name])
+                bounds[0] = None
+                bounds[1] = None
 
             # Add the design variable to the dict
             node_name = name if name not in self.coupling_vars else self.coupling_vars[name]['copy']
@@ -717,8 +709,6 @@ class LEGOModel(Group):
         This method enables the iterative configuration of groups of distributed convergers based on the convergence
         hierarchy.
         """
-        # TODO: Should the case be checked where non-converged blocks are present in the coupled_hierarchy? YES
-        # TODO: KADMOS should be adjusted to account for invalid coupled blocks...
         if not root:
             coupled_group = Group()
         for entry in hierarchy:
@@ -733,29 +723,39 @@ class LEGOModel(Group):
                 conv_elem = get_element_by_uid(self.elem_arch_elems, uid)
                 # Define linear solver
                 linsol_elem = conv_elem.find('settings/linearSolver')
-                if linsol_elem.find('method').text == 'Gauss-Seidel':
-                    linsol = subsys.linear_solver = LinearBlockGS()
-                elif linsol_elem.find('method').text == 'Jacobi':
-                    linsol = subsys.linear_solver = LinearBlockJac()
+                if isinstance(linsol_elem, _Element):
+                    if linsol_elem.find('method').text == 'Gauss-Seidel':
+                        linsol = subsys.linear_solver = LinearBlockGS()
+                    elif linsol_elem.find('method').text == 'Jacobi':
+                        linsol = subsys.linear_solver = LinearBlockJac()
+                    else:
+                        raise ValueError('Specified convergerType "{}" is not supported.'
+                                         .format(linsol_elem.find('method').text))
+                    linsol.options['maxiter'] = int(linsol_elem.find('maximumIterations').text)
+                    linsol.options['atol'] = float(linsol_elem.find('convergenceToleranceAbsolute').text)
+                    linsol.options['rtol'] = float(linsol_elem.find('convergenceToleranceRelative').text)
                 else:
-                    raise ValueError('Specified convergerType "{}" is not supported.'
-                                     .format(linsol_elem.find('method').text))
-                linsol.options['maxiter'] = int(linsol_elem.find('maximumIterations').text)
-                linsol.options['atol'] = float(linsol_elem.find('convergenceToleranceAbsolute').text)
-                linsol.options['rtol'] = float(linsol_elem.find('convergenceToleranceRelative').text)
+                    subsys.linear_solver = DirectSolver()
+                    warnings.warn('Linear solver was not defined in CMDOWS file for converger {}. linear_solver set to'
+                                  ' default "DirectSolver()".'.format(str_to_valid_sys_name(uid)))
 
                 # Define nonlinear solver
                 nonlinsol_elem = conv_elem.find('settings/nonlinearSolver')
-                if nonlinsol_elem.find('method').text == 'Gauss-Seidel':
-                    nonlinsol = subsys.nonlinear_solver = NonlinearBlockGS()
-                elif nonlinsol_elem.find('method').text == 'Jacobi':
-                    nonlinsol = subsys.nonlinear_solver = NonlinearBlockJac()
+                if isinstance(nonlinsol_elem, _Element):
+                    if nonlinsol_elem.find('method').text == 'Gauss-Seidel':
+                        nonlinsol = subsys.nonlinear_solver = NonlinearBlockGS()
+                    elif nonlinsol_elem.find('method').text == 'Jacobi':
+                        nonlinsol = subsys.nonlinear_solver = NonlinearBlockJac()
+                    else:
+                        raise ValueError('Specified convergerType "{}" is not supported.'
+                                         .format(nonlinsol_elem.find('method').text))
+                    nonlinsol.options['maxiter'] = int(nonlinsol_elem.find('maximumIterations').text)
+                    nonlinsol.options['atol'] = float(nonlinsol_elem.find('convergenceToleranceAbsolute').text)
+                    nonlinsol.options['rtol'] = float(nonlinsol_elem.find('convergenceToleranceRelative').text)
                 else:
-                    raise ValueError('Specified convergerType "{}" is not supported.'
-                                     .format(nonlinsol_elem.find('method').text))
-                nonlinsol.options['maxiter'] = int(nonlinsol_elem.find('maximumIterations').text)
-                nonlinsol.options['atol'] = float(nonlinsol_elem.find('convergenceToleranceAbsolute').text)
-                nonlinsol.options['rtol'] = float(nonlinsol_elem.find('convergenceToleranceRelative').text)
+                    subsys.nonlinear_solver = NonlinearRunOnce()
+                    warnings.warn('Nonlinear solver was not defined in CMDOWS file for converger {}. nonlinear_solver'
+                                  ' set to default "NonlinearRunOnce()".'.format(str_to_valid_sys_name(uid)))
             elif isinstance(entry, str):  # if entry specifies an executable block
                 if root:
                     raise AssertionError('Code was not expected to get here for root == True.')
@@ -766,6 +766,7 @@ class LEGOModel(Group):
                     block = self.discipline_components[uid]
 
                     # Change input variable names if they are provided as copies of coupling variables
+                    # TODO: Remove this section here and add it to the addition for the post-coupled (and other?) functions
                     if not self.has_converger:
                         for i in block.inputs_from_xml.keys():
                             if i in self.coupling_vars:
@@ -785,7 +786,7 @@ class LEGOModel(Group):
         else:
             return coupled_group
 
-    # TODO: implement this property
+    # TODO: implement this property in phase 3 (required for distributed architectures such as BLISS-2000 and CO)
     @CachedProperty
     def subsystem_optimization_groups(self):
         # type: () -> Optional[list]

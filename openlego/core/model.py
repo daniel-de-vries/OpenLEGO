@@ -500,7 +500,7 @@ class LEGOModel(Group):
         # type: () -> List[str]
         """:obj:`list` of :obj:`str`: List of ``uIDs`` of the coupled executable blocks specified in the CMDOWS file."""
         _coupled_blocks = []
-        for block in self.elem_arch_elems.iterfind('executableBlocks/coupledAnalyses/coupledAnalysis'):
+        for block in self.elem_arch_elems.iterfind('executableBlocks/coupledAnalyses/coupledAnalysis/relatedExecutableBlockUID'):
             _coupled_blocks.append(block.text)
         return _coupled_blocks
 
@@ -764,13 +764,6 @@ class LEGOModel(Group):
                 uid = entry
                 if uid in self.discipline_components:
                     block = self.discipline_components[uid]
-
-                    # Change input variable names if they are provided as copies of coupling variables
-                    # TODO: Remove this section here and add it to the addition for the post-coupled (and other?) functions
-                    if not self.has_converger:
-                        for i in block.inputs_from_xml.keys():
-                            if i in self.coupling_vars:
-                                promotes.append((i, self.coupling_vars[i]['copy']))
                 elif uid in self.mathematical_functions_groups:
                     block = self.mathematical_functions_groups[uid]
                 else:
@@ -860,9 +853,17 @@ class LEGOModel(Group):
         # Add all pre-coupling and post-coupling components
         for name, component in self.discipline_components.items():
             if name not in self.coupled_blocks:
-                self.add_subsystem(str_to_valid_sys_name(name), component, ['*'])
+                promotes = ['*']
+                # Change input variable names if they are provided as copies of coupling variables
+                for i in component.inputs_from_xml.keys():
+                    if i in self.coupling_vars:
+                        if isinstance(self.coupling_vars[i], dict):
+                            if 'copy' in self.coupling_vars[i]:
+                                promotes.append((i, self.coupling_vars[i]['copy']))
+                self.add_subsystem(str_to_valid_sys_name(name), component, promotes)
         for name, component in self.mathematical_functions_groups.items():
             if name not in self.coupled_blocks:
+                # TODO: Adjust promotion of variables for copies?
                 self.add_subsystem(str_to_valid_sys_name(name), component, ['*'])
 
         # Add the coupled groups

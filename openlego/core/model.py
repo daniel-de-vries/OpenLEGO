@@ -503,7 +503,8 @@ class LEGOModel(Group):
         # type: () -> List[str]
         """:obj:`list` of :obj:`str`: List of ``uIDs`` of the coupled executable blocks specified in the CMDOWS file."""
         _coupled_blocks = []
-        for block in self.elem_arch_elems.iterfind('executableBlocks/coupledAnalyses/coupledAnalysis/relatedExecutableBlockUID'):
+        for block in self.elem_arch_elems.iterfind(
+                'executableBlocks/coupledAnalyses/coupledAnalysis/relatedExecutableBlockUID'):
             _coupled_blocks.append(block.text)
         return _coupled_blocks
 

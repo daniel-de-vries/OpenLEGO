@@ -61,7 +61,7 @@ setup(
     ],
     install_requires=[
         'kadmos==0.8',
-        'openmdao==2.0.2',
+        'openmdao',
         'lxml',
         'numpy',
         'matplotlib'

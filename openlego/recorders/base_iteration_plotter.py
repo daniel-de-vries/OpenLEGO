@@ -80,7 +80,6 @@ class BaseIterationPlotter(BaseRecorder):
         self._toolbar = None
         self._fig = None
 
-        # TODO: why did this have to change from .options to .recording_options?
         self.recording_options['record_objectives'] = True
         self.recording_options['record_constraints'] = True
 

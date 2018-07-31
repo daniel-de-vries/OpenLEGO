@@ -4,27 +4,28 @@ from __future__ import print_function
 
 from copy import copy
 from lxml.etree import _Element
+from typing import Tuple, Union
 
 
 def get_related_parameter_uid(elem_param, full_xml):
-    # type: (_Element, _Element) -> (str, str)
+    # type: (_Element, _Element) -> Tuple[str, str]
     """Function to retrieve the UID of the related parameter. This UID refers to the original local in the XML file of
      the parameter and is used when a parameter is found in a CMDOWS file which is an architecture type or a higher
      instance.
 
     Parameters
     ----------
-    elem_param : _Element
-        Element of the parameter to be mapped.
-    full_xml : _Element
-        Element of the full XML file in which the related parameter UID should be found.
+        elem_param : _Element
+            Element of the parameter to be mapped.
+        full_xml : _Element
+            Element of the full XML file in which the related parameter UID should be found.
 
     Returns
     -------
-    param : str
-        Original parameter UID for which the related UID is searched for.
-    mapped : str
-        The found related parameter UID.
+        param : str
+            Original parameter UID for which the related UID is searched for.
+        mapped : str
+            The found related parameter UID.
     """
     param = elem_param.attrib['uID']
     if isinstance(elem_param.find('relatedParameterUID'), _Element):
@@ -34,7 +35,7 @@ def get_related_parameter_uid(elem_param, full_xml):
         mapped = related_instance.find('relatedParameterUID').text
     else:
         raise AssertionError('Could not map element {}.'.format(param))
-    return param, mapped
+    return str(param), str(mapped)
 
 
 def get_element_by_uid(xml, uid):
@@ -51,8 +52,8 @@ def get_element_by_uid(xml, uid):
 
     Returns
     -------
-    _Element
-        Element with the right UID.
+        _Element
+            Element with the right UID.
     """
     xpath_expression = get_uid_search_xpath(uid)
     els = xml.xpath(xpath_expression)
@@ -70,13 +71,13 @@ def get_uid_search_xpath(uid):
 
     Parameters
     ----------
-    uid : str
-        Original UID string with XPath expression.
+        uid : str
+            Original UID string with XPath expression.
 
     Returns
     -------
-    str
-        Processed XPath expression to escape quote characters using "concat()".
+        str
+            Processed XPath expression to escape quote characters using "concat()".
     """
     if '"' in uid or '&quot;' in uid:
         uid_concat = "concat('%s')" % uid.replace('&quot;', "\',\'\"\',\'").replace('"', "\',\'\"\',\'")
@@ -86,18 +87,23 @@ def get_uid_search_xpath(uid):
 
 
 def get_loop_nesting_obj(elem):
-    # type: (_Element) -> Optional[list]
+    # type: (_Element) -> Union[list, dict]
     """Function to make an object of the loop hierarchy based on the loopNesting element in a CMDOWS file.
 
     Parameters
     ----------
-    elem : _Element
-        Element in the XML file (loopNesting or one of its subelements)
+        elem : _Element
+            Element in the XML file (loopNesting or one of its subelements)
 
     Returns
     -------
-    list
-        A list object containing dictionaries and string entries to represent the loopNesting element.
+        list or dict
+            A list object containing dictionaries and string entries to represent the loopNesting element.
+
+    Raises
+    ------
+        AssertionError
+            If the provided element is not formatted correctly.
     """
     basic_list = []
     basic_dict = {}

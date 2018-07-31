@@ -20,6 +20,7 @@ This file contains the definition of the `LEGOModel` class.
 from __future__ import absolute_import, division, print_function
 
 import imp
+import os
 import warnings
 
 import numpy as np
@@ -140,17 +141,15 @@ class LEGOModel(Group):
 
     def __integrity_check(self):
         # type: () -> None
-        """Ensure both a CMDOWS file and a knowledge base path have been supplied.
+        """Ensure a CMDOWS file has been supplied.
 
         Raises
         ------
             ValueError
-                If either no CMDOWS file or no knowledge base path has been supplied
+                If no CMDOWS file has been supplied
         """
-        a = self._cmdows_path is None
-        b = self._kb_path is None
-        if a or b:
-            raise ValueError('No ' + a * 'CMDOWS file ' + (a & b) * 'and ' + b * 'knowledge base path ' + 'specified!')
+        if self._cmdows_path is None:
+            raise ValueError('No CMDOWS file specified!')
 
     def invalidate(self):
         # type: () -> None
@@ -306,8 +305,12 @@ class LEGOModel(Group):
             RuntimeError
                 If a ``designCompetence`` specified in the CMDOWS file does not correspond to an `AbstractDiscipline`.
         """
+        # Ensure that the knowledge base path is specified.
         _discipline_components = dict()
         for design_competence in self.elem_cmdows.iter('designCompetence'):
+            if not self._kb_path or not os.path.isdir(self._kb_path):
+                raise ValueError('No valid knowledge base path ({}) specified while the CMDOWS file contains design'
+                                 ' competences.'.format(self._kb_path))
             uid = design_competence.attrib['uID']
             name = design_competence.find('ID').text
             try:

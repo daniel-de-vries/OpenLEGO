@@ -193,7 +193,7 @@ def xml_safe_create_element(
                 elem = elems[0]
                 break
         except etree.XPathError:
-            raise ValueError('Specified XPath is invalid')
+            raise ValueError('Specified XPath {} is invalid.'.format(xpath))
 
     # If no existing element was found the root elements of the tree and XPath don't match
     if elem is None:

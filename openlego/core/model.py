@@ -47,7 +47,7 @@ class InvalidCMDOWSFileError(ValueError):
 
 
 class LEGOModel(Group):
-    """Specialized OpenMDAO Group class representing the problem specified by a CMDOWS file.
+    """Specialized OpenMDAO Group class representing the model specified by a CMDOWS file.
 
     An important note about this class in the context of OpenMDAO is that the aggregation pattern of the root Group
     class the base Problem class has is changed into a stronger composition pattern. This is because this class directly

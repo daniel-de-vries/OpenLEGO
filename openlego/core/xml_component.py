@@ -307,7 +307,7 @@ class XMLComponent(ExplicitComponent):
         _partials = Partials(file)
         for src, partial in _partials.get_partials().items():
             for tgt, val in partial.items():
-                if [src, tgt] in partials:
+                if (src, tgt) in partials:
                     try:
                         partials[src, tgt] = val
                     except Exception as e:

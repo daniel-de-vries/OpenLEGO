@@ -1,6 +1,1 @@
-from OpenLEGO_dev_scripts.ssbjdatabase.Aerodynamics import Aerodynamics
-from OpenLEGO_dev_scripts.ssbjdatabase.Constraints import Constraints
-from OpenLEGO_dev_scripts.ssbjdatabase.Objective import Objective
-from OpenLEGO_dev_scripts.ssbjdatabase.Performance import Performance
-from OpenLEGO_dev_scripts.ssbjdatabase.Propulsion import Propulsion
-from OpenLEGO_dev_scripts.ssbjdatabase.Structures import Structures
+

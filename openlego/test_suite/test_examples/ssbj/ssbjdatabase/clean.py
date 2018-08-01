@@ -1,8 +1,6 @@
 import os
 
-from ssbjkadmos.utils.database import clean, try_to_remove
-
-# TODO: Add renamed input and output files...
+from ssbjkadmos.utils.database import try_to_remove
 
 list_disciplines = ['AeroAnalysis', 'PerformanceAnalysis', 'PropulsionAnalysis', 'StructuralAnalysis']
 
@@ -16,6 +14,4 @@ for file in os.listdir(os.path.dirname(__file__)):
     if '__test__' in file:
         os.remove(file)
     if '__run__' in file and '_output.xml' in file:
-        os.remove(file)
-    if '__cmdows__' in file:
         os.remove(file)

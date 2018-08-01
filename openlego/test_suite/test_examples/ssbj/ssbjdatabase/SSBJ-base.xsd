@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="dataSchema" type="data_schemaType"/>
+  <xs:complexType name="ESFType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="scaler" minOccurs="0"/>
+      <xs:element type="xs:string" name="value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="sigma5Type">
+    <xs:sequence>
+      <xs:element type="xs:string" name="scaler" minOccurs="0"/>
+      <xs:element type="xs:string" name="value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="sigma3Type">
+    <xs:sequence>
+      <xs:element type="xs:string" name="scaler" minOccurs="0"/>
+      <xs:element type="xs:string" name="value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="TempType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="scaler" minOccurs="0"/>
+      <xs:element type="xs:string" name="value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="RType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="scaler" minOccurs="0"/>
+      <xs:element type="xs:string" name="value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="referenceType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="h" minOccurs="0"/>
+      <xs:element type="xs:string" name="M" minOccurs="0"/>
+      <xs:element type="xs:string" name="ESF" minOccurs="0"/>
+      <xs:element type="xs:string" name="Temp" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ThetaType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="scaler" minOccurs="0"/>
+      <xs:element type="xs:string" name="value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="dpdxType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="scaler" minOccurs="0"/>
+      <xs:element type="xs:string" name="value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="otherType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="L" minOccurs="0"/>
+      <xs:element type="xs:string" name="Nz" minOccurs="0"/>
+      <xs:element type="xs:string" name="sigma1" minOccurs="0"/>
+      <xs:element type="xs:string" name="sigma2" minOccurs="0"/>
+      <xs:element type="xs:string" name="sigma3" minOccurs="0"/>
+      <xs:element type="xs:string" name="sigma4" minOccurs="0"/>
+      <xs:element type="xs:string" name="sigma5" minOccurs="0"/>
+      <xs:element type="xs:string" name="CDmin" minOccurs="0"/>
+      <xs:element type="xs:string" name="Cf" minOccurs="0"/>
+      <xs:element type="xs:string" name="D" minOccurs="0"/>
+      <xs:element type="xs:string" name="fin" minOccurs="0"/>
+      <xs:element type="xs:string" name="dpdx" minOccurs="0"/>
+      <xs:element type="xs:string" name="T" minOccurs="0"/>
+      <xs:element type="xs:string" name="SFC" minOccurs="0"/>
+      <xs:element type="xs:string" name="DT" minOccurs="0"/>
+      <xs:element type="xs:string" name="R" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="weightType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="WO" minOccurs="0"/>
+      <xs:element type="xs:string" name="WE" minOccurs="0"/>
+      <xs:element type="xs:string" name="WFO" minOccurs="0"/>
+      <xs:element type="xs:string" name="WT" minOccurs="0"/>
+      <xs:element type="xs:string" name="WF" minOccurs="0"/>
+      <xs:element type="xs:string" name="WBE" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="aircraftType">
+    <xs:sequence>
+      <xs:element type="geometryType" name="geometry" minOccurs="0"/>
+      <xs:element type="weightType" name="weight" minOccurs="0"/>
+      <xs:element type="otherType" name="other" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="sigma4Type">
+    <xs:sequence>
+      <xs:element type="xs:string" name="scaler" minOccurs="0"/>
+      <xs:element type="xs:string" name="value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="scaledDataType">
+    <xs:sequence>
+      <xs:element type="RType" name="R" minOccurs="0"/>
+      <xs:element type="sigma1Type" name="sigma1" minOccurs="0"/>
+      <xs:element type="sigma2Type" name="sigma2" minOccurs="0"/>
+      <xs:element type="sigma3Type" name="sigma3" minOccurs="0"/>
+      <xs:element type="sigma4Type" name="sigma4" minOccurs="0"/>
+      <xs:element type="sigma5Type" name="sigma5" minOccurs="0"/>
+      <xs:element type="ThetaType" name="Theta" minOccurs="0"/>
+      <xs:element type="dpdxType" name="dpdx" minOccurs="0"/>
+      <xs:element type="ESFType" name="ESF" minOccurs="0"/>
+      <xs:element type="DTType" name="DT" minOccurs="0"/>
+      <xs:element type="TempType" name="Temp" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="sigma1Type">
+    <xs:sequence>
+      <xs:element type="xs:string" name="scaler" minOccurs="0"/>
+      <xs:element type="xs:string" name="value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="sigma2Type">
+    <xs:sequence>
+      <xs:element type="xs:string" name="scaler" minOccurs="0"/>
+      <xs:element type="xs:string" name="value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="DTType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="scaler" minOccurs="0"/>
+      <xs:element type="xs:string" name="value" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="geometryType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="tc" minOccurs="0"/>
+      <xs:element type="xs:string" name="AR" minOccurs="0"/>
+      <xs:element type="xs:string" name="Lambda" minOccurs="0"/>
+      <xs:element type="xs:string" name="Sref" minOccurs="0"/>
+      <xs:element type="xs:string" name="lambda" minOccurs="0"/>
+      <xs:element type="xs:string" name="section" minOccurs="0"/>
+      <xs:element type="xs:string" name="Theta" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="data_schemaType">
+    <xs:sequence>
+      <xs:element type="aircraftType" name="aircraft" minOccurs="0"/>
+      <xs:element type="referenceType" name="reference" minOccurs="0"/>
+      <xs:element type="scaledDataType" name="scaledData" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataSchema>
+  <aircraft>
+    <other>
+      <Cf>1.09245656833</Cf>
+      <CDmin>0.01375</CDmin>
+      <L>54457.5406052</L>
+      <D>12095.8822219</D>
+      <fin>3.51816987616</fin>
+      <dpdx>1.05</dpdx>
+      <Nz>6.0</Nz>
+      <sigma1>0.932740570419</sigma1>
+      <sigma2>0.944306965488</sigma2>
+      <sigma3>0.954160193569</sigma3>
+      <sigma4>0.961374540192</sigma4>
+      <sigma5>0.966726775348</sigma5>
+      <T>0.482932600603</T>
+      <SFC>1.13796108636</SFC>
+      <DT>0.557958328553</DT>
+      <R>2321.52373223</R>
+    </other>
+    <weight>
+      <WT>54457.5406052</WT>
+      <WE>6534.50907933</WE>
+      <WO>25000.000001</WO>
+      <WFO>2000.0</WFO>
+      <WF>28156.9418331</WF>
+      <WBE>4360.0</WBE>
+    </weight>
+    <geometry>
+      <Theta>1.00349969652</Theta>
+      <tc>0.09</tc>
+      <Lambda>69.85</Lambda>
+      <Sref>1500.0</Sref>
+      <AR>2.475</AR>
+      <lambda>0.273614770364</lambda>
+      <section>0.75</section>
+    </geometry>
+  </aircraft>
+  <reference>
+    <M>1.8</M>
+    <ESF>0.516365661762</ESF>
+    <h>55542.4348387</h>
+    <Temp>0.954650140245</Temp>
+  </reference>
+</dataSchema>

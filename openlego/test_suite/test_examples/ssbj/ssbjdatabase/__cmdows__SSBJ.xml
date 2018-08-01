@@ -1,0 +1,256 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<cmdows xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://bitbucket.org/imcovangent/cmdows/raw/master/schema/0.9/cmdows.xsd">
+  <header>
+    <timestamp>2018-05-23T11:19:56.287006</timestamp>
+    <cmdowsVersion>0.8</cmdowsVersion>
+    <description>CMDOWS file for the SSBJ database.</description>
+    <fileVersion>1.0</fileVersion>
+    <creator>Imco van Gent</creator>
+    <organization>
+      <contacts>
+        <contact uID="imcovangent">
+          <function>PhD Student</function>
+          <name>Imco van Gent</name>
+          <country>The Netherlands</country>
+          <company>TU Delft</company>
+          <telephone>0031 6 53 89 42 75</telephone>
+          <address>Kluyverweg 1, 2629 HS, Delft</address>
+          <department>Flight Performance and Propulsion</department>
+          <email>i.vangent@tudelft.nl</email>
+        </contact>
+        <contact uID="remilafage">
+          <name>Remi Lafage</name>
+          <country>France</country>
+          <company>ONERA - French Aerospace Lab</company>
+          <email>Remi.Lafage@onera.fr</email>
+        </contact>
+        <contact uID="sylvaindubreuil">
+          <name>Sylvain Dubreuil</name>
+          <country>France</country>
+          <company>ONERA - French Aerospace Lab</company>
+          <email>Sylvain.Dubreuil@onera.fr</email>
+        </contact>
+      </contacts>
+      <organigram>
+        <architects>
+          <architect>
+            <contactUID>imcovangent</contactUID>
+          </architect>
+        </architects>
+        <integrators>
+          <integrator>
+            <contactUID>imcovangent</contactUID>
+          </integrator>
+        </integrators>
+        <toolSpecialists>
+          <toolSpecialist>
+            <contactUID>remilafage</contactUID>
+          </toolSpecialist>
+          <toolSpecialist>
+            <contactUID>sylvaindubreuil</contactUID>
+          </toolSpecialist>
+        </toolSpecialists>
+      </organigram>
+    </organization>
+  </header>
+  <executableBlocks>
+    <designCompetences>
+      <designCompetence uID="StructuralAnalysis">
+        <instanceID>1</instanceID>
+        <version>1.0</version>
+        <modeID>main</modeID>
+        <ID>StructuralAnalysis</ID>
+        <label>StructuralAnalysis</label>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>StructuralAnalysis discipline of the SSBJ tool set.</description>
+            <owner>
+              <contactUID>remilafage</contactUID>
+            </owner>
+            <creator>
+              <contactUID>sylvaindubreuil</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+            <sources>
+              <repositoryLink>https://bitbucket.org/imcovangent/ssbj-kadmos/src/master/</repositoryLink>
+              <references>
+                <reference>ONERA SSBJ-OpenMDAO GitHub repository: https://github.com/OneraHub/SSBJ-OpenMDAO</reference>
+                <reference>NASA report using SSBJ: https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19980234657.pdf</reference>
+              </references>
+              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
+            </sources>
+          </generalInfo>
+          <executionInfo>
+            <localComponentInfo>
+              <executionDetails>
+                <operatingSystem>Windows</operatingSystem>
+                <description>Details for the command line execution of the StructuralAnalysis Python tool in Windows using an Optimus integration.</description>
+                <softwareRequirements>
+                  <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
+                  <softwareRequirement>kadmos Python package version 0.8 or higher installed</softwareRequirement>
+                </softwareRequirements>
+                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\structuralanalysis\StructuralAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
+                <integrationPlatform>Optimus</integrationPlatform>
+              </executionDetails>
+            </localComponentInfo>
+          </executionInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="AeroAnalysis">
+        <instanceID>1</instanceID>
+        <version>1.0</version>
+        <modeID>main</modeID>
+        <ID>AeroAnalysis</ID>
+        <label>AeroAnalysis</label>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>AeroAnalysis discipline of the SSBJ tool set.</description>
+            <owner>
+              <contactUID>remilafage</contactUID>
+            </owner>
+            <creator>
+              <contactUID>sylvaindubreuil</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+            <sources>
+              <repositoryLink>https://bitbucket.org/imcovangent/ssbj-kadmos/src/master/</repositoryLink>
+              <references>
+                <reference>ONERA SSBJ-OpenMDAO GitHub repository: https://github.com/OneraHub/SSBJ-OpenMDAO</reference>
+                <reference>NASA report using SSBJ: https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19980234657.pdf</reference>
+              </references>
+              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
+            </sources>
+          </generalInfo>
+          <executionInfo>
+            <localComponentInfo>
+              <executionDetails>
+                <operatingSystem>Windows</operatingSystem>
+                <description>Details for the command line execution of the AeroAnalysis Python tool in Windows using an Optimus integration.</description>
+                <softwareRequirements>
+                  <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
+                  <softwareRequirement>kadmos Python package version 0.8 or higher installed</softwareRequirement>
+                </softwareRequirements>
+                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\aeroanalysis\AeroAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
+                <integrationPlatform>Optimus</integrationPlatform>
+              </executionDetails>
+            </localComponentInfo>
+          </executionInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="PropulsionAnalysis">
+        <instanceID>1</instanceID>
+        <version>1.0</version>
+        <modeID>main</modeID>
+        <ID>PropulsionAnalysis</ID>
+        <label>PropulsionAnalysis</label>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>PropulsionAnalysis discipline of the SSBJ tool set.</description>
+            <owner>
+              <contactUID>remilafage</contactUID>
+            </owner>
+            <creator>
+              <contactUID>sylvaindubreuil</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+            <sources>
+              <repositoryLink>https://bitbucket.org/imcovangent/ssbj-kadmos/src/master/</repositoryLink>
+              <references>
+                <reference>ONERA SSBJ-OpenMDAO GitHub repository: https://github.com/OneraHub/SSBJ-OpenMDAO</reference>
+                <reference>NASA report using SSBJ: https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19980234657.pdf</reference>
+              </references>
+              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
+            </sources>
+          </generalInfo>
+          <executionInfo>
+            <localComponentInfo>
+              <executionDetails>
+                <operatingSystem>Windows</operatingSystem>
+                <description>Details for the command line execution of the PropulsionAnalysis Python tool in Windows using an Optimus integration.</description>
+                <softwareRequirements>
+                  <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
+                  <softwareRequirement>kadmos Python package version 0.8 or higher installed</softwareRequirement>
+                </softwareRequirements>
+                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\propulsionanalysis\PropulsionAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
+                <integrationPlatform>Optimus</integrationPlatform>
+              </executionDetails>
+            </localComponentInfo>
+          </executionInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="PerformanceAnalysis">
+        <instanceID>1</instanceID>
+        <version>1.0</version>
+        <modeID>main</modeID>
+        <ID>PerformanceAnalysis</ID>
+        <label>PerformanceAnalysis</label>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>PerformanceAnalysis discipline of the SSBJ tool set.</description>
+            <owner>
+              <contactUID>remilafage</contactUID>
+            </owner>
+            <creator>
+              <contactUID>sylvaindubreuil</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+            <sources>
+              <repositoryLink>https://bitbucket.org/imcovangent/ssbj-kadmos/src/master/</repositoryLink>
+              <references>
+                <reference>ONERA SSBJ-OpenMDAO GitHub repository: https://github.com/OneraHub/SSBJ-OpenMDAO</reference>
+                <reference>NASA report using SSBJ: https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19980234657.pdf</reference>
+              </references>
+              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
+            </sources>
+          </generalInfo>
+          <executionInfo>
+            <localComponentInfo>
+              <executionDetails>
+                <operatingSystem>Windows</operatingSystem>
+                <description>Details for the command line execution of the PerformanceAnalysis Python tool in Windows using an Optimus integration.</description>
+                <softwareRequirements>
+                  <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
+                  <softwareRequirement>kadmos Python package version 0.8 or higher installed</softwareRequirement>
+                </softwareRequirements>
+                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\performanceanalysis\PerformanceAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
+                <integrationPlatform>Optimus</integrationPlatform>
+              </executionDetails>
+            </localComponentInfo>
+          </executionInfo>
+        </metadata>
+      </designCompetence>
+    </designCompetences>
+  </executableBlocks>
+</cmdows>

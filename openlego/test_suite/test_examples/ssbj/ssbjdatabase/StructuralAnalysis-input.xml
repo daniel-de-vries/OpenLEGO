@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<dataSchema>
+  <aircraft>
+    <geometry>
+      <tc>0.05</tc>
+      <AR>5.5</AR>
+      <Lambda>55.0</Lambda>
+      <Sref>1000.0</Sref>
+      <lambda>0.25</lambda>
+      <section>1.0</section>
+    </geometry>
+    <weight>
+      <WO>25000.0</WO>
+      <WE>5748.915355</WE>
+      <WFO>2000.0</WFO>
+    </weight>
+    <other>
+      <L>49909.58578</L>
+      <Nz>6.0</Nz>
+    </other>
+  </aircraft>
+</dataSchema>

@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<dataSchema>
+  <aircraft>
+    <geometry>
+      <tc>0.05</tc>
+      <AR>5.5</AR>
+      <Lambda>55.0</Lambda>
+      <Sref>1000.0</Sref>
+      <Theta>0.950978</Theta>
+    </geometry>
+    <weight>
+      <WT>49909.58578</WT>
+    </weight>
+    <other>
+      <CDmin>0.01375</CDmin>
+      <Cf>0.75</Cf>
+    </other>
+  </aircraft>
+  <reference>
+    <h>45000.0</h>
+    <M>1.6</M>
+    <ESF>1.0</ESF>
+  </reference>
+</dataSchema>

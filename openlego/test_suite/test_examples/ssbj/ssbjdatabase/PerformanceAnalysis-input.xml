@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<dataSchema>
+  <reference>
+    <h>45000.0</h>
+    <M>1.6</M>
+  </reference>
+  <aircraft>
+    <other>
+      <fin>4.093062</fin>
+      <SFC>1.12328</SFC>
+    </other>
+    <weight>
+      <WT>49909.58578</WT>
+      <WF>7306.20261</WF>
+    </weight>
+  </aircraft>
+</dataSchema>

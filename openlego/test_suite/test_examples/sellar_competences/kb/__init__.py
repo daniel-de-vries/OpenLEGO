@@ -60,6 +60,7 @@ def clean():
         os.remove(discipline.in_file)
         os.remove(discipline.out_file)
         os.remove(discipline.json_file)
+        os.remove(discipline.partials_file)
     os.remove(base_file_path)
 
 

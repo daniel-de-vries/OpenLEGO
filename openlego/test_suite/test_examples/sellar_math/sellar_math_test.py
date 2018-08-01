@@ -5,7 +5,7 @@ import logging
 import os
 import unittest
 
-from openmdao.api import Problem, ScipyOptimizeDriver, view_model
+from openmdao.api import Problem, ScipyOptimizeDriver
 
 from openlego.core.model import LEGOModel
 
@@ -54,8 +54,8 @@ def run_openlego(analyze_mdao_definitions):
         prob.set_solver_print(0)  # Turn off printing of solver information
 
         # 2. Create the LEGOModel
-        model = prob.model = LEGOModel(cmdows_path=os.path.join('output_files', 'CMDOWS', 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
-                                       data_folder=os.path.join('output_files', 'OpenLEGO'),  # Output directory
+        model = prob.model = LEGOModel(cmdows_path=os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
+                                       data_folder='',  # Output directory
                                        base_xml_file='sellar-output.xml')  # Output file
 
         # 3. Create the Driver
@@ -64,10 +64,9 @@ def run_openlego(analyze_mdao_definitions):
         driver.options['disp'] = True  # Print the result
         driver.opt_settings = {'disp': True, 'iprint': 2}  # Display iterations
 
-        # 4. Setup the Problem and export N2 chart
+        # 4. Setup the Problem
         prob.setup()  # Call the OpenMDAO setup() method
         prob.run_model()  # Run the model once to init. the variables
-        view_model(prob, outfile=os.path.join('output_files', 'N2s', 'N2-{}.html'.format(mdao_def)), show_browser=False)
         model.initialize_from_xml('sellar-input.xml')  # Set the initial values from an XML file
 
         # 5. Create and attach some Recorders (Optional)

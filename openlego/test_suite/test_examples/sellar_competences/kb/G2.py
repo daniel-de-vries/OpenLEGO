@@ -37,9 +37,9 @@ class G2(AbstractDiscipline):
     def description(self):
         return u'First constraint function of the Sellar problem'
 
-    # @property
-    # def supplies_partials(self):
-    #     return False
+    @property
+    def supplies_partials(self):
+        return False
 
     def generate_input_xml(self):
         root = etree.Element(root_tag)
@@ -57,10 +57,10 @@ class G2(AbstractDiscipline):
 
         return etree.tostring(doc, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
-    # def generate_partials_xml(self):
-    #     partials = Partials()
-    #     partials.declare_partials(x_g2, x_y2)
-    #     return partials.get_string()
+    def generate_partials_xml(self):
+        partials = Partials()
+        partials.declare_partials(x_g2, x_y2)
+        return partials.get_string()
 
     @staticmethod
     def execute(in_file, out_file):
@@ -74,8 +74,8 @@ class G2(AbstractDiscipline):
         xml_safe_create_element(doc, x_g2, g2)
         doc.write(out_file, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
-    # @staticmethod
-    # def linearize(in_file, partials_file):
-    #     partials = Partials()
-    #     partials.declare_partials(x_g2, x_y2, 1./24.)
-    #     partials.write(partials_file)
+    @staticmethod
+    def linearize(in_file, partials_file):
+        partials = Partials()
+        partials.declare_partials(x_g2, x_y2, 1./24.)
+        partials.write(partials_file)

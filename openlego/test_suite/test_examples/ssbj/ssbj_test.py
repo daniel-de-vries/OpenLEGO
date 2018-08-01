@@ -3,9 +3,10 @@ import os
 import logging
 import unittest
 
-from openmdao.api import Problem, ScipyOptimizeDriver, view_model
+from openmdao.api import Problem, ScipyOptimizeDriver
 
 from openlego.core.model import LEGOModel
+import openlego.test_suite.test_examples.ssbj.kb as kb
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
@@ -60,10 +61,10 @@ def run_openlego(analyze_mdao_definitions):
         prob.set_solver_print(0)  # Turn off printing of solver information
 
         # 2. Create the LEGOModel
-        model = prob.model = LEGOModel(os.path.join('output_files', 'CMDOWS', 'Mdao_{}.xml'.format(mdao_def)),
+        model = prob.model = LEGOModel(os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),
                                        # CMDOWS file
-                                       'ssbjdatabase',  # Knowledge base path
-                                       os.path.join('output_files', 'OpenLEGO'),  # Output directory
+                                       'kb',  # Knowledge base path
+                                       '',  # Output directory
                                        'ssbj-output-{}.xml'.format(mdao_def))  # Output file
 
         # 3. Create the Driver
@@ -76,8 +77,6 @@ def run_openlego(analyze_mdao_definitions):
         # 4. Setup the Problem
         prob.setup(mode='fwd')  # Call the OpenMDAO setup() method
         prob.run_model()  # Run the model once to init. the variables
-        view_model(model, outfile=os.path.join('output_files', 'N2s', '{}.html'.format(mdao_def)),
-                   show_browser=False)
         if mdao_def in ['MDF-GS', 'MDF-J', 'IDF', 'CO', 'BLISS-2000']:
             model.initialize_from_xml('SSBJ-base-mdo.xml')  # Set the initial values from an XML file
         else:
@@ -162,6 +161,10 @@ def run_openlego(analyze_mdao_definitions):
 
 class TestSsbj(unittest.TestCase):
 
+    def __call__(self, *args, **kwargs):
+        kb.deploy()
+        super(TestSsbj, self).__call__(*args, **kwargs)
+
     def test_mdf_gs(self):
         """Solve the SSBJ problem using the MDF architecture and a Gauss-Seidel convergence scheme."""
         run_openlego(11)
@@ -173,6 +176,9 @@ class TestSsbj(unittest.TestCase):
     def test_idf(self):
         """Solve the SSBJ problem using the IDF architecture."""
         run_openlego(13)
+
+    def __del__(self):
+        kb.clean()
 
 
 if __name__ == '__main__':

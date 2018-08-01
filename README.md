@@ -10,26 +10,8 @@ MDAO more readily applicable in the engineering industry.
 
 ## Outline
 
-The [AGILE project](https://www.agile-project.eu/) is an international research collaboration , funded by the European
-Commission, with the ultimate goal of reaching:
->"... a speed up of 40% when solving realistic MDO problems compared to today's state-of-the-art."
-
-One way this speed up is envisaged is creating tools which allow engineers to manipulate the analysis and design tools,
-connected to one another within a multidisciplinary analysis or optimization architecture, as if they were building
-blocks that one could take apart and fit together another way effortlessly - much like LEGO blocks. If they could be
-treated as such, it becomes easier for engineers to set-up and reconfigure large, interconnected frameworks of tools.
-
-Within *AGILE* the [KADMOS package](https://pypi.python.org/pypi/kadmos) was developed for this purpose. This
-Open-source software, written in Python, uses graph theory to provide tools for automated (re)configuration and
-visualization of complex MDAO problems on an abstract level.
-
-As of yet unrelated to the *AGILE* project is the [OpenMDAO framework](http://openmdao.org/). This Open-source platform
-provides classes and interfaces wrapping complex data logic and high performance optimization algorithms. It allows
-for problems to be decomposed into isolated components and groups of components, which can easily be tied together to
-form complex, multidisciplinary analysis and optimization systems.
-
-*OpenLEGO* enables to user to combine the strength of both of these projects by providing a direct link between *KADMOS*
-and *OpenMDAO*. By using *OpenLEGO* the user can manipulate MDAO problems from a high, abstract level using *KADMOS* and
+*OpenLEGO* enables to user to combine the strengths of  *KADMOS* and *OpenMDAO*. 
+By using *OpenLEGO* the user can manipulate MDAO problems from a high, abstract level using *KADMOS* and
 then automatically generate and run an *OpenMDAO* problem from it.
 
 ## Installation
@@ -47,21 +29,11 @@ The following packages are required by *OpenLEGO*:
 
 ## Usage
 
-Two example cases have been added in the `example` folder to serve as a tutorials, as well as show cases of *OpenLEGO*:
-- **The Sellar problem**: This case can be run by executing `examples/sellar.py`. It sets up and solves the Sellar 
-optimization problem. This test case is also described by *KADMOS* and *OpenMDAO*. More information on this problem can
-be found at:
-    - https://arc.aiaa.org/doi/abs/10.2514/6.1996-714
-    - https://www.researchgate.net/publication/2759746_Response_Surface_Based_Concurrent_Subspace_Optimization_For_Multidisciplinary_System_Design
-    - http://openmdao.readthedocs.io/en/latest/usr-guide/tutorials/sellar.html
-- **A wing optimization problem**: This case can be run by executing `examples/wing_opt.py`. It sets up and solves a very
-basic aero-structural wing optimization problem using the Open-source [dAEDalus tool](https://github.com/sbind/dAEDalusNXT).
-Note that *dAEDalus* is not included in this repo and should be obtained and installed separately before this example case
-can be run.
+Check out the test cases in the `openlego.test_suite.test_examples` package included in this repo test get an idea
+of how OpenLEGO can be used.
 
 ## Credits
-*OpenLEGO* is being developed by [Daniël de Vries](https://www.linkedin.com/in/dani%C3%ABl-de-vries-07495661/) as part
-of an MSc thesis at the [TU Delft](https://www.tudelft.nl/). This current state of this work should be considered as an early
-beta and is subject to change. Feel free to post any feedback on the code, suggestions for new features, and general ideas.
+*OpenLEGO* was originally developed by [Daniël de Vries](www.daniel-de-vries.com) as part
+of his MSc thesis at the [TU Delft](https://www.tudelft.nl/). Feel free to post any feedback on the code, suggestions for new features, and general ideas.
 
 NOTE: OpenLEGO was not developed under the umbrella of the AGILE project and did not receive funding from it.

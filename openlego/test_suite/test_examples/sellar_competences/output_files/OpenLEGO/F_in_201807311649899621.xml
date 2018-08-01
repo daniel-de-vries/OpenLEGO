@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataSchema>
+  <geometry>
+    <x1>0.0</x1>
+    <z2>10.0</z2>
+  </geometry>
+  <analyses>
+    <y1>7.65318752734</y1>
+    <y2>13.3317087942</y2>
+  </analyses>
+</dataSchema>

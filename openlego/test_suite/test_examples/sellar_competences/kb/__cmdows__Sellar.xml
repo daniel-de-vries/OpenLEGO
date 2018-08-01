@@ -1,0 +1,186 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<cmdows xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://bitbucket.org/imcovangent/cmdows/raw/master/schema/0.9/cmdows.xsd">
+  <header>
+    <timestamp>2018-05-23T11:19:56.287006</timestamp>
+    <cmdowsVersion>0.8</cmdowsVersion>
+    <description>CMDOWS file for the Sellar database.</description>
+    <fileVersion>1.0</fileVersion>
+    <creator>Imco van Gent</creator>
+    <organization>
+      <contacts>
+        <contact uID="imcovangent">
+          <function>PhD Student</function>
+          <name>Imco van Gent</name>
+          <country>The Netherlands</country>
+          <company>TU Delft</company>
+          <telephone>0031 6 53 89 42 75</telephone>
+          <address>Kluyverweg 1, 2629 HS, Delft</address>
+          <department>Flight Performance and Propulsion</department>
+          <email>i.vangent@tudelft.nl</email>
+        </contact>
+        <contact uID="danieldevries">
+          <name>Daniel de Vries</name>
+          <country>USA</country>
+          <company>TU Delft</company>
+          <email>danieldevries6@gmail.com</email>
+        </contact>
+      </contacts>
+      <organigram>
+        <architects>
+          <architect>
+            <contactUID>imcovangent</contactUID>
+          </architect>
+        </architects>
+        <integrators>
+          <integrator>
+            <contactUID>imcovangent</contactUID>
+          </integrator>
+        </integrators>
+        <toolSpecialists>
+          <toolSpecialist>
+            <contactUID>danieldevries</contactUID>
+          </toolSpecialist>
+        </toolSpecialists>
+      </organigram>
+    </organization>
+  </header>
+  <executableBlocks>
+    <designCompetences>
+      <designCompetence uID="D1">
+        <instanceID>1</instanceID>
+        <version>1.0</version>
+        <modeID>main</modeID>
+        <ID>D1</ID>
+        <label>D1</label>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>D1 discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>danieldevries</contactUID>
+            </owner>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="D2">
+        <instanceID>1</instanceID>
+        <version>1.0</version>
+        <modeID>main</modeID>
+        <ID>D2</ID>
+        <label>D2</label>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>D2 discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>danieldevries</contactUID>
+            </owner>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="F">
+        <instanceID>1</instanceID>
+        <version>1.0</version>
+        <modeID>main</modeID>
+        <ID>F</ID>
+        <label>F</label>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>F discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>danieldevries</contactUID>
+            </owner>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="G1">
+        <instanceID>1</instanceID>
+        <version>1.0</version>
+        <modeID>main</modeID>
+        <ID>G1</ID>
+        <label>G1</label>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>G1 discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>danieldevries</contactUID>
+            </owner>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="G2">
+        <instanceID>1</instanceID>
+        <version>1.0</version>
+        <modeID>main</modeID>
+        <ID>G2</ID>
+        <label>G2</label>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>G2 discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>danieldevries</contactUID>
+            </owner>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+    </designCompetences>
+  </executableBlocks>
+</cmdows>

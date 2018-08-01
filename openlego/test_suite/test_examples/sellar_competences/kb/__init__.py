@@ -28,28 +28,31 @@ from openlego.utils.xml_utils import xml_merge
 dir_path = os.path.dirname(os.path.realpath(__file__))
 base_file_path = os.path.join(dir_path, 'sellar-base.xml')
 
-root_tag = 'data_schema'
+root_tag = 'dataSchema'
 x_root = '/' + root_tag
 
-x_z1 = '/'.join([x_root, 'z1'])
-x_z2 = '/'.join([x_root, 'z2'])
-x_x1 = '/'.join([x_root, 'x1'])
+x_geometry = 'geometry'
+x_analyses = 'analyses'
 
-x_y1 = '/'.join([x_root, 'y1'])
-x_y2 = '/'.join([x_root, 'y2'])
-x_f1 = '/'.join([x_root, 'f1'])
-x_g1 = '/'.join([x_root, 'g1'])
-x_g2 = '/'.join([x_root, 'g2'])
+x_z1 = '/'.join([x_root, x_geometry, 'z1'])
+x_z2 = '/'.join([x_root, x_geometry, 'z2'])
+x_x1 = '/'.join([x_root, x_geometry, 'x1'])
 
-from openlego.test_suite.test_examples.sellar.kb.D1 import D1
-from openlego.test_suite.test_examples.sellar.kb.D2 import D2
-from openlego.test_suite.test_examples.sellar.kb.F1 import F1
-from openlego.test_suite.test_examples.sellar.kb.G1 import G1
-from openlego.test_suite.test_examples.sellar.kb.G2 import G2
+x_y1 = '/'.join([x_root, x_analyses, 'y1'])
+x_y2 = '/'.join([x_root, x_analyses, 'y2'])
+x_f1 = '/'.join([x_root, x_analyses, 'f'])
+x_g1 = '/'.join([x_root, x_analyses, 'g1'])
+x_g2 = '/'.join([x_root, x_analyses, 'g2'])
+
+from openlego.test_suite.test_examples.sellar_competences.kb.D1 import D1
+from openlego.test_suite.test_examples.sellar_competences.kb.D2 import D2
+from openlego.test_suite.test_examples.sellar_competences.kb.F import F
+from openlego.test_suite.test_examples.sellar_competences.kb.G1 import G1
+from openlego.test_suite.test_examples.sellar_competences.kb.G2 import G2
 
 
 def list_disciplines():
-    return [D1(), D2(), F1(), G1(), G2()]
+    return [D1(), D2(), F(), G1(), G2()]
 
 
 def clean():

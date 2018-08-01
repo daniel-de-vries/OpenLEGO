@@ -41,7 +41,7 @@ class F(AbstractDiscipline):
 
     @property
     def supplies_partials(self):
-        return False
+        return True
 
     def generate_input_xml(self):
         root = etree.Element(root_tag)

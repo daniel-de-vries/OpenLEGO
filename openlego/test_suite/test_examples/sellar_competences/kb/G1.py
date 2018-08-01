@@ -39,7 +39,7 @@ class G1(AbstractDiscipline):
 
     @property
     def supplies_partials(self):
-        return False
+        return True
 
     def generate_input_xml(self):
         root = etree.Element(root_tag)
@@ -77,5 +77,5 @@ class G1(AbstractDiscipline):
     @staticmethod
     def linearize(in_file, partials_file):
         partials = Partials()
-        partials.declare_partials(x_g1, x_y1, -1./3.16)
+        partials.declare_partials(x_g1, x_y1, 1./3.16)
         partials.write(partials_file)

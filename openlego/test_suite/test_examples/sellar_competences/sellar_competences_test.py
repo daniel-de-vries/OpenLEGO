@@ -100,23 +100,22 @@ def run_openlego(analyze_mdao_definitions):
         prob.run_driver()  # Run the optimization
 
         # 7. Print results
-        x_f1 = '/dataSchema/analyses/f'
-        x_x1 = '/dataSchema/geometry/x1'
-        x_z1 = '/dataSchema/geometry/z1'
-        x_z2 = '/dataSchema/geometry/z2'
-        x_y1 = '/dataSchema/analyses/y1'
-        x_y2 = '/dataSchema/analyses/y2'
-        x_g1 = '/dataSchema/analyses/g1'
-        x_g2 = '/dataSchema/analyses/g2'
+        x = [prob['/dataSchema/geometry/x1']]
+        y = [prob['/dataSchema/analyses/y1'], prob['/dataSchema/analyses/y2']]
+        z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
+        f = [prob['/dataSchema/analyses/f']]
+        g = [prob['/dataSchema/analyses/g1'], prob['/dataSchema/analyses/g2']]
 
-        print('Optimum found! Objective function value: f = {}'.format(prob[x_f1]))
-        print('Design variables at optimum: x = {}, z1 = {}, z2 = {}'.format(prob[x_x1], prob[x_z1], prob[x_z2]))
-        print('Coupling variables at optimum: y1 = {}, y2 = {}'.format(prob[x_y1], prob[x_y2]))
-        print('Constraints at optimum: g1 = {}, g2 = {}'.format(prob[x_g1], prob[x_g2]))
+        print('Optimum found! Objective function value: f = {}'.format(f[0]))
+        print('Design variables at optimum: x = {}, z1 = {}, z2 = {}'.format(x[0], z[0], z[1]))
+        print('Coupling variables at optimum: y1 = {}, y2 = {}'.format(y[0], y[1]))
+        print('Constraints at optimum: g1 = {}, g2 = {}'.format(g[0], g[1]))
 
         # 8. Cleanup the Problem afterwards
         prob.cleanup()  # Clear all resources and close the plots
         model.invalidate()  # Clear the cached properties of the LEGOModel
+
+        return x, y, z, f, g
 
 
 class TestSellarCompetences(unittest.TestCase):
@@ -125,17 +124,27 @@ class TestSellarCompetences(unittest.TestCase):
         kb.deploy()
         super(TestSellarCompetences, self).__call__(*args, **kwargs)
 
+    def assertion(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 0.00, 2)
+        self.assertAlmostEqual(y[0], 3.16, 2)
+        self.assertAlmostEqual(y[1], 3.76, 2)
+        self.assertAlmostEqual(z[0], 1.98, 2)
+        self.assertAlmostEqual(z[1], 0.00, 2)
+        self.assertAlmostEqual(f[0], 3.18, 2)
+        self.assertAlmostEqual(g[0], 0.00, 2)
+        self.assertAlmostEqual(g[1], 0.84, 2)
+
     def test_mdf_gs(self):
         """Solve the Sellar problem using the MDF architecture and a Gauss-Seidel convergence scheme."""
-        run_openlego(6)
+        self.assertion(*run_openlego(6))
 
     def test_mdf_j(self):
         """Solve the Sellar problem using the MDF architecture and a Jacobi converger."""
-        run_openlego(7)
+        self.assertion(*run_openlego(7))
 
     def test_idf(self):
         """Solve the Sellar problem using the IDF architecture."""
-        run_openlego(8)
+        self.assertion(*run_openlego(8))
 
     def __del__(self):
         kb.clean()

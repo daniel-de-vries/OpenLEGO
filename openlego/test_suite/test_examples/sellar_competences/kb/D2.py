@@ -20,8 +20,7 @@ This file contains the definition of the Sellar D2 discipline.
 from __future__ import absolute_import, division, print_function
 
 from lxml import etree
-
-from numpy import inf, sign
+from numpy import sign
 
 from openlego.api import AbstractDiscipline
 from openlego.utils.xml_utils import xml_safe_create_element
@@ -86,7 +85,7 @@ class D2(AbstractDiscipline):
         y1 = float(doc.xpath(x_y1)[0].text)
 
         if not y1:
-            dy2_dy1 = sign(y1) * inf
+            dy2_dy1 = sign(y1) * 1e99
         else:
             dy2_dy1 = y1 / (2. * abs(y1)**(3./2.))
 

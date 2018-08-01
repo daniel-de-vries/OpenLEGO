@@ -77,5 +77,5 @@ class G2(AbstractDiscipline):
     @staticmethod
     def linearize(in_file, partials_file):
         partials = Partials()
-        partials.declare_partials(x_g2, x_y2, 1./24.)
+        partials.declare_partials(x_g2, x_y2, -1./24.)
         partials.write(partials_file)

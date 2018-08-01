@@ -19,7 +19,7 @@ This file contains the setup code for the OpenLEGO package.
 """
 from setuptools import setup
 
-version = '1.0.0'
+from openlego import __version__ as version
 
 
 def readme():

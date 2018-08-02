@@ -19,7 +19,9 @@ This file contains the definition of the `LEGOProblem` class.
 """
 from __future__ import absolute_import, division, print_function
 
+import datetime
 import imp
+import os
 import re
 import warnings
 
@@ -27,12 +29,14 @@ import numpy as np
 from lxml import etree
 from lxml.etree import _Element, _ElementTree
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
-    LinearRunOnce, ExecComp, NonlinearRunOnce, Problem, ScipyOptimizeDriver, pyOptSparseDriver, DOEDriver
+    LinearRunOnce, ExecComp, NonlinearRunOnce, Problem, ScipyOptimizeDriver, pyOptSparseDriver, DOEDriver, \
+    UniformGenerator, FullFactorialGenerator, BoxBehnkenGenerator, LatinHypercubeGenerator, ListGenerator, view_model, \
+    SqliteRecorder
 from openmdao.core.driver import Driver
 from typing import Union, Optional, List, Any, Dict, Tuple
 
 from openlego.core.model import LEGOModel
-from openlego.utils.cmdows_utils import get_element_by_uid
+from openlego.utils.cmdows_utils import get_element_by_uid, get_opt_setting_safe, get_doe_setting_safe
 from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str_to_valid_sys_name, parse_string
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
 from .abstract_discipline import AbstractDiscipline
@@ -77,8 +81,8 @@ class LEGOProblem(Problem):
             Path to an XML file which should be kept up-to-date with the latest data describing the problem.
     """
 
-    def __init__(self, cmdows_path=None, kb_path='', data_folder=None, base_xml_file=None, **kwargs):
-        # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
+    def __init__(self, cmdows_path=None, kb_path='', data_folder=None, base_xml_file=None, output_case_str=None, **kwargs):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
         """Initialize a CMDOWS Problem from a given CMDOWS file and knowledge base.
 
         It is also possible to specify where (temporary) data should be stored, and if a base XML
@@ -102,6 +106,11 @@ class LEGOProblem(Problem):
         self._kb_path = kb_path
         self.data_folder = data_folder
         self.base_xml_file = base_xml_file
+        if output_case_str:
+            self.output_case_string = output_case_str
+        else:
+            self.output_case_string = os.path.splitext(os.path.basename(cmdows_path))[0] + '_' + \
+                                      datetime.datetime.now().isoformat()
 
         super(LEGOProblem, self).__init__(**kwargs)
 
@@ -120,22 +129,39 @@ class LEGOProblem(Problem):
         if name not in ['model', 'driver']:
             super(LEGOProblem, self).__setattr__(name, value)
 
+    def invalidate(self):
+        # type: () -> None
+        """Invalidate the instance.
+
+        All computed (cached) properties will be recomputed upon being read once the instance has been invalidated."""
+        for value in self.__class__.__dict__.values():
+            if isinstance(value, CachedProperty):
+                value.invalidate()
+        # Also invalidate the model
+        self.model.invalidate()
+
+    @CachedProperty
+    def case_reader_path(self):
+        filename = 'case_reader_' + self.output_case_string + '.sql'
+        if self.data_folder:
+            return os.path.join(self.data_folder, filename)
+        else:
+            return filename
+
+    @CachedProperty
+    def model_view_path(self):
+        filename = 'n2_' + self.output_case_string + '.html'
+        if self.data_folder:
+            return os.path.join(self.data_folder, filename)
+        else:
+            return filename
+
     @property
     def drivers(self):
-        optimizer_elems = self.model.elem_arch_elems.find('executableBlocks/optimizers/optimizer')
-        doe_elems = self.model.elem_arch_elems.find('executableBlocks/does/doe')
-        if isinstance(optimizer_elems, _Element):
-            optimizers = [optimizer_elems.get('uID')]
-        elif isinstance(optimizer_elems, list):
-            optimizers = [elem.get('uID') for elem in optimizer_elems]
-        else:
-            optimizers = []
-        if isinstance(doe_elems, _Element):
-            does = [doe_elems.get('uID')]
-        elif isinstance(doe_elems, list):
-            does = [elem.get('uID') for elem in doe_elems]
-        else:
-            does = []
+        optimizer_elems = self.model.elem_arch_elems.findall('executableBlocks/optimizers/optimizer')
+        doe_elems = self.model.elem_arch_elems.findall('executableBlocks/does/doe')
+        optimizers = [elem.get('uID') for elem in optimizer_elems]
+        does = [elem.get('uID') for elem in doe_elems]
         return {'optimizers': optimizers, 'does': does}
 
     @CachedProperty
@@ -148,55 +174,37 @@ class LEGOProblem(Problem):
     @CachedProperty
     def driver(self):
         if self.model.has_driver:
-            # TODO: Test this part...
             assert len(self.drivers['optimizers']) + len(self.drivers['does']) <= 1, \
                 "Only one driver is allowed at the moment. {} drivers specified ({}) at the moment."\
                     .format(len(self.drivers), self.drivers)
             if self.model.has_optimizer:
+                # Find optimizer element in CMDOWS file
                 opt_uid = self.drivers['optimizers'][0]
                 opt_elem = get_element_by_uid(self.model.elem_cmdows, opt_uid)
                 # Load settings from CMDOWS file
-                # package
-                if isinstance(opt_elem.find('settings/package'), _Element):
-                    opt_package = opt_elem.find('settings/package').text
-                else:
-                    warnings.warn('Package not specified for optimizer {}, setting to default SciPy.')
-                    opt_package = 'SciPy'
-
-                # algorithm
-                if isinstance(opt_elem.find('settings/algorithm'), _Element):
-                    opt_algo = opt_elem.find('settings/algorithm').text
-                else:
-                    warnings.warn('Algorithm not specified for optimizer {}, setting to default SLSQP.')
-                    opt_algo = 'SLSQP'
-
-                # maximum iterations
-                if isinstance(opt_elem.find('settings/maximumIterations'), _Element):
-                    opt_maxiter = int(opt_elem.find('settings/maximumIterations').text)
-                else:
-                    warnings.warn('Maximum iterations not specified for optimizer {}, setting to default 50.')
-                    opt_maxiter = 50
-
-                # convergence tolerance
-                if isinstance(opt_elem.find('settings/convergenceTolerance'), _Element):
-                    opt_convtol = float(opt_elem.find('settings/convergenceTolerance').text)
-                else:
-                    warnings.warn('Convergence tolerance not specified for optimizer {}, setting to default 1e-6.')
-                    opt_convtol = 1e-6
+                opt_package = get_opt_setting_safe(opt_elem, 'package', 'SciPy')
+                opt_algo = get_opt_setting_safe(opt_elem, 'algorithm', 'SLSQP')
+                opt_maxiter = get_opt_setting_safe(opt_elem, 'maximumIterations', 50, expected_type='int')
+                opt_convtol = get_opt_setting_safe(opt_elem, 'convergenceTolerance', 1e-6, expected_type='float')
 
                 # Apply settings to the driver
+                # driver
                 if opt_package == 'SciPy':
                     driver = ScipyOptimizeDriver()
                 elif opt_package == 'pyOptSparse':
                     driver = pyOptSparseDriver()
                 else:
-                    raise ValueError('Unsupported package {} encountered in CMDOWS file.'.format(opt_package))
+                    raise ValueError('Unsupported package {} encountered in CMDOWS file for optimizer "{}".'
+                                     .format(opt_package, opt_uid))
 
+                # optimization algorithm
                 if opt_algo == 'SLSQP':
                     driver.options['optimizer'] = 'SLSQP'
                 else:
-                    raise ValueError('Unsupported algorithm {} encountered in CMDOWS file.'.format(opt_package))
+                    raise ValueError('Unsupported algorithm {} encountered in CMDOWS file for optimizer "{}".'
+                                     .format(opt_algo, opt_uid))
 
+                # maximum iterations and tolerance
                 if isinstance(driver, ScipyOptimizeDriver):
                     driver.options['maxiter'] = opt_maxiter
                     driver.options['tol'] = opt_convtol
@@ -204,25 +212,82 @@ class LEGOProblem(Problem):
                     driver.opt_settings['MAXIT'] = opt_maxiter
                     driver.opt_settings['ACC'] = opt_convtol
 
-                # Default display and output settings
-                driver.options['disp'] = True  # Print the result
-                driver.opt_settings = {'disp': True, 'iprint': 2}  # Display iterations
+                # Set default display and output settings
+                if isinstance(driver, ScipyOptimizeDriver):
+                    driver.options['disp'] = True  # Print the result
                 driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']
+                driver.add_recorder(SqliteRecorder(self.case_reader_path))
                 return driver
             elif self.model.has_doe:
-                # TODO: Develop this part...
-                # doe sampling
+                # Find DOE element in CMDOWS file
+                doe_uid = self.drivers['does'][0]
+                doe_elem = get_element_by_uid(self.model.elem_cmdows, doe_uid)
+                # Load settings from CMDOWS file
+                doe_method = get_doe_setting_safe(doe_elem, 'method', 'Uniform design')
+                doe_runs = get_doe_setting_safe(doe_elem, 'runs', 5, expected_type='int', doe_method=doe_method,
+                                                required_for_doe_methods=['Latin hypercube design', 'Uniform design',
+                                                                          'Monte Carlo design'])
+                doe_center_runs = get_doe_setting_safe(doe_elem, 'centerRuns', 2, expected_type='int',
+                                                       doe_method=doe_method,
+                                                       required_for_doe_methods=['Box-Behnken design'])
+                doe_seed = get_doe_setting_safe(doe_elem, 'seed', 0, expected_type='int', doe_method=doe_method,
+                                                required_for_doe_methods=['Latin hypercube design', 'Uniform design',
+                                                                          'Monte Carlo design'])
+                doe_levels = get_doe_setting_safe(doe_elem, 'levels', 2, expected_type='int', doe_method=doe_method,
+                                                  required_for_doe_methods=['Full factorial design'])
+
+                # table
+                if isinstance(doe_elem.find('settings/table'), _Element):
+                    doe_table = doe_elem.find('settings/table')
+                    doe_table_rows = [row for row in doe_table.iterchildren()]
+                    n_samples = len([exp for exp in doe_table_rows[0].iterchildren()])
+                    doe_data = []
+                    for idx in range(n_samples):
+                        data_sample = []
+                        for row_elem in doe_table_rows:
+                            value = float(row_elem.find('tableElement[@experimentID="{}"]'.format(idx)).text)
+                            data_sample.append([row_elem.attrib['relatedParameterUID'], value])
+                        doe_data.append(data_sample)
+                else:
+                    if doe_method in ['Custom design table']:
+                        raise ValueError('Table element with data for custom design table missing in CMDOWS file.')
+
+                # Apply settings to the driver
+                # define driver
                 driver = DOEDriver()
+
+                # define generator
+                if doe_method in ['Uniform design', 'Monte Carlo design']:
+                    driver.options['generator'] = UniformGenerator(num_samples=doe_runs, seed=doe_seed)
+                elif doe_method == 'Full factorial design':
+                    driver.options['generator'] = FullFactorialGenerator(levels=doe_levels)
+                elif doe_method == 'Box-Behnken design':
+                    driver.options['generator'] = BoxBehnkenGenerator(center=doe_center_runs)
+                elif doe_method == 'Latin hypercube design':
+                    driver.options['generator'] = LatinHypercubeGenerator(samples=doe_runs, seed=doe_seed)
+                elif doe_method == 'Custom design table':
+                    driver.options['generator'] = ListGenerator(data=doe_data)
+                else:
+                    raise ValueError('Could not match the doe_method {} with supported methods from OpenMDAO.'
+                                     .format(doe_method))
                 # settings from OpenMDAO
+                driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']
+                # add a standard case recorder
+                driver.add_recorder(SqliteRecorder(self.case_reader_path))
                 return driver
             else:
-                pass# raise error / exception
+                raise ValueError('Driver was found, but no optimizer or doe was found somehow.')
         else:
             return Driver()
 
-    def store_model(self, open_in_browser=False):
+    def store_model_view(self, open_in_browser=False):
         """Implementation of the view_model() function for storage and (optionally) viewing in the browser."""
+        if self._setup_status == 0:
+            self.setup()
+        view_model(self, outfile=self.model_view_path, show_browser=open_in_browser)
 
-    #
-    # def attach_recorders(self):
-    #     """Implementation where recorders are automatically attached based on the driver/CMDOWS file."""
+    def initialize_from_xml(self, xml):
+        if self._setup_status == 0:
+            self.setup()
+        self.run_model()
+        self.model.initialize_from_xml(xml)

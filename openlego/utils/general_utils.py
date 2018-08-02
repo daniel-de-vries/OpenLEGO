@@ -334,3 +334,16 @@ def str_to_valid_sys_name(string):
     while not re_sys_name_starts.match(sys_name):
         sys_name = sys_name[1:]
     return sys_name
+
+
+def change_object_type(obj, new_type):
+    # type: (Union[str, supportsInts, supportsFloats], str) -> Union[str, int, float]
+    """Attempts to change an object (usually a string) to a different object type."""
+    if new_type == 'str':
+        return str(obj)
+    elif new_type == 'int':
+        return int(obj)
+    elif new_type == 'float':
+        return float(obj)
+    else:
+        raise IOError('expected_type "{}" is not supported in this function.'.format(new_type))

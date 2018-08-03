@@ -102,31 +102,10 @@ def run_openlego(analyze_mdao_definitions):
         else:
             model.initialize_from_xml('SSBJ-base-mda.xml')
 
-        # 5. Create and attach some Recorders (Optional)
-        """
-        from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
-
-        desvar_plotter = NormalizedDesignVarPlotter()                   # Create a plotter for the design variables
-        desvar_plotter.options['save_on_close'] = True                  # Should this plot be saved automatically?
-        desvar_plotter.save_settings['path'] = 'desvar.png'             # Set the filename of the image file
-
-        convar_plotter = ConstraintsPlotter()                           # Create a plotter for the constraints
-        convar_plotter.options['save_on_close'] = True                  # Should this plot be saved automatically?
-        convar_plotter.save_settings['path'] = 'convar.png'             # Set the filename of the image file
-
-        objvar_plotter = SimpleObjectivePlotter()                       # Create a plotter for the objective
-        objvar_plotter.options['save_on_close'] = True                  # Should this plot be saved automatically?
-        objvar_plotter.save_settings['path'] = 'objvar.png'             # Set the filename of the image file
-
-        driver.add_recorder(desvar_plotter)                             # Attach the design variable plotter
-        driver.add_recorder(convar_plotter)                             # Attach the constraint variable plotter
-        driver.add_recorder(objvar_plotter)                             # Attach the objective variable plotter
-        """
-
-        # 6. Solve the Problem
+        # 5. Solve the Problem
         prob.run_driver()  # Run the optimization
 
-        # 7. Print results
+        # 6. Print results
         x_R = '/dataSchema/aircraft/other/R'
         x_R__scr = '/dataSchema/scaledData/R/scaler'
 
@@ -174,7 +153,7 @@ def run_openlego(analyze_mdao_definitions):
         for output in prob.model._outputs:
             print('{:105} = {:10.3f}'.format(output, prob[output][0]))
 
-        # 8. Cleanup the Problem afterwards
+        # 7. Cleanup the Problem afterwards
         prob.cleanup()  # Clear all resources and close the plots
         model.invalidate()  # Clear the cached properties of the LEGOModel
 

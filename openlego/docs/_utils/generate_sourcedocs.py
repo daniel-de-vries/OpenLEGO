@@ -63,7 +63,6 @@ Source Docs
     # get added will show up at the end.
     packages = [
         'core',
-        'recorders',
     ]
 
     # everything in openmdao dir that isn't discarded is appended as a source package.

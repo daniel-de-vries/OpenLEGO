@@ -23,9 +23,7 @@ import logging
 import os
 import unittest
 
-from openmdao.api import Problem, ScipyOptimizeDriver
-
-from openlego.core.model import LEGOModel
+from openlego.core.problem import LEGOProblem
 import openlego.test_suite.test_examples.sellar_competences.kb as kb
 
 # Settings for logging
@@ -71,28 +69,19 @@ def run_openlego(analyze_mdao_definitions):
         print('------------------------------------------------')
         """Solve the Sellar problem using the given CMDOWS file."""
         # 1. Create Problem
-        prob = Problem()  # Create an instance of the Problem class
-        prob.set_solver_print(0)  # Turn off printing of solver information
-
-        # 2. Create the LEGOModel
-        model = prob.model = LEGOModel(
+        prob = LEGOProblem(
             cmdows_path=os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
             kb_path='kb',
             data_folder='',  # Output directory
             base_xml_file='sellar-output.xml')  # Output file
+        # prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
+        prob.set_solver_print(0)  # Set printing of solver information
 
-        # 3. Create the Driver
-        driver = prob.driver = ScipyOptimizeDriver()  # Use a SciPy for the optimization
-        driver.options['optimizer'] = 'SLSQP'  # Use the SQP algorithm
-        driver.options['disp'] = True  # Print the result
-        driver.opt_settings = {'disp': True, 'iprint': 2}  # Display iterations
+        # 2. Initialize the Problem and export N2 chart
+        prob.store_model_view(open_in_browser=False)
+        prob.initialize_from_xml('sellar-input.xml')
 
-        # 4. Setup the Problem
-        prob.setup()  # Call the OpenMDAO setup() method
-        prob.run_model()  # Run the model once to init. the variables
-        model.initialize_from_xml('sellar-input.xml')  # Set the initial values from an XML file
-
-        # 5. Create and attach some Recorders (Optional)
+        # 3. Create and attach some Recorders (Optional)
         """
         from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
 
@@ -108,30 +97,26 @@ def run_openlego(analyze_mdao_definitions):
         objvar_plotter.options['save_on_close'] = True                  # Should this plot be saved automatically?
         objvar_plotter.save_settings['path'] = 'objvar.png'             # Set the filename of the image file
 
-        driver.add_recorder(desvar_plotter)                             # Attach the design variable plotter
-        driver.add_recorder(convar_plotter)                             # Attach the constraint variable plotter
-        driver.add_recorder(objvar_plotter)                             # Attach the objective variable plotter
+        prob.driver.add_recorder(desvar_plotter)                             # Attach the design variable plotter
+        prob.driver.add_recorder(convar_plotter)                             # Attach the constraint variable plotter
+        prob.driver.add_recorder(objvar_plotter)                             # Attach the objective variable plotter
         """
 
-        # 6. Solve the Problem
-        #prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']
-        prob.run_driver()  # Run the optimization
+        # 4. Run the Problem
+        prob.run_driver()  # Run the driver (optimization, DOE, or convergence)
 
-        # 7. Print results
+        # 5. Read out the case reader
+        prob.print_results()
+
+        # 6. Collect test results
         x = [prob['/dataSchema/geometry/x1']]
         y = [prob['/dataSchema/analyses/y1'], prob['/dataSchema/analyses/y2']]
         z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
         f = [prob['/dataSchema/analyses/f']]
         g = [prob['/dataSchema/analyses/g1'], prob['/dataSchema/analyses/g2']]
 
-        print('Optimum found! Objective function value: f = {}'.format(f[0]))
-        print('Design variables at optimum: x = {}, z1 = {}, z2 = {}'.format(x[0], z[0], z[1]))
-        print('Coupling variables at optimum: y1 = {}, y2 = {}'.format(y[0], y[1]))
-        print('Constraints at optimum: g1 = {}, g2 = {}'.format(g[0], g[1]))
-
-        # 8. Cleanup the Problem afterwards
-        prob.cleanup()  # Clear all resources and close the plots
-        model.invalidate()  # Clear the cached properties of the LEGOModel
+        # 8. Cleanup and invalidate the Problem afterwards
+        prob.invalidate()
 
         return x, y, z, f, g
 
@@ -152,6 +137,30 @@ class TestSellarCompetences(unittest.TestCase):
         self.assertAlmostEqual(g[0], 0.00, 2)
         self.assertAlmostEqual(g[1], 0.84, 2)
 
+    def test_unc_mda_gs(self):
+        """Test run the Sellar system using a sequential tool execution."""
+        run_openlego(0)
+
+    def test_unc_mda_j(self):
+        """Test run the Sellar system using a parallel tool execution."""
+        run_openlego(1)
+
+    def test_doe_gs(self):
+        """Solve the Sellar system using a DOE architecture and a Gauss-Seidel convergence scheme."""
+        run_openlego(2)
+
+    def test_doe_j(self):
+        """Solve the Sellar system using a DOE architecture and a Jacobi convergence scheme."""
+        run_openlego(3)
+
+    def test_mda_j(self):
+        """Solve the Sellar system using a Jacobi convergence scheme."""
+        run_openlego(4)
+
+    def test_mda_gs(self):
+        """Solve the Sellar system using Gauss-Seidel convergence scheme."""
+        run_openlego(5)
+
     def test_mdf_gs(self):
         """Solve the Sellar problem using the MDF architecture and a Gauss-Seidel convergence scheme."""
         self.assertion(*run_openlego(6))
@@ -166,6 +175,7 @@ class TestSellarCompetences(unittest.TestCase):
 
     def __del__(self):
         kb.clean()
+        # TODO: Add function to remove output files also...
 
 
 if __name__ == '__main__':

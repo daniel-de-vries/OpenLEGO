@@ -1,0 +1,614 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<cmdows xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://bitbucket.org/imcovangent/cmdows/raw/master/schema/0.9/cmdows.xsd">
+  <header>
+    <creator>Imco van Gent</creator>
+    <description>Mdao CMDOWS file of the well-known Sellar problem</description>
+    <timestamp>2018-08-02T18:02:25.928659</timestamp>
+    <fileVersion>0.1</fileVersion>
+    <cmdowsVersion>0.9</cmdowsVersion>
+    <updates>
+      <update>
+        <modification>KADMOS export of a mdao data graph (MDG).</modification>
+        <creator>Imco van Gent</creator>
+        <timestamp>2018-08-02T18:02:25.928659</timestamp>
+        <fileVersion>0.1</fileVersion>
+        <cmdowsVersion>0.9</cmdowsVersion>
+      </update>
+    </updates>
+    <organization>
+      <contacts>
+        <contact uID="imcovangent">
+          <function>PhD Student</function>
+          <name>Imco van Gent</name>
+          <country>The Netherlands</country>
+          <company>TU Delft</company>
+          <telephone>0031 6 53 89 42 75</telephone>
+          <address>Kluyverweg 1, 2629 HS, Delft</address>
+          <department>Flight Performance and Propulsion</department>
+          <email>i.vangent@tudelft.nl</email>
+        </contact>
+        <contact uID="danieldevries">
+          <name>Daniel de Vries</name>
+          <country>USA</country>
+          <company>TU Delft</company>
+          <email>danieldevries6@gmail.com</email>
+        </contact>
+      </contacts>
+      <organigram>
+        <architects>
+          <architect>
+            <contactUID>imcovangent</contactUID>
+          </architect>
+        </architects>
+        <integrators>
+          <integrator>
+            <contactUID>imcovangent</contactUID>
+          </integrator>
+        </integrators>
+        <toolSpecialists>
+          <toolSpecialist>
+            <contactUID>danieldevries</contactUID>
+          </toolSpecialist>
+        </toolSpecialists>
+      </organigram>
+    </organization>
+  </header>
+  <executableBlocks>
+    <designCompetences>
+      <designCompetence uID="F">
+        <label>F</label>
+        <instanceID>1</instanceID>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/geometry/x1</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/geometry/z2</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/analyses/y2</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/analyses/y1</parameterUID>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/analyses/f</parameterUID>
+          </output>
+        </outputs>
+        <ID>F</ID>
+        <modeID>main</modeID>
+        <version>1.0</version>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>F discipline of the Sellar tool set.</description>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <owner>
+              <contactUID>danieldevries</contactUID>
+            </owner>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="D2">
+        <label>D2</label>
+        <instanceID>1</instanceID>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/geometry/z1</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/geometry/z2</parameterUID>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/analyses/y2</parameterUID>
+          </output>
+        </outputs>
+        <ID>D2</ID>
+        <modeID>main</modeID>
+        <version>1.0</version>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>D2 discipline of the Sellar tool set.</description>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <owner>
+              <contactUID>danieldevries</contactUID>
+            </owner>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="G2">
+        <label>G2</label>
+        <instanceID>1</instanceID>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/analyses/y2</parameterUID>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/analyses/g2</parameterUID>
+          </output>
+        </outputs>
+        <ID>G2</ID>
+        <modeID>main</modeID>
+        <version>1.0</version>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>G2 discipline of the Sellar tool set.</description>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <owner>
+              <contactUID>danieldevries</contactUID>
+            </owner>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="G1">
+        <label>G1</label>
+        <instanceID>1</instanceID>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/analyses/y1</parameterUID>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/analyses/g1</parameterUID>
+          </output>
+        </outputs>
+        <ID>G1</ID>
+        <modeID>main</modeID>
+        <version>1.0</version>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>G1 discipline of the Sellar tool set.</description>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <owner>
+              <contactUID>danieldevries</contactUID>
+            </owner>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="D1">
+        <label>D1</label>
+        <instanceID>1</instanceID>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/geometry/x1</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/geometry/z1</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/geometry/z2</parameterUID>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/analyses/y1</parameterUID>
+          </output>
+        </outputs>
+        <ID>D1</ID>
+        <modeID>main</modeID>
+        <version>1.0</version>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>D1 discipline of the Sellar tool set.</description>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <owner>
+              <contactUID>danieldevries</contactUID>
+            </owner>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+    </designCompetences>
+  </executableBlocks>
+  <parameters>
+    <parameter uID="/dataSchema/analyses/g1">
+      <label>g1</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/analyses/f">
+      <label>f</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/analyses/g2">
+      <label>g2</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/geometry/x1">
+      <label>x1</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/geometry/z2">
+      <label>z2</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/geometry/z1">
+      <label>z1</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/analyses/y1">
+      <label>y1</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/analyses/y2">
+      <label>y2</label>
+      <instanceID>1</instanceID>
+    </parameter>
+  </parameters>
+  <problemDefinition uID="unconverged-MDAJacobi">
+    <problemFormulation>
+      <mdaoArchitecture>unconverged-MDA</mdaoArchitecture>
+      <convergerType>Jacobi</convergerType>
+      <executableBlocksOrder>
+        <executableBlock position="1">D2</executableBlock>
+        <executableBlock position="2">D1</executableBlock>
+        <executableBlock position="3">G1</executableBlock>
+        <executableBlock position="4">G2</executableBlock>
+        <executableBlock position="5">F</executableBlock>
+      </executableBlocksOrder>
+      <allowUnconvergedCouplings>true</allowUnconvergedCouplings>
+    </problemFormulation>
+    <problemRoles>
+      <parameters>
+        <stateVariables>
+          <stateVariable uID="__statVar__/dataSchema/analyses/g1">
+            <parameterUID>/dataSchema/analyses/g1</parameterUID>
+          </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/analyses/f">
+            <parameterUID>/dataSchema/analyses/f</parameterUID>
+          </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/analyses/g2">
+            <parameterUID>/dataSchema/analyses/g2</parameterUID>
+          </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/analyses/y1">
+            <parameterUID>/dataSchema/analyses/y1</parameterUID>
+          </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/analyses/y2">
+            <parameterUID>/dataSchema/analyses/y2</parameterUID>
+          </stateVariable>
+        </stateVariables>
+      </parameters>
+      <executableBlocks>
+        <coupledBlocks>
+          <coupledBlock>D2</coupledBlock>
+          <coupledBlock>D1</coupledBlock>
+        </coupledBlocks>
+        <postCouplingBlocks>
+          <postCouplingBlock>G1</postCouplingBlock>
+          <postCouplingBlock>G2</postCouplingBlock>
+          <postCouplingBlock>F</postCouplingBlock>
+        </postCouplingBlocks>
+      </executableBlocks>
+    </problemRoles>
+  </problemDefinition>
+  <workflow>
+    <problemDefinitionUID>unconverged-MDAJacobi</problemDefinitionUID>
+    <dataGraph>
+      <name>XDSM - unconverged-MDA-J</name>
+      <edges>
+        <edge>
+          <fromExecutableBlockUID>G2</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/analyses/g2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>G1</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/analyses/g1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>F</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/analyses/f</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/g1</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/geometry/x1</fromParameterUID>
+          <toExecutableBlockUID>D1</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/geometry/x1</fromParameterUID>
+          <toExecutableBlockUID>F</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
+          <toExecutableBlockUID>D1</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
+          <toExecutableBlockUID>D2</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
+          <toExecutableBlockUID>F</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>D2</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/geometry/x1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/geometry/z1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/geometry/z2</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/f</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>D1</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/geometry/z1</fromParameterUID>
+          <toExecutableBlockUID>D2</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/geometry/z1</fromParameterUID>
+          <toExecutableBlockUID>D1</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>G1</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>F</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>G2</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>F</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>D2</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/analyses/y2</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/g2</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>D1</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/analyses/y1</toParameterUID>
+        </edge>
+      </edges>
+    </dataGraph>
+    <processGraph>
+      <name>mpg Sellar problem</name>
+      <edges>
+        <edge>
+          <fromExecutableBlockUID>G2</fromExecutableBlockUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <processStepNumber>3</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>G1</fromExecutableBlockUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <processStepNumber>3</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>F</fromExecutableBlockUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <processStepNumber>3</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toExecutableBlockUID>D2</toExecutableBlockUID>
+          <processStepNumber>1</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toExecutableBlockUID>D1</toExecutableBlockUID>
+          <processStepNumber>1</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>D2</fromExecutableBlockUID>
+          <toExecutableBlockUID>G2</toExecutableBlockUID>
+          <processStepNumber>2</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>D2</fromExecutableBlockUID>
+          <toExecutableBlockUID>F</toExecutableBlockUID>
+          <processStepNumber>2</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>D1</fromExecutableBlockUID>
+          <toExecutableBlockUID>G1</toExecutableBlockUID>
+          <processStepNumber>2</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>D1</fromExecutableBlockUID>
+          <toExecutableBlockUID>F</toExecutableBlockUID>
+          <processStepNumber>2</processStepNumber>
+        </edge>
+      </edges>
+      <nodes>
+        <node>
+          <referenceUID>G2</referenceUID>
+          <processStepNumber>2</processStepNumber>
+          <diagonalPosition>4</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>G1</referenceUID>
+          <processStepNumber>2</processStepNumber>
+          <diagonalPosition>3</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>F</referenceUID>
+          <processStepNumber>2</processStepNumber>
+          <diagonalPosition>5</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>Coordinator</referenceUID>
+          <processStepNumber>0</processStepNumber>
+          <convergerStepNumber>3</convergerStepNumber>
+          <diagonalPosition>0</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>D2</referenceUID>
+          <processStepNumber>1</processStepNumber>
+          <diagonalPosition>1</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>D1</referenceUID>
+          <processStepNumber>1</processStepNumber>
+          <diagonalPosition>2</diagonalPosition>
+        </node>
+      </nodes>
+      <metadata>
+        <loopNesting>
+          <loopElements>
+            <loopElement relatedUID="Coordinator">
+              <functionElements>
+                <functionElement>D1</functionElement>
+                <functionElement>D2</functionElement>
+                <functionElement>F</functionElement>
+                <functionElement>G1</functionElement>
+                <functionElement>G2</functionElement>
+              </functionElements>
+            </loopElement>
+          </loopElements>
+        </loopNesting>
+        <executableBlocksOrder>
+          <executableBlock position="1">D2</executableBlock>
+          <executableBlock position="2">D1</executableBlock>
+          <executableBlock position="3">G2</executableBlock>
+          <executableBlock position="4">G1</executableBlock>
+          <executableBlock position="5">F</executableBlock>
+        </executableBlocksOrder>
+      </metadata>
+    </processGraph>
+  </workflow>
+  <architectureElements>
+    <parameters>
+      <initialGuessCouplingVariables>
+        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1">
+          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
+          <label>y1^{c0}</label>
+          <instanceID>1</instanceID>
+        </initialGuessCouplingVariable>
+        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2">
+          <relatedParameterUID>/dataSchema/analyses/y2</relatedParameterUID>
+          <label>y2^{c0}</label>
+          <instanceID>1</instanceID>
+        </initialGuessCouplingVariable>
+      </initialGuessCouplingVariables>
+    </parameters>
+    <executableBlocks>
+      <coordinators>
+        <coordinator uID="Coordinator">
+          <label>COOR</label>
+        </coordinator>
+      </coordinators>
+      <postCouplingAnalyses>
+        <postCouplingAnalysis>
+          <relatedExecutableBlockUID>G2</relatedExecutableBlockUID>
+        </postCouplingAnalysis>
+        <postCouplingAnalysis>
+          <relatedExecutableBlockUID>G1</relatedExecutableBlockUID>
+        </postCouplingAnalysis>
+        <postCouplingAnalysis>
+          <relatedExecutableBlockUID>F</relatedExecutableBlockUID>
+        </postCouplingAnalysis>
+        <postCouplingAnalysis>
+          <relatedExecutableBlockUID>D2</relatedExecutableBlockUID>
+        </postCouplingAnalysis>
+        <postCouplingAnalysis>
+          <relatedExecutableBlockUID>D1</relatedExecutableBlockUID>
+        </postCouplingAnalysis>
+      </postCouplingAnalyses>
+    </executableBlocks>
+  </architectureElements>
+</cmdows>

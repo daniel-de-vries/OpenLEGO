@@ -3,14 +3,14 @@
   <header>
     <creator>Imco van Gent</creator>
     <description>Mdao CMDOWS file of the well-known Sellar problem</description>
-    <timestamp>2018-07-31T17:02:19.496101</timestamp>
+    <timestamp>2018-08-03T15:02:39.911958</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2018-07-31T17:02:19.496101</timestamp>
+        <timestamp>2018-08-03T15:02:39.911958</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -858,12 +858,13 @@
         <optimizer uID="Optimizer">
           <label>OPT</label>
           <settings>
+            <package>SciPy</package>
+            <algorithm>SLSQP</algorithm>
             <maximumIterations>1000</maximumIterations>
-            <algorithm>Dakota Quasi-Newton method</algorithm>
-            <applyScaling>true</applyScaling>
             <maximumFunctionEvaluations>1000</maximumFunctionEvaluations>
-            <constraintTolerance>0.0001</constraintTolerance>
             <convergenceTolerance>0.0001</convergenceTolerance>
+            <constraintTolerance>0.0001</constraintTolerance>
+            <applyScaling>true</applyScaling>
           </settings>
           <designVariables>
             <designVariable>

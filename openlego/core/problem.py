@@ -20,73 +20,58 @@ This file contains the definition of the `LEGOProblem` class.
 from __future__ import absolute_import, division, print_function
 
 import datetime
-import imp
 import os
-import re
-import warnings
 
-import numpy as np
-from lxml import etree
 from lxml.etree import _Element, _ElementTree
-from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
-    LinearRunOnce, ExecComp, NonlinearRunOnce, Problem, ScipyOptimizeDriver, pyOptSparseDriver, DOEDriver, \
-    UniformGenerator, FullFactorialGenerator, BoxBehnkenGenerator, LatinHypercubeGenerator, ListGenerator, view_model, \
-    SqliteRecorder
+from openmdao.api import Problem, ScipyOptimizeDriver, pyOptSparseDriver, DOEDriver, UniformGenerator, \
+    FullFactorialGenerator, BoxBehnkenGenerator, LatinHypercubeGenerator, ListGenerator, view_model, SqliteRecorder, \
+    CaseReader
 from openmdao.core.driver import Driver
-from typing import Union, Optional, List, Any, Dict, Tuple
+from typing import Optional, Any, Union
 
 from openlego.core.model import LEGOModel
 from openlego.utils.cmdows_utils import get_element_by_uid, get_opt_setting_safe, get_doe_setting_safe
-from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str_to_valid_sys_name, parse_string
-from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
-from .abstract_discipline import AbstractDiscipline
-from .discipline_component import DisciplineComponent
-
-
-class InvalidCMDOWSFileError(ValueError):
-
-    def __init__(self, reason=None):
-        msg = 'Invalid CMDOWS file'
-        if reason is not None:
-            msg += ': {}'.format(reason)
-        super(InvalidCMDOWSFileError, self).__init__(msg)
+from openlego.utils.general_utils import CachedProperty
 
 
 class LEGOProblem(Problem):
     """Specialized OpenMDAO Problem class representing the problem specified by a CMDOWS file.
 
-    An important note about this class in the context of OpenMDAO is that the aggregation pattern of the root Group
-    class the base Problem class has is changed into a stronger composition pattern. This is because this class directly
+    # TODO: Daniel: is this also true here?
+    An important note about this class in the context of OpenMDAO is that the aggregation pattern of the root Problem
+    class has is changed into a stronger composition pattern. This is because this class directly
     controls the creation and assembly of this class by making use of Python's @property decorator. It is not possible,
-    nor should it be attempted, to manually inject a different instance of Group in place of these, because the
+    nor should it be attempted, to manually inject a different instance of Problem in place of these, because the
     correspondence between the CMDOWS file and the Problem can then no longer be guaranteed.
 
     Attributes TODO: Update!
     ----------
         cmdows_path
         kb_path
-        discipline_components
-        block_order
-        coupled_blocks
-        system_order
-        system_variables
-        system_inputs
+        case_reader_path
+        model_view_path
+        drivers
+        driver_type
+        model
         driver
-        coordinator
 
         data_folder : str, optional
             Path to the folder in which to store all data generated during the `Problem`'s execution.
 
         base_xml_file : str, optional
             Path to an XML file which should be kept up-to-date with the latest data describing the problem.
+
+        output_case_string : str, optional
+            A string indicating the naming for output files such as N2 views and recorders.
     """
 
-    def __init__(self, cmdows_path=None, kb_path='', data_folder=None, base_xml_file=None, output_case_str=None, **kwargs):
+    def __init__(self, cmdows_path=None, kb_path='', data_folder=None, base_xml_file=None, output_case_str=None,
+                 **kwargs):
         # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
-        """Initialize a CMDOWS Problem from a given CMDOWS file and knowledge base.
+        """Initialize a CMDOWS Problem from a given CMDOWS file and (optionally) knowledge base.
 
         It is also possible to specify where (temporary) data should be stored, and if a base XML
-        file should be kept up-to-data.
+        file should be kept up-to-date.
 
         Parameters
         ----------
@@ -101,6 +86,9 @@ class LEGOProblem(Problem):
 
         base_xml_file : str, optional
             Path to a base XML file to update with the problem data.
+
+        output_case_str : str, optional
+            A string indicating the naming for output files such as N2 views and recorders.
         """
         self._cmdows_path = cmdows_path
         self._kb_path = kb_path
@@ -114,9 +102,28 @@ class LEGOProblem(Problem):
 
         super(LEGOProblem, self).__init__(**kwargs)
 
+    def __getattribute__(self, name):
+        # type: (str) -> Any
+        """Check the integrity before returning any of the cached variables.
+
+        Parameters
+        ----------
+        name : str
+            Name of the attribute to read.
+
+        Returns
+        -------
+            any
+                The value of the requested attribute.
+        """
+        if name != '__class__' and name != '__dict__':
+            if name in [_name for _name, value in self.__class__.__dict__.items() if isinstance(value, CachedProperty)]:
+                self.__integrity_check()
+        return super(LEGOProblem, self).__getattribute__(name)
+
     def __setattr__(self, name, value):
         # type: (str, Any) -> None
-        """Bypass setting model attribute.
+        """Bypass setting model and driver attribute.
 
         Parameters
         ----------
@@ -129,19 +136,65 @@ class LEGOProblem(Problem):
         if name not in ['model', 'driver']:
             super(LEGOProblem, self).__setattr__(name, value)
 
+    def __integrity_check(self):
+        # type: () -> None
+        """Ensure a CMDOWS file has been supplied.
+
+        Raises
+        ------
+            ValueError
+                If no CMDOWS file has been supplied
+        """
+        if self._cmdows_path is None:
+            raise ValueError('No CMDOWS file specified!')
+
     def invalidate(self):
         # type: () -> None
         """Invalidate the instance.
 
         All computed (cached) properties will be recomputed upon being read once the instance has been invalidated."""
+        self.cleanup()  # Cleanup the problem
+        self.model.invalidate()  # Invalidate the model
+        # Invalidate the problem
         for value in self.__class__.__dict__.values():
             if isinstance(value, CachedProperty):
                 value.invalidate()
-        # Also invalidate the model
-        self.model.invalidate()
+
+    @property
+    def cmdows_path(self):
+        # type: () -> str
+        """:obj:`str`: Path to the CMDOWS file this class corresponds to.
+
+        When this property is set the instance is automatically invalidated.
+        """
+        return self._cmdows_path
+
+    @cmdows_path.setter
+    def cmdows_path(self, cmdows_path):
+        # type: (str) -> None
+        self._cmdows_path = cmdows_path
+        self.invalidate()
+
+    @property
+    def kb_path(self):
+        # type: () -> str
+        """:obj:`str`: Path to the knowledge base.
+
+        When this property is set the instance is automatically invalidated.
+        """
+        return self._kb_path
+
+    @kb_path.setter
+    def kb_path(self, kb_path):
+        # type: (str) -> None
+        self._kb_path = kb_path
+        self.invalidate()
+
 
     @CachedProperty
     def case_reader_path(self):
+        # type: () -> str
+        """:obj:`str`: Path to the case reader that has been added to the driver."""
         filename = 'case_reader_' + self.output_case_string + '.sql'
         if self.data_folder:
             return os.path.join(self.data_folder, filename)
@@ -150,14 +203,18 @@ class LEGOProblem(Problem):
 
     @CachedProperty
     def model_view_path(self):
+        # type: () -> str
+        """:obj:`str`: Path to the model view html view that is created with store_model_view()."""
         filename = 'n2_' + self.output_case_string + '.html'
         if self.data_folder:
             return os.path.join(self.data_folder, filename)
         else:
             return filename
 
-    @property
+    @CachedProperty
     def drivers(self):
+        # type: () -> dict
+        """:obj:`dict`: Dictionary containing the optimizer and DOE element UIDs from the CMDOWS file."""
         optimizer_elems = self.model.elem_arch_elems.findall('executableBlocks/optimizers/optimizer')
         doe_elems = self.model.elem_arch_elems.findall('executableBlocks/does/doe')
         optimizers = [elem.get('uID') for elem in optimizer_elems]
@@ -165,7 +222,23 @@ class LEGOProblem(Problem):
         return {'optimizers': optimizers, 'does': does}
 
     @CachedProperty
+    def driver_type(self):
+        # type: () -> Union[str, None]
+        """:obj:`str`: Type of driver as string."""
+        assert len(self.drivers['optimizers']) + len(self.drivers['does']) <= 1, \
+            "Only one driver is allowed at the moment. {} drivers specified ({}) at the moment." \
+                .format(len(self.drivers), self.drivers)
+        if self.drivers['optimizers']:
+            return 'optimizer'
+        elif self.drivers['does']:
+            return 'doe'
+        else:
+            return None
+
+    @CachedProperty
     def model(self):
+        # type: () -> LEGOModel
+        """:obj:`LEGOModel`: The LEGOModel that is automatically built from the CMDOWS file and knowledge base."""
         return LEGOModel(self._cmdows_path,   # CMDOWS file
                          self._kb_path,       # Knowledge base path
                          self.data_folder,    # Output directory
@@ -173,11 +246,21 @@ class LEGOProblem(Problem):
 
     @CachedProperty
     def driver(self):
-        if self.model.has_driver:
-            assert len(self.drivers['optimizers']) + len(self.drivers['does']) <= 1, \
-                "Only one driver is allowed at the moment. {} drivers specified ({}) at the moment."\
-                    .format(len(self.drivers), self.drivers)
-            if self.model.has_optimizer:
+        # type: () -> Driver
+        """Method to return a preconfigured driver.
+
+        Returns
+        -------
+            Driver
+                A preconfigured driver element to be used for the Problem instance.
+
+        Raises
+        ------
+            ValueError
+                Value error are raised if unsupported settings are encountered.
+        """
+        if self.driver_type:
+            if self.driver_type == 'optimizer':
                 # Find optimizer element in CMDOWS file
                 opt_uid = self.drivers['optimizers'][0]
                 opt_elem = get_element_by_uid(self.model.elem_cmdows, opt_uid)
@@ -215,10 +298,8 @@ class LEGOProblem(Problem):
                 # Set default display and output settings
                 if isinstance(driver, ScipyOptimizeDriver):
                     driver.options['disp'] = True  # Print the result
-                driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']
-                driver.add_recorder(SqliteRecorder(self.case_reader_path))
                 return driver
-            elif self.model.has_doe:
+            elif self.driver_type == 'doe':
                 # Find DOE element in CMDOWS file
                 doe_uid = self.drivers['does'][0]
                 doe_elem = get_element_by_uid(self.model.elem_cmdows, doe_uid)
@@ -237,11 +318,11 @@ class LEGOProblem(Problem):
                                                   required_for_doe_methods=['Full factorial design'])
 
                 # table
+                doe_data = []
                 if isinstance(doe_elem.find('settings/table'), _Element):
                     doe_table = doe_elem.find('settings/table')
                     doe_table_rows = [row for row in doe_table.iterchildren()]
                     n_samples = len([exp for exp in doe_table_rows[0].iterchildren()])
-                    doe_data = []
                     for idx in range(n_samples):
                         data_sample = []
                         for row_elem in doe_table_rows:
@@ -270,10 +351,6 @@ class LEGOProblem(Problem):
                 else:
                     raise ValueError('Could not match the doe_method {} with supported methods from OpenMDAO.'
                                      .format(doe_method))
-                # settings from OpenMDAO
-                driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']
-                # add a standard case recorder
-                driver.add_recorder(SqliteRecorder(self.case_reader_path))
                 return driver
             else:
                 raise ValueError('Driver was found, but no optimizer or doe was found somehow.')
@@ -281,13 +358,130 @@ class LEGOProblem(Problem):
             return Driver()
 
     def store_model_view(self, open_in_browser=False):
-        """Implementation of the view_model() function for storage and (optionally) viewing in the browser."""
+        # type: (bool) -> None
+        """Implementation of the view_model() function for storage and (optionally) viewing in the browser.
+
+        Parameters
+        ----------
+            open_in_browser : bool
+                Setting whether to attempt to automatically open the model view in the browser.
+        """
         if self._setup_status == 0:
             self.setup()
         view_model(self, outfile=self.model_view_path, show_browser=open_in_browser)
 
-    def initialize_from_xml(self, xml):
+    def initialize(self):
+        # type: () -> None
+        """Method to initialize the problem by adding a recorder and doing the setup."""
+        self.driver.add_recorder(SqliteRecorder(self.case_reader_path))
         if self._setup_status == 0:
             self.setup()
+
+    def initialize_from_xml(self, xml):
+        # type: (Union[str, _ElementTree]) -> None
+        """Initialize the problem with initial values from an XML file.
+
+        Parameters
+        ----------
+            xml : str or :obj:`etree._ElementTree`
+                Path to an XML file or an instance of `etree._ElementTree` representing it.
+                """
+        self.initialize()
         self.run_model()
         self.model.initialize_from_xml(xml)
+
+    def print_results(self, cases_to_print='default'):
+        # type: (Union[str, list]) -> None
+        """Print the results that were stored in the case reader.
+
+        Parameters
+        ----------
+            cases_to_print : str or list
+                Setting on which cases should be print (e.g. 'last', 'all', 'default', [2, 3, 5]
+        """
+        assert os.path.isfile(self.case_reader_path), 'Could not find the case reader file {}.'\
+            .format(self.case_reader_path)
+        assert isinstance(cases_to_print, (str, list)), 'cases_to_print must be of type str or list.'
+        if isinstance(cases_to_print, str):
+            assert cases_to_print in ['default', 'all', 'last'], 'Invalid cases_to_print string value provided.'
+        if cases_to_print=='default':
+            if self.driver_type == 'doe':
+                cases_to_print = 'all'
+            elif self.driver_type == 'optimizer':
+                cases_to_print = 'last'
+            else:
+                cases_to_print = 'last'
+
+        # Get all cases from the case reader and determine amount of cases
+        cases = CaseReader(self.case_reader_path).driver_cases
+        num_cases = cases.num_cases
+
+        # Change cases_to_print to a list of integers with case numbers
+        if isinstance(cases_to_print, str):
+            if cases_to_print == 'all':
+                cases_to_print = range(num_cases)
+            elif cases_to_print == 'last':
+                cases_to_print = [num_cases-1]
+
+        # Print results
+        print('\nPrinting results from case reader: {}.'.format(self.case_reader_path))
+        if self.driver.fail:
+            if self.driver_type == 'optimizer':
+                print('Optimum not found in driver execution!')
+            else:
+                print('Driver failed for some reason!')
+        else:
+            if self.driver_type == 'optimizer':
+                print('Optimum found!')
+            else:
+                print('Driver finished!')
+        print('\nPrinting case numbers: {}'.format(num_cases, cases_to_print))
+        for num_case in cases_to_print:
+            case = cases.get_case(num_case)
+            print('\n\n  Case {}/{} ({})'.format(num_case, num_cases-1, case.iteration_coordinate))
+            recorded_objectives = case.get_objectives()
+            recorded__desvars = case.get_desvars()
+            recorded_constraints = case.get_constraints()
+            var_objectives = sorted(list(recorded_objectives.keys))
+            var_desvars = sorted(list(recorded__desvars.keys))
+            var_constraints = sorted(list(recorded_constraints.keys))
+            var_does = sorted([elem.text for elem in self.model.elem_arch_elems
+                              .findall('parameters/doeOutputSampleLists/doeOutputSampleList/relatedParameterUID')])
+            var_convs = sorted([elem.text for elem in self.model.elem_problem_def
+                              .findall('problemRoles/parameters/stateVariables/stateVariable/parameterUID')])
+
+            # Print objective
+            if var_objectives:
+                print('    Objectives')
+                for var_objective in var_objectives:
+                    print('    {}: {}'.format(var_objective, recorded_objectives[var_objective]))
+
+            # Print design variables
+            # TODO: Add bounds (currently a bug in OpenMDAO recorders)
+            if var_desvars:
+                print('\n    Design variables')
+                for var_desvar in var_desvars:
+                    print('    {}: {}'.format(var_desvar, recorded__desvars[var_desvar]))
+
+            # Print constraint values
+            # TODO: Add bounds (currently a bug in OpenMDAO recorders)
+            if var_constraints:
+                print('\n    Constraints')
+                for var_constraint in var_constraints:
+                    print('    {}: {}'.format(var_constraint, recorded_constraints[var_constraint]))
+
+            # Print DOE quantities of interest
+            if var_does:
+                print('\n    Quantifies of interest')
+                for var_qoi in var_does:
+                    print('    {}: {}'.format(var_qoi, case.outputs[var_qoi]))
+
+            # Print other quantities of interest
+            title_not_printed = True
+            if var_convs:
+                for var_qoi in var_convs:
+                    if var_qoi not in var_objectives + var_constraints + var_does:
+                        if title_not_printed:
+                            print('\n    Quantifies of interest')
+                            title_not_printed = False
+                        print('    {}: {}'.format(var_qoi, case.outputs[var_qoi]))

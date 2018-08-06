@@ -26,6 +26,8 @@ import unittest
 from openlego.core.problem import LEGOProblem
 import openlego.test_suite.test_examples.sellar_competences.kb as kb
 
+from openlego.utils.general_utils import clean_dir_filtered
+
 # Settings for logging
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
@@ -40,15 +42,6 @@ mdao_definitions = ['unconverged-MDA-J',  # 0
                     'MDF-J',  # 7
                     'IDF',  # 8
                     'CO']  # 9
-
-
-def test_folder_clean():
-    test_folder = os.path.dirname(__file__)
-    for file in os.listdir(test_folder):
-        if 'case_reader_' in file:
-            os.remove(file)
-        elif 'n2_Mdao_' in file:
-            os.remove(file)
 
 
 def get_loop_items(analyze_mdao_definitions):
@@ -94,7 +87,7 @@ def run_openlego(analyze_mdao_definitions):
         prob.run_driver()  # Run the driver (optimization, DOE, or convergence)
 
         # 4. Read out the case reader
-        prob.print_results()
+        prob.collect_results()
 
         # 5. Collect test results for test assertions
         x = [prob['/dataSchema/geometry/x1']]
@@ -102,11 +95,6 @@ def run_openlego(analyze_mdao_definitions):
         z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
         f = [prob['/dataSchema/analyses/f']]
         g = [prob['/dataSchema/analyses/g1'], prob['/dataSchema/analyses/g2']]
-        print('Optimum found! Objective function value: f = {}'.format(f[0]))
-        print('Design variables at optimum: x = {}, z1 = {}, z2 = {}'.format(x[0], z[0], z[1]))
-        print('Coupling variables at optimum: y1 = {}, y2 = {}'.format(y[0], y[1]))
-        print('Constraints at optimum: g1 = {}, g2 = {}'.format(g[0], g[1]))
-
 
         # 6. Cleanup and invalidate the Problem afterwards
         prob.invalidate()
@@ -198,7 +186,7 @@ class TestSellarCompetences(unittest.TestCase):
 
     def __del__(self):
         kb.clean()
-        test_folder_clean()
+        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_'])
 
 
 if __name__ == '__main__':

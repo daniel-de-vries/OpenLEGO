@@ -27,11 +27,11 @@ from openmdao.api import Problem, ScipyOptimizeDriver, pyOptSparseDriver, DOEDri
     FullFactorialGenerator, BoxBehnkenGenerator, LatinHypercubeGenerator, ListGenerator, view_model, SqliteRecorder, \
     CaseReader
 from openmdao.core.driver import Driver
-from typing import Optional, Any, Union
+from typing import Optional, Any, Union, Dict
 
 from openlego.core.model import LEGOModel
 from openlego.utils.cmdows_utils import get_element_by_uid, get_opt_setting_safe, get_doe_setting_safe
-from openlego.utils.general_utils import CachedProperty
+from openlego.utils.general_utils import CachedProperty, print_optional, add_or_append_dict_entry
 
 
 class LEGOProblem(Problem):
@@ -390,55 +390,65 @@ class LEGOProblem(Problem):
         self.run_model()
         self.model.initialize_from_xml(xml)
 
-    def print_results(self, cases_to_print='default'):
-        # type: (Union[str, list]) -> None
+    def collect_results(self, cases_to_collect='default', print_in_log=True):
+        # type: (Union[str, list]) -> Dict[dict]
         """Print the results that were stored in the case reader.
 
         Parameters
         ----------
-            cases_to_print : str or list
+            cases_to_collect : str or list
                 Setting on which cases should be print (e.g. 'last', 'all', 'default', [2, 3, 5]
+
+            print_in_log : bool
+                Setting on whether the results should also be printed in the log
+
+        Returns
+        -------
+            results : dict of dicts
+                Dictionary containing the results that were collected
         """
         assert os.path.isfile(self.case_reader_path), 'Could not find the case reader file {}.'\
             .format(self.case_reader_path)
-        assert isinstance(cases_to_print, (str, list)), 'cases_to_print must be of type str or list.'
-        if isinstance(cases_to_print, str):
-            assert cases_to_print in ['default', 'all', 'last'], 'Invalid cases_to_print string value provided.'
-        if cases_to_print=='default':
+        assert isinstance(cases_to_collect, (str, list)), 'cases_to_print must be of type str or list.'
+        if isinstance(cases_to_collect, str):
+            assert cases_to_collect in ['default', 'all', 'last'], 'Invalid cases_to_print string value provided.'
+        if cases_to_collect== 'default':
             if self.driver_type == 'doe':
-                cases_to_print = 'all'
+                cases_to_collect = 'all'
             elif self.driver_type == 'optimizer':
-                cases_to_print = 'last'
+                cases_to_collect = 'last'
             else:
-                cases_to_print = 'last'
+                cases_to_collect = 'last'
+        results = dict()
 
         # Get all cases from the case reader and determine amount of cases
         cases = CaseReader(self.case_reader_path).driver_cases
         num_cases = cases.num_cases
 
         # Change cases_to_print to a list of integers with case numbers
-        if isinstance(cases_to_print, str):
-            if cases_to_print == 'all':
-                cases_to_print = range(num_cases)
-            elif cases_to_print == 'last':
-                cases_to_print = [num_cases-1]
+        if isinstance(cases_to_collect, str):
+            if cases_to_collect == 'all':
+                cases_to_collect = range(num_cases)
+            elif cases_to_collect == 'last':
+                cases_to_collect = [num_cases - 1]
 
         # Print results
-        print('\nPrinting results from case reader: {}.'.format(self.case_reader_path))
+        print_optional('\nPrinting results from case reader: {}.'.format(self.case_reader_path), print_in_log)
         if self.driver.fail:
             if self.driver_type == 'optimizer':
-                print('Optimum not found in driver execution!')
+                print_optional('Optimum not found in driver execution!', print_in_log)
             else:
-                print('Driver failed for some reason!')
+                print_optional('Driver failed for some reason!', print_in_log)
         else:
             if self.driver_type == 'optimizer':
-                print('Optimum found!')
+                print_optional('Optimum found!', print_in_log)
             else:
-                print('Driver finished!')
-        print('\nPrinting case numbers: {}'.format(num_cases, cases_to_print))
-        for num_case in cases_to_print:
+                print_optional('Driver finished!', print_in_log)
+        print_optional('\nPrinting case numbers: {}'.format(num_cases, cases_to_collect), print_in_log)
+        for num_case in cases_to_collect:
             case = cases.get_case(num_case)
-            print('\n\n  Case {}/{} ({})'.format(num_case, num_cases-1, case.iteration_coordinate))
+            print_optional('\n\n  Case {}/{} ({})'.format(num_case, num_cases-1, case.iteration_coordinate),
+                           print_in_log)
             recorded_objectives = case.get_objectives()
             recorded__desvars = case.get_desvars()
             recorded_constraints = case.get_constraints()
@@ -452,29 +462,37 @@ class LEGOProblem(Problem):
 
             # Print objective
             if var_objectives:
-                print('    Objectives')
+                print_optional('    Objectives', print_in_log)
                 for var_objective in var_objectives:
-                    print('    {}: {}'.format(var_objective, recorded_objectives[var_objective]))
+                    value = recorded_objectives[var_objective]
+                    print_optional('    {}: {}'.format(var_objective, value), print_in_log)
+                    results = add_or_append_dict_entry(results, 'objectives', var_objective, value)
 
             # Print design variables
             # TODO: Add bounds (currently a bug in OpenMDAO recorders)
             if var_desvars:
-                print('\n    Design variables')
+                print_optional('\n    Design variables', print_in_log)
                 for var_desvar in var_desvars:
-                    print('    {}: {}'.format(var_desvar, recorded__desvars[var_desvar]))
+                    value = recorded__desvars[var_desvar]
+                    print_optional('    {}: {}'.format(var_desvar, value), print_in_log)
+                    results = add_or_append_dict_entry(results, 'desvars', var_desvar, value)
 
             # Print constraint values
             # TODO: Add bounds (currently a bug in OpenMDAO recorders)
             if var_constraints:
-                print('\n    Constraints')
+                print_optional('\n    Constraints', print_in_log)
                 for var_constraint in var_constraints:
-                    print('    {}: {}'.format(var_constraint, recorded_constraints[var_constraint]))
+                    value = recorded_constraints[var_constraint]
+                    print_optional('    {}: {}'.format(var_constraint, value), print_in_log)
+                    results = add_or_append_dict_entry(results, 'desvars', var_constraint, value)
 
             # Print DOE quantities of interest
             if var_does:
-                print('\n    Quantifies of interest')
+                print_optional('\n    Quantifies of interest', print_in_log)
                 for var_qoi in var_does:
-                    print('    {}: {}'.format(var_qoi, case.outputs[var_qoi]))
+                    value = case.outputs[var_qoi]
+                    print_optional('    {}: {}'.format(var_qoi, value), print_in_log)
+                    results = add_or_append_dict_entry(results, 'qois', var_qoi, value)
 
             # Print other quantities of interest
             title_not_printed = True
@@ -482,6 +500,9 @@ class LEGOProblem(Problem):
                 for var_qoi in var_convs:
                     if var_qoi not in var_objectives + var_constraints + var_does:
                         if title_not_printed:
-                            print('\n    Quantifies of interest')
+                            print_optional('\n    Quantifies of interest', print_in_log)
                             title_not_printed = False
-                        print('    {}: {}'.format(var_qoi, case.outputs[var_qoi]))
+                        value = case.outputs[var_qoi]
+                        print_optional('    {}: {}'.format(var_qoi, value), print_in_log)
+                        results = add_or_append_dict_entry(results, 'qois', var_qoi, value)
+        return results

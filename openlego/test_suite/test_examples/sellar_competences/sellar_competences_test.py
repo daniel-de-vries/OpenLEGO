@@ -90,41 +90,25 @@ def run_openlego(analyze_mdao_definitions):
         prob.store_model_view(open_in_browser=False)
         prob.initialize_from_xml('sellar-input.xml')
 
-        # 3. Create and attach some Recorders (Optional)
-        """
-        from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
-
-        desvar_plotter = NormalizedDesignVarPlotter()                   # Create a plotter for the design variables
-        desvar_plotter.options['save_on_close'] = True                  # Should this plot be saved automatically?
-        desvar_plotter.save_settings['path'] = 'desvar.png'             # Set the filename of the image file
-
-        convar_plotter = ConstraintsPlotter()                           # Create a plotter for the constraints
-        convar_plotter.options['save_on_close'] = True                  # Should this plot be saved automatically?
-        convar_plotter.save_settings['path'] = 'convar.png'             # Set the filename of the image file
-
-        objvar_plotter = SimpleObjectivePlotter()                       # Create a plotter for the objective
-        objvar_plotter.options['save_on_close'] = True                  # Should this plot be saved automatically?
-        objvar_plotter.save_settings['path'] = 'objvar.png'             # Set the filename of the image file
-
-        prob.driver.add_recorder(desvar_plotter)                             # Attach the design variable plotter
-        prob.driver.add_recorder(convar_plotter)                             # Attach the constraint variable plotter
-        prob.driver.add_recorder(objvar_plotter)                             # Attach the objective variable plotter
-        """
-
-        # 4. Run the Problem
+        # 3. Run the Problem
         prob.run_driver()  # Run the driver (optimization, DOE, or convergence)
 
-        # 5. Read out the case reader
+        # 4. Read out the case reader
         prob.print_results()
 
-        # 6. Collect test results
+        # 5. Collect test results for test assertions
         x = [prob['/dataSchema/geometry/x1']]
         y = [prob['/dataSchema/analyses/y1'], prob['/dataSchema/analyses/y2']]
         z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
         f = [prob['/dataSchema/analyses/f']]
         g = [prob['/dataSchema/analyses/g1'], prob['/dataSchema/analyses/g2']]
+        print('Optimum found! Objective function value: f = {}'.format(f[0]))
+        print('Design variables at optimum: x = {}, z1 = {}, z2 = {}'.format(x[0], z[0], z[1]))
+        print('Coupling variables at optimum: y1 = {}, y2 = {}'.format(y[0], y[1]))
+        print('Constraints at optimum: g1 = {}, g2 = {}'.format(g[0], g[1]))
 
-        # 8. Cleanup and invalidate the Problem afterwards
+
+        # 6. Cleanup and invalidate the Problem afterwards
         prob.invalidate()
 
         return x, y, z, f, g

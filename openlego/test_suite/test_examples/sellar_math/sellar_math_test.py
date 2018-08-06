@@ -87,32 +87,11 @@ def run_openlego(analyze_mdao_definitions):
         prob.run_model()  # Run the model once to init. the variables
         model.initialize_from_xml('sellar-input.xml')  # Set the initial values from an XML file
 
-        # 5. Create and attach some Recorders (Optional)
-        """
-        from openlego.recorders import NormalizedDesignVarPlotter, ConstraintsPlotter, SimpleObjectivePlotter
-        
-        desvar_plotter = NormalizedDesignVarPlotter()                   # Create a plotter for the design variables
-        desvar_plotter.options['save_on_close'] = True                  # Should this plot be saved automatically?
-        desvar_plotter.save_settings['path'] = 'desvar.png'             # Set the filename of the image file
-        
-        convar_plotter = ConstraintsPlotter()                           # Create a plotter for the constraints
-        convar_plotter.options['save_on_close'] = True                  # Should this plot be saved automatically?
-        convar_plotter.save_settings['path'] = 'convar.png'             # Set the filename of the image file
-        
-        objvar_plotter = SimpleObjectivePlotter()                       # Create a plotter for the objective
-        objvar_plotter.options['save_on_close'] = True                  # Should this plot be saved automatically?
-        objvar_plotter.save_settings['path'] = 'objvar.png'             # Set the filename of the image file
-        
-        driver.add_recorder(desvar_plotter)                             # Attach the design variable plotter
-        driver.add_recorder(convar_plotter)                             # Attach the constraint variable plotter
-        driver.add_recorder(objvar_plotter)                             # Attach the objective variable plotter
-        """
-
-        # 6. Solve the Problem
+        # 5. Solve the Problem
         #prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']
         prob.run_driver()  # Run the optimization
 
-        # 7. Print results
+        # 6. Print results
         x = [prob['/dataSchema/geometry/x1']]
         y = [prob['/dataSchema/analyses/y1'], prob['/dataSchema/analyses/y2']]
         z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
@@ -124,7 +103,7 @@ def run_openlego(analyze_mdao_definitions):
         print('Coupling variables at optimum: y1 = {}, y2 = {}'.format(y[0], y[1]))
         print('Constraints at optimum: g1 = {}, g2 = {}'.format(g[0], g[1]))
 
-        # 8. Cleanup the Problem afterwards
+        # 7. Cleanup the Problem afterwards
         prob.cleanup()  # Clear all resources and close the plots
         model.invalidate()  # Clear the cached properties of the LEGOModel
 

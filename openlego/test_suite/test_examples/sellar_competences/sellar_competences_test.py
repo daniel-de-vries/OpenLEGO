@@ -42,6 +42,15 @@ mdao_definitions = ['unconverged-MDA-J',  # 0
                     'CO']  # 9
 
 
+def test_folder_clean():
+    test_folder = os.path.dirname(__file__)
+    for file in os.listdir(test_folder):
+        if 'case_reader_' in file:
+            os.remove(file)
+        elif 'n2_Mdao_' in file:
+            os.remove(file)
+
+
 def get_loop_items(analyze_mdao_definitions):
     if isinstance(analyze_mdao_definitions, int):
         mdao_defs_loop = [mdao_definitions[analyze_mdao_definitions]]
@@ -127,7 +136,37 @@ class TestSellarCompetences(unittest.TestCase):
         kb.deploy()
         super(TestSellarCompetences, self).__call__(*args, **kwargs)
 
-    def assertion(self, x, y, z, f, g):
+    def assertion_unc_mda(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 5.00, 2)
+        self.assertAlmostEqual(y[0], 9.48, 2)
+        self.assertAlmostEqual(y[1], 7.61, 2)
+        self.assertAlmostEqual(z[0], 1.00, 2)
+        self.assertAlmostEqual(z[1], 5.00, 2)
+        self.assertAlmostEqual(f[0], 39.48, 2)
+        self.assertAlmostEqual(g[0], 2.00, 2)
+        self.assertAlmostEqual(g[1], 0.68, 2)
+
+    def assertion_con_mda(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 5.00, 2)
+        self.assertAlmostEqual(y[0], 9.19, 2)
+        self.assertAlmostEqual(y[1], 9.03, 2)
+        self.assertAlmostEqual(z[0], 1.00, 2)
+        self.assertAlmostEqual(z[1], 5.00, 2)
+        self.assertAlmostEqual(f[0], 39.19, 2)
+        self.assertAlmostEqual(g[0], 1.91, 2)
+        self.assertAlmostEqual(g[1], 0.62, 2)
+
+    def assertion_doe(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 2.75, 2)
+        self.assertAlmostEqual(y[0], 4.15, 2)
+        self.assertAlmostEqual(y[1], 4.54, 2)
+        self.assertAlmostEqual(z[0], 0.75, 2)
+        self.assertAlmostEqual(z[1], 1.75, 2)
+        self.assertAlmostEqual(f[0], 13.48, 2)
+        self.assertAlmostEqual(g[0], 0.31, 2)
+        self.assertAlmostEqual(g[1], 0.81, 2)
+
+    def assertion_mdo(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 0.00, 2)
         self.assertAlmostEqual(y[0], 3.16, 2)
         self.assertAlmostEqual(y[1], 3.76, 2)
@@ -139,43 +178,43 @@ class TestSellarCompetences(unittest.TestCase):
 
     def test_unc_mda_gs(self):
         """Test run the Sellar system using a sequential tool execution."""
-        run_openlego(0)
+        self.assertion_unc_mda(*run_openlego(0))
 
     def test_unc_mda_j(self):
         """Test run the Sellar system using a parallel tool execution."""
-        run_openlego(1)
+        self.assertion_unc_mda(*run_openlego(1))
 
     def test_doe_gs(self):
         """Solve the Sellar system using a DOE architecture and a Gauss-Seidel convergence scheme."""
-        run_openlego(2)
+        self.assertion_doe(*run_openlego(2))
 
     def test_doe_j(self):
         """Solve the Sellar system using a DOE architecture and a Jacobi convergence scheme."""
-        run_openlego(3)
+        self.assertion_doe(*run_openlego(3))
 
     def test_mda_j(self):
         """Solve the Sellar system using a Jacobi convergence scheme."""
-        run_openlego(4)
+        self.assertion_con_mda(*run_openlego(4))
 
     def test_mda_gs(self):
         """Solve the Sellar system using Gauss-Seidel convergence scheme."""
-        run_openlego(5)
+        self.assertion_con_mda(*run_openlego(5))
 
     def test_mdf_gs(self):
         """Solve the Sellar problem using the MDF architecture and a Gauss-Seidel convergence scheme."""
-        self.assertion(*run_openlego(6))
+        self.assertion_mdo(*run_openlego(6))
 
     def test_mdf_j(self):
         """Solve the Sellar problem using the MDF architecture and a Jacobi converger."""
-        self.assertion(*run_openlego(7))
+        self.assertion_mdo(*run_openlego(7))
 
     def test_idf(self):
         """Solve the Sellar problem using the IDF architecture."""
-        self.assertion(*run_openlego(8))
+        self.assertion_mdo(*run_openlego(8))
 
     def __del__(self):
         kb.clean()
-        # TODO: Add function to remove output files also...
+        test_folder_clean()
 
 
 if __name__ == '__main__':

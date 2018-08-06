@@ -31,7 +31,7 @@ from openlego.utils.general_utils import clean_dir_filtered
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
 # List of MDAO definitions that can be wrapped around the problem
-mdao_definitions = ['unconverged-MDA-J',     # 0
+mdao_definitions = ['unconverged-MDA-J',    # 0
                     'unconverged-MDA-GS',   # 1
                     'converged-DOE-GS',     # 2
                     'converged-DOE-J',      # 3
@@ -41,6 +41,7 @@ mdao_definitions = ['unconverged-MDA-J',     # 0
                     'MDF-J',                # 7
                     'IDF',                  # 8
                     'CO']                   # 9
+
 
 def get_loop_items(analyze_mdao_definitions):
     if isinstance(analyze_mdao_definitions, int):
@@ -67,11 +68,10 @@ def run_openlego(analyze_mdao_definitions):
         print('------------------------------------------------')
         """Solve the Sellar problem using the given CMDOWS file."""
         # 1. Create Problem
-        prob = LEGOProblem(
-            cmdows_path=os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
-            kb_path='kb',
-            data_folder='',  # Output directory
-            base_xml_file='sellar-output.xml')  # Output file
+        prob = LEGOProblem(cmdows_path=os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
+                           kb_path='kb',
+                           data_folder='',  # Output directory
+                           base_xml_file='sellar-output.xml')  # Output file
         # prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
         prob.set_solver_print(0)  # Set printing of solver information
 
@@ -177,7 +177,7 @@ class TestSellarMath(unittest.TestCase):
         self.assertion_mdo(*run_openlego(8))
 
     def __del__(self):
-        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_'])
+        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'sellar-output.xml'])
 
 
 if __name__ == '__main__':

@@ -27,7 +27,7 @@ from os import path
 import numpy as np
 from lxml import etree
 from openmdao.core.driver import Driver
-from typing import Callable, Any, Optional, Union, Type, List
+from typing import Callable, Any, Optional, Union, Type, List, SupportsInt, SupportsFloat
 
 
 def try_hard(fun, *args, **kwargs):
@@ -382,7 +382,7 @@ def str_to_valid_sys_name(string):
 
 
 def change_object_type(obj, new_type):
-    # type: (Union[str, supportsInts, supportsFloats], str) -> Union[str, int, float]
+    # type: (Union[str, SupportsInt, SupportsFloat], str) -> Union[str, int, float]
     """Attempts to change an object (usually a string) to a different object type."""
     if new_type == 'str':
         return str(obj)

@@ -44,7 +44,7 @@ class LEGOProblem(Problem):
     nor should it be attempted, to manually inject a different instance of Problem in place of these, because the
     correspondence between the CMDOWS file and the Problem can then no longer be guaranteed.
 
-    Attributes TODO: Update!
+    Attributes
     ----------
         cmdows_path
         kb_path

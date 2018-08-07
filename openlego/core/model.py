@@ -19,6 +19,7 @@ This file contains the definition of the `LEGOModel` class.
 """
 from __future__ import absolute_import, division, print_function
 
+import copy
 import imp
 import os
 import warnings
@@ -28,7 +29,7 @@ from lxml import etree
 from lxml.etree import _Element, _ElementTree
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
     LinearRunOnce, ExecComp, NonlinearRunOnce, DirectSolver
-from typing import Union, Optional, List, Any, Dict, Tuple
+from typing import Union, Optional, List, Any, Dict, Tuple, Set
 
 from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str_to_valid_sys_name, parse_string
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
@@ -486,17 +487,52 @@ class LEGOModel(Group):
         else:
             return None
 
-    @CachedProperty
+    # TODO: Remove old block_order?
+    """@CachedProperty
     def block_order(self):
         # type: () -> List[str]
-        """:obj:`list` of :obj:`str`: List of executable block ``uIDs`` in the order specified in the CMDOWS file."""
+        """""":obj:`list` of :obj:`str`: List of executable block ``uIDs`` in the order specified in the CMDOWS file.""""""
         positions = list()
         uids = list()
         for block in self.elem_workflow.iterfind('processGraph/metadata/executableBlocksOrder/executableBlock'):
             uid = block.text
             positions.append(int(block.attrib['position']))
             uids.append(uid)
-        return [uid for position, uid in sorted(zip(positions, uids))]
+        return [uid for position, uid in sorted(zip(positions, uids))]"""
+
+    @CachedProperty
+    def process_info(self):
+        # TODO: Add type and docstring
+        _uids = []
+        _process_step_numbers = []
+        _partition_ids = []
+        for elem in self.elem_workflow.iterfind('processGraph/nodes/node'):
+            _uids.append(elem.find('referenceUID').text)
+            _process_step_numbers.append(int(elem.find('processStepNumber').text))
+            if elem.find('partitionID') is not None:
+                _partition_ids.append(elem.find('partitionID').text)
+            else:
+                _partition_ids.append(None)
+        return {'uids': _uids, 'step_numbers': _process_step_numbers, 'partition_ids': _partition_ids}
+
+    @CachedProperty
+    def block_order(self):
+        # TODO: Add type and docstring
+        return [x for _, x in sorted(zip(self.process_info['step_numbers'], self.process_info['uids']))]
+
+    @CachedProperty
+    def partition_sets(self):
+        # type: () -> Dict[Set[str]]
+        """:obj:`dict` of :obj:`set`: Dictionary of executable block ``uIDs`` per partitionID."""
+        partitions = dict()
+        for idx, block in enumerate(self.process_info['uids']):
+            if self.process_info['partition_ids'][idx] is not None:
+                partition_id = self.process_info['partition_ids'][idx]
+                if partition_id not in partitions:
+                    partitions[partition_id] = {block}
+                else:
+                    partitions[partition_id].add(block)
+        return partitions
 
     @CachedProperty
     def coupled_blocks(self):
@@ -530,24 +566,89 @@ class LEGOModel(Group):
         return _loopelement_details
 
     @CachedProperty
+    def process_step_numbers(self):
+        # TODO: Add type and docstring
+        _process_step_numbers = {}
+        for elem in self.elem_workflow.iterfind('processGraph/nodes/node'):
+            _process_step_numbers[elem.find('referenceUID').text] = int(elem.find('processStepNumber').text)
+        return _process_step_numbers
+
+    @CachedProperty
     def coupled_hierarchy(self):
         # type: () -> List[dict]
         """:obj:`list`: List containing the hierarchy of the coupled blocks for grouped convergence."""
         return self._get_coupled_hierarchy(self.loop_nesting_dict)
 
     def _get_coupled_hierarchy(self, hierarchy):
+        # type: (List[dict]) -> List[dict]
+        """:obj:`list`: List containing the partitioned hierarchy of the coupled blocks for grouped convergence."""
+        basic_hierarchy = self._get_basic_coupled_hierarchy(hierarchy)
+        basic_hierarchy_new = copy.deepcopy(basic_hierarchy)
+        # First determine the partition IDs of the different functions and converger groups.
+        for idx, entry in enumerate(basic_hierarchy):
+            sublevel_list = entry[entry.keys()[0]]
+            partitions_ids = [None]*len(sublevel_list)
+            # Find out to which partition the converger dictionaries and separate functions belong
+            for jdx, item in enumerate(sublevel_list):
+                if isinstance(item, dict):
+                    funcs = item[item.keys()[0]]
+                    funcs_partition_ids = [None]*len(funcs)
+                    for kdx, fun in enumerate(funcs):
+                        for key, part_set in self.partition_sets.items():
+                            if fun in part_set:
+                                funcs_partition_ids[kdx] = key
+                                continue
+                    # Check that all partition IDs are the same
+                    if not funcs_partition_ids.count(funcs_partition_ids[0]) == len(funcs_partition_ids):
+                        raise AssertionError('The functions inside the converger {} do not belong to the same '
+                                             'partition.'.format(item.keys()[0]))
+                    else:
+                        partitions_ids[jdx] = funcs_partition_ids[0]
+                elif isinstance(item, str):
+                    for key, part_set in self.partition_sets.items():
+                        if item in part_set:
+                            partitions_ids[jdx] = key
+                            continue
+            # If multiple items belong to multiple partitions, then create a partition group
+            for part_id in self.partition_sets.keys():
+                part_id_idxs = [i for i, j in enumerate(partitions_ids) if j == part_id]
+                if len(part_id_idxs) > 1:  # create new partition group for this case
+                    # Sort the part_id_idxs based on the step number
+                    process_steps = []
+                    for part_id_idx in part_id_idxs:
+                        list_item = entry[entry.keys()[0]][part_id_idx]
+                        if isinstance(list_item, dict):
+                            item_uid = list_item.keys()[0]
+                        elif isinstance(list_item, str):
+                            item_uid = list_item
+                        else:
+                            raise AssertionError('Could not map list_item.')
+                        process_steps.append(self.process_step_numbers[item_uid])
+                        part_id_idxs_sorted = [x for _, x in sorted(zip(process_steps, part_id_idxs))]
+                    # Create a partition group and delete items that have become part of the group
+                    part_dict = {'_Partition_{}'.format(part_id): []}
+                    for part_id_idx in part_id_idxs_sorted:
+                        part_dict['_Partition_{}'.format(part_id)].append(entry[entry.keys()[0]][part_id_idx])
+                    for part_id_idx in sorted(part_id_idxs, reverse=True):
+                        del basic_hierarchy_new[idx][entry.keys()[0]][part_id_idx]
+                    # Add the new partition group to the hierarchy
+                    basic_hierarchy_new[idx][entry.keys()[0]].append(part_dict)
+        return basic_hierarchy_new
+
+    def _get_basic_coupled_hierarchy(self, hierarchy):
         # type: (List) -> List[dict]
-        """:obj:`list`: List containing the hierarchy of the coupled functions which defines the hierarchy of converged
-        groups."""
+        """:obj:`list`: List containing the basic (no partitions) hierarchy of the coupled functions which defines the
+        hierarchy of converged groups."""
         _coupled_hierarchy = []
         for entry in hierarchy:
             if isinstance(entry, dict):
                 keys = entry.keys()
-                assert len(keys) == 1, 'One key is expected in the dictionary of a process hierarchy.'
+                if not len(keys) == 1:
+                    raise AssertionError('One key is expected in the dictionary of a process hierarchy.')
                 if self.loop_element_details[keys[0]] == 'converger':
                     _coupled_hierarchy.append(entry)
                 else:
-                    return self._get_coupled_hierarchy(entry[keys[0]])
+                    return self._get_basic_coupled_hierarchy(entry[keys[0]])
         return _coupled_hierarchy
 
     @CachedProperty
@@ -724,42 +825,52 @@ class LEGOModel(Group):
                 else:
                     subsys = coupled_group.add_subsystem(str_to_valid_sys_name(uid),
                                                          self._configure_coupled_groups(entry[uid], False), ['*'])
-                conv_elem = get_element_by_uid(self.elem_arch_elems, uid)
-                # Define linear solver
-                linsol_elem = conv_elem.find('settings/linearSolver')
-                if isinstance(linsol_elem, _Element):
-                    if linsol_elem.find('method').text == 'Gauss-Seidel':
-                        linsol = subsys.linear_solver = LinearBlockGS()
-                    elif linsol_elem.find('method').text == 'Jacobi':
-                        linsol = subsys.linear_solver = LinearBlockJac()
-                    else:
-                        raise ValueError('Specified convergerType "{}" is not supported.'
-                                         .format(linsol_elem.find('method').text))
-                    linsol.options['maxiter'] = int(linsol_elem.find('maximumIterations').text)
-                    linsol.options['atol'] = float(linsol_elem.find('convergenceToleranceAbsolute').text)
-                    linsol.options['rtol'] = float(linsol_elem.find('convergenceToleranceRelative').text)
+                if '_Partition_' not in uid:
+                    conv_elem = get_element_by_uid(self.elem_arch_elems, uid)
                 else:
-                    subsys.linear_solver = DirectSolver()
-                    warnings.warn('Linear solver was not defined in CMDOWS file for converger {}. linear_solver set to'
-                                  ' default "DirectSolver()".'.format(str_to_valid_sys_name(uid)))
+                    conv_elem = None
+                # Define linear solver
+                if conv_elem is not None:
+                    linsol_elem = conv_elem.find('settings/linearSolver')
+                    if isinstance(linsol_elem, _Element):
+                        if linsol_elem.find('method').text == 'Gauss-Seidel':
+                            linsol = subsys.linear_solver = LinearBlockGS()
+                        elif linsol_elem.find('method').text == 'Jacobi':
+                            linsol = subsys.linear_solver = LinearBlockJac()
+                        else:
+                            raise ValueError('Specified convergerType "{}" is not supported.'
+                                             .format(linsol_elem.find('method').text))
+                        linsol.options['maxiter'] = int(linsol_elem.find('maximumIterations').text)
+                        linsol.options['atol'] = float(linsol_elem.find('convergenceToleranceAbsolute').text)
+                        linsol.options['rtol'] = float(linsol_elem.find('convergenceToleranceRelative').text)
+                    else:
+                        subsys.linear_solver = DirectSolver()
+                        warnings.warn('Linear solver was not defined in CMDOWS file for converger {}. linear_solver set'
+                                      ' to default "DirectSolver()".'.format(str_to_valid_sys_name(uid)))
+                else:
+                    subsys.linear_solver = LinearRunOnce()
 
                 # Define nonlinear solver
-                nonlinsol_elem = conv_elem.find('settings/nonlinearSolver')
-                if isinstance(nonlinsol_elem, _Element):
-                    if nonlinsol_elem.find('method').text == 'Gauss-Seidel':
-                        nonlinsol = subsys.nonlinear_solver = NonlinearBlockGS()
-                    elif nonlinsol_elem.find('method').text == 'Jacobi':
-                        nonlinsol = subsys.nonlinear_solver = NonlinearBlockJac()
+                if conv_elem is not None:
+                    nonlinsol_elem = conv_elem.find('settings/nonlinearSolver')
+                    if isinstance(nonlinsol_elem, _Element):
+                        if nonlinsol_elem.find('method').text == 'Gauss-Seidel':
+                            nonlinsol = subsys.nonlinear_solver = NonlinearBlockGS()
+                        elif nonlinsol_elem.find('method').text == 'Jacobi':
+                            nonlinsol = subsys.nonlinear_solver = NonlinearBlockJac()
+                        else:
+                            raise ValueError('Specified convergerType "{}" is not supported.'
+                                             .format(nonlinsol_elem.find('method').text))
+                        nonlinsol.options['maxiter'] = int(nonlinsol_elem.find('maximumIterations').text)
+                        nonlinsol.options['atol'] = float(nonlinsol_elem.find('convergenceToleranceAbsolute').text)
+                        nonlinsol.options['rtol'] = float(nonlinsol_elem.find('convergenceToleranceRelative').text)
                     else:
-                        raise ValueError('Specified convergerType "{}" is not supported.'
-                                         .format(nonlinsol_elem.find('method').text))
-                    nonlinsol.options['maxiter'] = int(nonlinsol_elem.find('maximumIterations').text)
-                    nonlinsol.options['atol'] = float(nonlinsol_elem.find('convergenceToleranceAbsolute').text)
-                    nonlinsol.options['rtol'] = float(nonlinsol_elem.find('convergenceToleranceRelative').text)
+                        subsys.nonlinear_solver = NonlinearRunOnce()
+                        warnings.warn('Nonlinear solver was not defined in CMDOWS file for converger {}. '
+                                      'nonlinear_solver set to default "NonlinearRunOnce()".'
+                                      .format(str_to_valid_sys_name(uid)))
                 else:
                     subsys.nonlinear_solver = NonlinearRunOnce()
-                    warnings.warn('Nonlinear solver was not defined in CMDOWS file for converger {}. nonlinear_solver'
-                                  ' set to default "NonlinearRunOnce()".'.format(str_to_valid_sys_name(uid)))
             elif isinstance(entry, str):  # if entry specifies an executable block
                 if root:
                     raise AssertionError('Code was not expected to get here for root == True.')
@@ -852,11 +963,11 @@ class LEGOModel(Group):
         # type: () -> None
         """Assemble the LEGOModel using the the CMDOWS file and knowledge base."""
         # Add the coordinator
-        self.add_subsystem('coordinator', self.coordinator, ['*'])
+        self.add_subsystem('coordinator', self.coordinator, ['*'])  # TODO: Adjust based on driver_id
 
         # Add all pre-coupling and post-coupling components
         for name, component in self.discipline_components.items():
-            if name not in self.coupled_blocks:
+            if name not in self.coupled_blocks:  # TODO: Adjust based on driver_id
                 promotes = ['*']
                 # Change input variable names if they are provided as copies of coupling variables
                 for i in component.inputs_from_xml.keys():
@@ -874,18 +985,24 @@ class LEGOModel(Group):
         if self.coupled_hierarchy:
             self._configure_coupled_groups(self.coupled_hierarchy, True)
 
-        # Put the blocks in the correct order
-        self.set_order(list(self.system_order))
+        # TODO phase 3: Add the subdriver groups
+        """for name in self.subdrivers:
+            self.add_subsystem(str_to_valid_sys_name(name),
+                               SubDriver(cmdows=self.elem_cmdows, driver_id=name))
+        """
 
-        # Add the design variables
+        # Put the blocks in the correct order
+        self.set_order(list(self.system_order))  # TODO phase 3: Add the subdrivers in the order...
+
+        # Add the design variables  TODO: Adjust based on driver_id
         for name, value in self.design_vars.items():
             self.add_design_var(name, lower=value['lower'], upper=value['upper'], ref0=value['ref0'], ref=value['ref'])
 
-        # Add the constraints
+        # Add the constraints  TODO: Adjust based on driver_id
         for name, value in self.constraints.items():
             self.add_constraint(name, lower=value['lower'], upper=value['upper'], equals=value['equals'])
 
-        # Add the objective
+        # Add the objective  TODO: Adjust based on driver_id
         if self.objective:
             self.add_objective(self.objective)
 

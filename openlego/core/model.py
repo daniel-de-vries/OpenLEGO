@@ -543,7 +543,8 @@ class LEGOModel(Group):
         for entry in hierarchy:
             if isinstance(entry, dict):
                 keys = entry.keys()
-                assert len(keys) == 1, 'One key is expected in the dictionary of a process hierarchy.'
+                if len(keys) == 1:
+                    raise AssertionError('One key is expected in the dictionary of a process hierarchy.')
                 if self.loop_element_details[keys[0]] == 'converger':
                     _coupled_hierarchy.append(entry)
                 else:

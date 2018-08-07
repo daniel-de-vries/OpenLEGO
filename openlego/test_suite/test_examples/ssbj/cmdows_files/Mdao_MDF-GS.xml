@@ -3,14 +3,14 @@
   <header>
     <creator>Imco van Gent</creator>
     <description>Mdao CMDOWS file of the super-sonic business jet test case optimization problem</description>
-    <timestamp>2018-08-01T10:45:46.563876</timestamp>
+    <timestamp>2018-08-03T15:26:13.399171</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2018-08-01T10:45:46.563876</timestamp>
+        <timestamp>2018-08-03T15:26:13.399171</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -2264,12 +2264,13 @@
         <optimizer uID="Optimizer">
           <label>OPT</label>
           <settings>
+            <package>SciPy</package>
+            <algorithm>SLSQP</algorithm>
             <maximumIterations>1000</maximumIterations>
-            <algorithm>Dakota Quasi-Newton method</algorithm>
-            <applyScaling>true</applyScaling>
             <maximumFunctionEvaluations>1000</maximumFunctionEvaluations>
-            <constraintTolerance>0.0001</constraintTolerance>
             <convergenceTolerance>0.0001</convergenceTolerance>
+            <constraintTolerance>0.0001</constraintTolerance>
+            <applyScaling>true</applyScaling>
           </settings>
           <designVariables>
             <designVariable>

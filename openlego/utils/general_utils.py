@@ -19,13 +19,15 @@ This file contains the definition of general utility functions.
 """
 from __future__ import absolute_import, division, print_function
 
+import os
 import re
 import warnings
+from os import path
 
 import numpy as np
 from lxml import etree
 from openmdao.core.driver import Driver
-from typing import Callable, Any, Optional, Union, Type
+from typing import Callable, Any, Optional, Union, Type, List, SupportsInt, SupportsFloat
 
 
 def try_hard(fun, *args, **kwargs):
@@ -176,6 +178,49 @@ def parse_string(s):
         return v
     except ValueError:
         return s
+
+
+def print_optional(string, print_in_log):
+    # type: (str, bool) -> None
+    """Print a statement based on a string and a boolean wheter to really print or not.
+
+    Parameters
+    ----------
+        string : str
+            string to be printed
+
+        print_in_log : bool
+            boolean on whether the string should really be printed
+    """
+    if print_in_log:
+        print(string)
+
+
+def add_or_append_dict_entry(main_dict, main_key, sub_key, value):
+    # type: (dict, str, str, Any) -> dict
+    """Add a value to a sub-key element of a dictionary, if sub-key entry does not exist yet, then it is first created.
+
+    Parameters
+    ----------
+        main_dict : dict
+            main dictionary containing all results
+
+        main_key : str
+            main key of the dictionary where the value should be stored
+
+        sub_key : str
+            sub-key withing the main_key dictionary under which the value should be added
+
+        value : Any
+            the actual value to be added
+    """
+    if main_key not in main_dict:
+        main_dict[main_key] = dict()
+    if sub_key not in main_dict[main_key]:
+        main_dict[main_key][sub_key] = [value]
+    else:
+        main_dict[main_key][sub_key].append(value)
+    return main_dict
 
 
 def parse_cmdows_value(elem):
@@ -334,3 +379,26 @@ def str_to_valid_sys_name(string):
     while not re_sys_name_starts.match(sys_name):
         sys_name = sys_name[1:]
     return sys_name
+
+
+def change_object_type(obj, new_type):
+    # type: (Union[str, SupportsInt, SupportsFloat], str) -> Union[str, int, float]
+    """Attempts to change an object (usually a string) to a different object type."""
+    if new_type == 'str':
+        return str(obj)
+    elif new_type == 'int':
+        return int(obj)
+    elif new_type == 'float':
+        return float(obj)
+    else:
+        raise IOError('expected_type "{}" is not supported in this function.'.format(new_type))
+
+
+def clean_dir_filtered(dr, filters):
+    # type: (path, List[str]) -> None
+    """Removes files in a directory that contain the strings provided in the filter."""
+    for f in os.listdir(dr):
+        for fltr in filters:
+            if fltr in f:
+                os.remove(f)
+                continue

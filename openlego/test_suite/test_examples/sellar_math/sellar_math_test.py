@@ -23,15 +23,15 @@ import logging
 import os
 import unittest
 
-from openmdao.api import Problem, ScipyOptimizeDriver
+from openlego.core.problem import LEGOProblem
 
-from openlego.core.model import LEGOModel
+from openlego.utils.general_utils import clean_dir_filtered
 
 # Settings for logging
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
 # List of MDAO definitions that can be wrapped around the problem
-mdao_definitions = ['unconverged-MDA-J',     # 0
+mdao_definitions = ['unconverged-MDA-J',    # 0
                     'unconverged-MDA-GS',   # 1
                     'converged-DOE-GS',     # 2
                     'converged-DOE-J',      # 3
@@ -41,6 +41,7 @@ mdao_definitions = ['unconverged-MDA-J',     # 0
                     'MDF-J',                # 7
                     'IDF',                  # 8
                     'CO']                   # 9
+
 
 def get_loop_items(analyze_mdao_definitions):
     if isinstance(analyze_mdao_definitions, int):
@@ -62,57 +63,74 @@ def run_openlego(analyze_mdao_definitions):
     mdao_defs_loop = get_loop_items(analyze_mdao_definitions)
 
     for mdao_def in mdao_defs_loop:
-
         print('\n-----------------------------------------------')
         print('Running the OpenLEGO of Mdao_{}.xml...'.format(mdao_def))
         print('------------------------------------------------')
         """Solve the Sellar problem using the given CMDOWS file."""
         # 1. Create Problem
-        prob = Problem()  # Create an instance of the Problem class
-        prob.set_solver_print(0)  # Turn off printing of solver information
+        prob = LEGOProblem(cmdows_path=os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
+                           kb_path='kb',
+                           data_folder='',  # Output directory
+                           base_xml_file='sellar-output.xml')  # Output file
+        # prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
+        prob.set_solver_print(0)  # Set printing of solver information
 
-        # 2. Create the LEGOModel
-        model = prob.model = LEGOModel(cmdows_path=os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
-                                       data_folder='',  # Output directory
-                                       base_xml_file='sellar-output.xml')  # Output file
+        # 2. Initialize the Problem and export N2 chart
+        prob.store_model_view(open_in_browser=False)
+        prob.initialize_from_xml('sellar-input.xml')
 
-        # 3. Create the Driver
-        driver = prob.driver = ScipyOptimizeDriver()  # Use a SciPy for the optimization
-        driver.options['optimizer'] = 'SLSQP'  # Use the SQP algorithm
-        driver.options['disp'] = True  # Print the result
-        driver.opt_settings = {'disp': True, 'iprint': 2}  # Display iterations
+        # 3. Run the Problem
+        prob.run_driver()  # Run the driver (optimization, DOE, or convergence)
 
-        # 4. Setup the Problem
-        prob.setup()  # Call the OpenMDAO setup() method
-        prob.run_model()  # Run the model once to init. the variables
-        model.initialize_from_xml('sellar-input.xml')  # Set the initial values from an XML file
+        # 4. Read out the case reader
+        prob.collect_results()
 
-        # 5. Solve the Problem
-        #prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']
-        prob.run_driver()  # Run the optimization
-
-        # 6. Print results
+        # 5. Collect test results for test assertions
         x = [prob['/dataSchema/geometry/x1']]
         y = [prob['/dataSchema/analyses/y1'], prob['/dataSchema/analyses/y2']]
         z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
         f = [prob['/dataSchema/analyses/f']]
         g = [prob['/dataSchema/analyses/g1'], prob['/dataSchema/analyses/g2']]
 
-        print('Optimum found! Objective function value: f = {}'.format(f[0]))
-        print('Design variables at optimum: x = {}, z1 = {}, z2 = {}'.format(x[0], z[0], z[1]))
-        print('Coupling variables at optimum: y1 = {}, y2 = {}'.format(y[0], y[1]))
-        print('Constraints at optimum: g1 = {}, g2 = {}'.format(g[0], g[1]))
-
-        # 7. Cleanup the Problem afterwards
-        prob.cleanup()  # Clear all resources and close the plots
-        model.invalidate()  # Clear the cached properties of the LEGOModel
+        # 6. Cleanup and invalidate the Problem afterwards
+        prob.invalidate()
 
         return x, y, z, f, g
 
 
 class TestSellarMath(unittest.TestCase):
 
-    def assertion(self, x, y, z, f, g):
+    def assertion_unc_mda(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 5.00, 2)
+        self.assertAlmostEqual(y[0], 9.48, 2)
+        self.assertAlmostEqual(y[1], 7.61, 2)
+        self.assertAlmostEqual(z[0], 1.00, 2)
+        self.assertAlmostEqual(z[1], 5.00, 2)
+        self.assertAlmostEqual(f[0], 39.48, 2)
+        self.assertAlmostEqual(g[0], 2.00, 2)
+        self.assertAlmostEqual(g[1], 0.68, 2)
+
+    def assertion_con_mda(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 5.00, 2)
+        self.assertAlmostEqual(y[0], 9.19, 2)
+        self.assertAlmostEqual(y[1], 9.03, 2)
+        self.assertAlmostEqual(z[0], 1.00, 2)
+        self.assertAlmostEqual(z[1], 5.00, 2)
+        self.assertAlmostEqual(f[0], 39.19, 2)
+        self.assertAlmostEqual(g[0], 1.91, 2)
+        self.assertAlmostEqual(g[1], 0.62, 2)
+
+    def assertion_doe(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 2.75, 2)
+        self.assertAlmostEqual(y[0], 4.15, 2)
+        self.assertAlmostEqual(y[1], 4.54, 2)
+        self.assertAlmostEqual(z[0], 0.75, 2)
+        self.assertAlmostEqual(z[1], 1.75, 2)
+        self.assertAlmostEqual(f[0], 13.48, 2)
+        self.assertAlmostEqual(g[0], 0.31, 2)
+        self.assertAlmostEqual(g[1], 0.81, 2)
+
+    def assertion_mdo(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 0.00, 2)
         self.assertAlmostEqual(y[0], 3.16, 2)
         self.assertAlmostEqual(y[1], 3.76, 2)
@@ -122,17 +140,44 @@ class TestSellarMath(unittest.TestCase):
         self.assertAlmostEqual(g[0], 0.00, 2)
         self.assertAlmostEqual(g[1], 0.84, 2)
 
+    def test_unc_mda_gs(self):
+        """Test run the Sellar system using a sequential tool execution."""
+        self.assertion_unc_mda(*run_openlego(0))
+
+    def test_unc_mda_j(self):
+        """Test run the Sellar system using a parallel tool execution."""
+        self.assertion_unc_mda(*run_openlego(1))
+
+    def test_doe_gs(self):
+        """Solve the Sellar system using a DOE architecture and a Gauss-Seidel convergence scheme."""
+        self.assertion_doe(*run_openlego(2))
+
+    def test_doe_j(self):
+        """Solve the Sellar system using a DOE architecture and a Jacobi convergence scheme."""
+        self.assertion_doe(*run_openlego(3))
+
+    def test_mda_j(self):
+        """Solve the Sellar system using a Jacobi convergence scheme."""
+        self.assertion_con_mda(*run_openlego(4))
+
+    def test_mda_gs(self):
+        """Solve the Sellar system using Gauss-Seidel convergence scheme."""
+        self.assertion_con_mda(*run_openlego(5))
+
     def test_mdf_gs(self):
         """Solve the Sellar problem using the MDF architecture and a Gauss-Seidel convergence scheme."""
-        self.assertion(*run_openlego(6))
+        self.assertion_mdo(*run_openlego(6))
 
     def test_mdf_j(self):
         """Solve the Sellar problem using the MDF architecture and a Jacobi converger."""
-        self.assertion(*run_openlego(7))
+        self.assertion_mdo(*run_openlego(7))
 
     def test_idf(self):
         """Solve the Sellar problem using the IDF architecture."""
-        self.assertion(*run_openlego(8))
+        self.assertion_mdo(*run_openlego(8))
+
+    def __del__(self):
+        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'sellar-output.xml'])
 
 
 if __name__ == '__main__':

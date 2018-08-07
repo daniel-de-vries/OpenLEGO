@@ -88,14 +88,10 @@
         </inputs>
         <outputs>
           <output>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/f</parameterUID>
+            <parameterUID>/dataSchema/analyses/f</parameterUID>
             <equations uID="F1_equation">
               <equation language="Python">x1**2+z2+y1+exp(-y2)</equation>
             </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/analyses/f</parameterUID>
-            <equationsUID>F1_equation</equationsUID>
           </output>
         </outputs>
       </mathematicalFunction>
@@ -115,10 +111,6 @@
               <equation language="Python">1-y2/24.0</equation>
             </equations>
           </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g2</parameterUID>
-            <equationsUID>G2_equation</equationsUID>
-          </output>
         </outputs>
       </mathematicalFunction>
       <mathematicalFunction uID="G1">
@@ -132,14 +124,10 @@
         </inputs>
         <outputs>
           <output>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g1</parameterUID>
+            <parameterUID>/dataSchema/analyses/g1</parameterUID>
             <equations uID="G1_equation">
               <equation language="Python">y1/3.16-1</equation>
             </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/analyses/g1</parameterUID>
-            <equationsUID>G1_equation</equationsUID>
           </output>
         </outputs>
       </mathematicalFunction>
@@ -170,10 +158,6 @@
             <equations uID="D2_equation">
               <equation language="Python">abs(y1)**.5 + z1 + z2</equation>
             </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y2</parameterUID>
-            <equationsUID>D2_equation</equationsUID>
           </output>
         </outputs>
       </mathematicalFunction>
@@ -214,14 +198,10 @@
         </inputs>
         <outputs>
           <output>
-            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y1</parameterUID>
+            <parameterUID>/dataSchema/analyses/y1</parameterUID>
             <equations uID="D1_equation">
               <equation language="Python">z1**2. + x1 + z2 - .2*y2</equation>
             </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/analyses/y1</parameterUID>
-            <equationsUID>D1_equation</equationsUID>
           </output>
         </outputs>
       </mathematicalFunction>
@@ -269,9 +249,9 @@
       <instanceID>1</instanceID>
     </parameter>
   </parameters>
-  <problemDefinition uID="MDFJacobi">
+  <problemDefinition uID="converged-DOEJacobi">
     <problemFormulation>
-      <mdaoArchitecture>MDF</mdaoArchitecture>
+      <mdaoArchitecture>converged-DOE</mdaoArchitecture>
       <convergerType>Jacobi</convergerType>
       <executableBlocksOrder>
         <executableBlock position="1">A</executableBlock>
@@ -282,6 +262,9 @@
         <executableBlock position="6">F1</executableBlock>
       </executableBlocksOrder>
       <allowUnconvergedCouplings>false</allowUnconvergedCouplings>
+      <doeSettings>
+        <method>Custom design table</method>
+      </doeSettings>
     </problemFormulation>
     <problemRoles>
       <parameters>
@@ -289,53 +272,45 @@
           <designVariable uID="__desVar__/dataSchema/geometry/z1">
             <parameterUID>/dataSchema/geometry/z1</parameterUID>
             <nominalValue>0.0</nominalValue>
-            <validRanges>
-              <limitRange>
-                <minimum>-10</minimum>
-                <maximum>10</maximum>
-              </limitRange>
-            </validRanges>
+            <samples>
+              <sample position="1">0.000000000000</sample>
+              <sample position="2">0.100000000000</sample>
+              <sample position="3">0.500000000000</sample>
+              <sample position="4">0.750000000000</sample>
+            </samples>
           </designVariable>
           <designVariable uID="__desVar__/dataSchema/geometry/z2">
             <parameterUID>/dataSchema/geometry/z2</parameterUID>
             <nominalValue>0.0</nominalValue>
-            <validRanges>
-              <limitRange>
-                <minimum>0.0</minimum>
-                <maximum>10</maximum>
-              </limitRange>
-            </validRanges>
+            <samples>
+              <sample position="1">1.000000000000</sample>
+              <sample position="2">1.100000000000</sample>
+              <sample position="3">1.500000000000</sample>
+              <sample position="4">1.750000000000</sample>
+            </samples>
           </designVariable>
           <designVariable uID="__desVar__/dataSchema/geometry/x1">
             <parameterUID>/dataSchema/geometry/x1</parameterUID>
             <nominalValue>0.0</nominalValue>
-            <validRanges>
-              <limitRange>
-                <minimum>0.0</minimum>
-                <maximum>10</maximum>
-              </limitRange>
-            </validRanges>
+            <samples>
+              <sample position="1">2.000000000000</sample>
+              <sample position="2">2.100000000000</sample>
+              <sample position="3">2.500000000000</sample>
+              <sample position="4">2.750000000000</sample>
+            </samples>
           </designVariable>
         </designVariables>
-        <objectiveVariables>
-          <objectiveVariable uID="__objVar__/dataSchema/analyses/f">
-            <parameterUID>/dataSchema/analyses/f</parameterUID>
-          </objectiveVariable>
-        </objectiveVariables>
-        <constraintVariables>
-          <constraintVariable uID="__conVar__/dataSchema/analyses/g1">
+        <stateVariables>
+          <stateVariable uID="__statVar__/dataSchema/analyses/g1">
             <parameterUID>/dataSchema/analyses/g1</parameterUID>
-            <constraintType>inequality</constraintType>
-            <constraintOperator>&gt;=</constraintOperator>
-            <referenceValue>0.0</referenceValue>
-          </constraintVariable>
-          <constraintVariable uID="__conVar__/dataSchema/analyses/g2">
+          </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/analyses/g2">
             <parameterUID>/dataSchema/analyses/g2</parameterUID>
-            <constraintType>inequality</constraintType>
-            <constraintOperator>&gt;=</constraintOperator>
-            <referenceValue>0.0</referenceValue>
-          </constraintVariable>
-        </constraintVariables>
+          </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/analyses/f">
+            <parameterUID>/dataSchema/analyses/f</parameterUID>
+          </stateVariable>
+        </stateVariables>
       </parameters>
       <executableBlocks>
         <preCouplingBlocks>
@@ -354,9 +329,9 @@
     </problemRoles>
   </problemDefinition>
   <workflow>
-    <problemDefinitionUID>MDFJacobi</problemDefinitionUID>
+    <problemDefinitionUID>converged-DOEJacobi</problemDefinitionUID>
     <dataGraph>
-      <name>XDSM - MDF-J</name>
+      <name>XDSM - converged-DOE-J</name>
       <edges>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
@@ -367,12 +342,32 @@
           <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/geometry/x1</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g1</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/geometry/z2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/geometry/z1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/f</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2</fromParameterUID>
@@ -387,40 +382,8 @@
           <toExecutableBlockUID>D1</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/geometry/x1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/geometry/z1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/geometry/z2</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/geometry/x1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/geometry/z1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/geometry/z2</toParameterUID>
-        </edge>
-        <edge>
           <fromExecutableBlockUID>G2</fromExecutableBlockUID>
           <toParameterUID>/dataSchema/analyses/g2</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>G2</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g2</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>G1</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g1</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>G1</fromExecutableBlockUID>
@@ -428,11 +391,11 @@
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/analyses/g1</fromParameterUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/analyses/g2</fromParameterUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/geometry/z1</fromParameterUID>
@@ -467,60 +430,40 @@
           <toExecutableBlockUID>Converger</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/geometry/x1</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/geometry/z1</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/geometry/z2</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
           <fromExecutableBlockUID>A</fromExecutableBlockUID>
           <toParameterUID>/dataSchema/settings/c</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/f</fromParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/f</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y2</fromParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g2</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/geometry/z2</fromParameterUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/analyses/f</fromParameterUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/geometry/x1</fromParameterUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/x1</fromParameterUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g2</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z1</fromParameterUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>F1</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/f</toParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z2</fromParameterUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>F1</fromExecutableBlockUID>
           <toParameterUID>/dataSchema/analyses/f</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/geometry/z1</fromParameterUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g1</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
@@ -528,15 +471,7 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/geometry/z2</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/geometry/z1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/x1</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
@@ -544,7 +479,15 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/geometry/x1</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2</toParameterUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/settings/a</fromParameterUID>
@@ -575,20 +518,12 @@
           <toParameterUID>/dataSchema/analyses/y2</toParameterUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>D2</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y2</toParameterUID>
-        </edge>
-        <edge>
           <fromParameterUID>/dataSchema/geometry/x1</fromParameterUID>
           <toExecutableBlockUID>F1</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/geometry/x1</fromParameterUID>
           <toExecutableBlockUID>D1</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>D1</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y1</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>D1</fromExecutableBlockUID>
@@ -601,32 +536,22 @@
       <edges>
         <edge>
           <fromExecutableBlockUID>A</fromExecutableBlockUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
           <processStepNumber>2</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>F1</fromExecutableBlockUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
           <processStepNumber>7</processStepNumber>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-          <processStepNumber>8</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-          <processStepNumber>3</processStepNumber>
-        </edge>
-        <edge>
           <fromExecutableBlockUID>G2</fromExecutableBlockUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
           <processStepNumber>7</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>G1</fromExecutableBlockUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
           <processStepNumber>7</processStepNumber>
         </edge>
         <edge>
@@ -653,6 +578,16 @@
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
           <toExecutableBlockUID>D1</toExecutableBlockUID>
           <processStepNumber>4</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <processStepNumber>8</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <processStepNumber>3</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
@@ -682,12 +617,6 @@
           <diagonalPosition>8</diagonalPosition>
         </node>
         <node>
-          <referenceUID>Optimizer</referenceUID>
-          <processStepNumber>2</processStepNumber>
-          <convergerStepNumber>7</convergerStepNumber>
-          <diagonalPosition>2</diagonalPosition>
-        </node>
-        <node>
           <referenceUID>G2</referenceUID>
           <processStepNumber>6</processStepNumber>
           <diagonalPosition>7</diagonalPosition>
@@ -702,6 +631,12 @@
           <processStepNumber>3</processStepNumber>
           <convergerStepNumber>5</convergerStepNumber>
           <diagonalPosition>3</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>DOE</referenceUID>
+          <processStepNumber>2</processStepNumber>
+          <convergerStepNumber>7</convergerStepNumber>
+          <diagonalPosition>2</diagonalPosition>
         </node>
         <node>
           <referenceUID>Coordinator</referenceUID>
@@ -725,7 +660,7 @@
           <loopElements>
             <loopElement relatedUID="Coordinator">
               <loopElements>
-                <loopElement relatedUID="Optimizer">
+                <loopElement relatedUID="DOE">
                   <loopElements>
                     <loopElement relatedUID="Converger">
                       <functionElements>
@@ -772,18 +707,6 @@
           <instanceID>1</instanceID>
         </initialGuessCouplingVariable>
       </initialGuessCouplingVariables>
-      <finalCouplingVariables>
-        <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y2">
-          <relatedParameterUID>/dataSchema/analyses/y2</relatedParameterUID>
-          <label>y2^{*}</label>
-          <instanceID>1</instanceID>
-        </finalCouplingVariable>
-        <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y1">
-          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
-          <label>y1^{*}</label>
-          <instanceID>1</instanceID>
-        </finalCouplingVariable>
-      </finalCouplingVariables>
       <couplingCopyVariables>
         <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1">
           <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
@@ -796,57 +719,40 @@
           <instanceID>1</instanceID>
         </couplingCopyVariable>
       </couplingCopyVariables>
-      <initialGuessDesignVariables>
-        <initialGuessDesignVariable uID="/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/geometry/z2">
-          <relatedParameterUID>/dataSchema/geometry/z2</relatedParameterUID>
-          <label>z2^{0}</label>
-          <instanceID>1</instanceID>
-        </initialGuessDesignVariable>
-        <initialGuessDesignVariable uID="/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/geometry/x1">
+      <doeInputSampleLists>
+        <doeInputSampleList uID="/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/x1">
           <relatedParameterUID>/dataSchema/geometry/x1</relatedParameterUID>
-          <label>x1^{0}</label>
+          <label>DOE_x1_{inp}</label>
           <instanceID>1</instanceID>
-        </initialGuessDesignVariable>
-        <initialGuessDesignVariable uID="/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/geometry/z1">
+        </doeInputSampleList>
+        <doeInputSampleList uID="/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z1">
           <relatedParameterUID>/dataSchema/geometry/z1</relatedParameterUID>
-          <label>z1^{0}</label>
+          <label>DOE_z1_{inp}</label>
           <instanceID>1</instanceID>
-        </initialGuessDesignVariable>
-      </initialGuessDesignVariables>
-      <finalDesignVariables>
-        <finalDesignVariable uID="/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/geometry/x1">
-          <relatedParameterUID>/dataSchema/geometry/x1</relatedParameterUID>
-          <label>x1^{*}</label>
-          <instanceID>1</instanceID>
-        </finalDesignVariable>
-        <finalDesignVariable uID="/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/geometry/z1">
-          <relatedParameterUID>/dataSchema/geometry/z1</relatedParameterUID>
-          <label>z1^{*}</label>
-          <instanceID>1</instanceID>
-        </finalDesignVariable>
-        <finalDesignVariable uID="/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/geometry/z2">
+        </doeInputSampleList>
+        <doeInputSampleList uID="/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z2">
           <relatedParameterUID>/dataSchema/geometry/z2</relatedParameterUID>
-          <label>z2^{*}</label>
+          <label>DOE_z2_{inp}</label>
           <instanceID>1</instanceID>
-        </finalDesignVariable>
-      </finalDesignVariables>
-      <finalOutputVariables>
-        <finalOutputVariable uID="/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g1">
-          <relatedParameterUID>/dataSchema/analyses/g1</relatedParameterUID>
-          <label>g1^{*}</label>
-          <instanceID>1</instanceID>
-        </finalOutputVariable>
-        <finalOutputVariable uID="/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/f">
+        </doeInputSampleList>
+      </doeInputSampleLists>
+      <doeOutputSampleLists>
+        <doeOutputSampleList uID="/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/f">
           <relatedParameterUID>/dataSchema/analyses/f</relatedParameterUID>
-          <label>f^{*}</label>
+          <label>DOE_f_{out}</label>
           <instanceID>1</instanceID>
-        </finalOutputVariable>
-        <finalOutputVariable uID="/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g2">
+        </doeOutputSampleList>
+        <doeOutputSampleList uID="/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g2">
           <relatedParameterUID>/dataSchema/analyses/g2</relatedParameterUID>
-          <label>g2^{*}</label>
+          <label>DOE_g2_{out}</label>
           <instanceID>1</instanceID>
-        </finalOutputVariable>
-      </finalOutputVariables>
+        </doeOutputSampleList>
+        <doeOutputSampleList uID="/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g1">
+          <relatedParameterUID>/dataSchema/analyses/g1</relatedParameterUID>
+          <label>DOE_g1_{out}</label>
+          <instanceID>1</instanceID>
+        </doeOutputSampleList>
+      </doeOutputSampleLists>
     </parameters>
     <executableBlocks>
       <coordinators>
@@ -854,44 +760,6 @@
           <label>COOR</label>
         </coordinator>
       </coordinators>
-      <optimizers>
-        <optimizer uID="Optimizer">
-          <label>OPT</label>
-          <settings>
-            <package>SciPy</package>
-            <algorithm>SLSQP</algorithm>
-            <maximumIterations>1000</maximumIterations>
-            <maximumFunctionEvaluations>1000</maximumFunctionEvaluations>
-            <convergenceTolerance>0.0001</convergenceTolerance>
-            <constraintTolerance>0.0001</constraintTolerance>
-            <applyScaling>true</applyScaling>
-          </settings>
-          <designVariables>
-            <designVariable>
-              <designVariableUID>__desVar__/dataSchema/geometry/x1</designVariableUID>
-            </designVariable>
-            <designVariable>
-              <designVariableUID>__desVar__/dataSchema/geometry/z1</designVariableUID>
-            </designVariable>
-            <designVariable>
-              <designVariableUID>__desVar__/dataSchema/geometry/z2</designVariableUID>
-            </designVariable>
-          </designVariables>
-          <objectiveVariables>
-            <objectiveVariable>
-              <objectiveVariableUID>__objVar__/dataSchema/analyses/f</objectiveVariableUID>
-            </objectiveVariable>
-          </objectiveVariables>
-          <constraintVariables>
-            <constraintVariable>
-              <constraintVariableUID>__conVar__/dataSchema/analyses/g1</constraintVariableUID>
-            </constraintVariable>
-            <constraintVariable>
-              <constraintVariableUID>__conVar__/dataSchema/analyses/g2</constraintVariableUID>
-            </constraintVariable>
-          </constraintVariables>
-        </optimizer>
-      </optimizers>
       <convergers>
         <converger uID="Converger">
           <label>CONV</label>
@@ -913,6 +781,45 @@
           </settings>
         </converger>
       </convergers>
+      <does>
+        <doe uID="DOE">
+          <label>DOE</label>
+          <settings>
+            <method>Custom design table</method>
+            <table>
+              <tableRow relatedParameterUID="/dataSchema/geometry/z2">
+                <tableElement experimentID="0">1.000000000000</tableElement>
+                <tableElement experimentID="1">1.100000000000</tableElement>
+                <tableElement experimentID="2">1.500000000000</tableElement>
+                <tableElement experimentID="3">1.750000000000</tableElement>
+              </tableRow>
+              <tableRow relatedParameterUID="/dataSchema/geometry/z1">
+                <tableElement experimentID="0">0.000000000000</tableElement>
+                <tableElement experimentID="1">0.100000000000</tableElement>
+                <tableElement experimentID="2">0.500000000000</tableElement>
+                <tableElement experimentID="3">0.750000000000</tableElement>
+              </tableRow>
+              <tableRow relatedParameterUID="/dataSchema/geometry/x1">
+                <tableElement experimentID="0">2.000000000000</tableElement>
+                <tableElement experimentID="1">2.100000000000</tableElement>
+                <tableElement experimentID="2">2.500000000000</tableElement>
+                <tableElement experimentID="3">2.750000000000</tableElement>
+              </tableRow>
+            </table>
+          </settings>
+          <designVariables>
+            <designVariable>
+              <designVariableUID>__desVar__/dataSchema/geometry/x1</designVariableUID>
+            </designVariable>
+            <designVariable>
+              <designVariableUID>__desVar__/dataSchema/geometry/z1</designVariableUID>
+            </designVariable>
+            <designVariable>
+              <designVariableUID>__desVar__/dataSchema/geometry/z2</designVariableUID>
+            </designVariable>
+          </designVariables>
+        </doe>
+      </does>
       <preIteratorAnalyses>
         <preIteratorAnalysis>
           <relatedExecutableBlockUID>A</relatedExecutableBlockUID>

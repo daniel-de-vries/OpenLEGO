@@ -19,9 +19,12 @@ This file contains a set of CMDOWS utility functions.
 """
 from __future__ import absolute_import, division, print_function
 
+import warnings
 from copy import copy
 from lxml.etree import _Element
-from typing import Tuple, Union
+from typing import Tuple, Union, Any, List
+
+from openlego.utils.general_utils import change_object_type
 
 
 def get_related_parameter_uid(elem_param, full_xml):
@@ -101,6 +104,87 @@ def get_uid_search_xpath(uid):
         return './/*[@uID=' + uid_concat + ']'
     else:
         return './/*[@uID="' + uid + '"]'
+
+
+def get_opt_setting_safe(opt_elem, setting, default, expected_type='str'):
+    # type: (_Element, str, Any, str) -> Union[str, int, float]
+    """Function to read out an optimizer setting from a CMDOWS file, and to provide a default value (and warning) if the
+    setting is not found.
+
+    Parameters
+    ----------
+        opt_elem : _Element
+            The lxml element of the optimizer block in the CMDOWS file.
+
+        setting : str
+            The setting to be found.
+
+        default : Any
+            The default value of the setting if it is not found in the element.
+
+        expected_type : str
+            The expected type of the setting (str, int, float) so that the XML string value can be changed accordingly.
+
+    Returns
+    -------
+        Union[str, int, float]
+            The optimizer setting that was found or its default value if it was not found.
+    """
+    if isinstance(opt_elem.find('settings/{}'.format(setting)), _Element):
+        opt_setting = opt_elem.find('settings/{}'.format(setting)).text
+    else:
+        warnings.warn('Setting "{}" not specified for optimizer element "{}", setting to default "{}".'
+                      .format(setting, opt_elem.attrib['uID'], default))
+        opt_setting = default
+    return change_object_type(opt_setting, expected_type)
+
+
+def get_doe_setting_safe(doe_elem, setting, default, expected_type='str', doe_method=None, required_for_doe_methods=None):
+    # type: (_Element, str, Any, str, str, List[str]) -> Union[str, int, float]
+    """Function to read out a DOE setting from a CMDOWS file based on whether that setting is required, and to provide
+    a default value (and warning) if the setting is not found.
+
+    Parameters
+    ----------
+        doe_elem : _Element
+            The lxml element of the DOE block in the CMDOWS file.
+
+        setting : str
+            The setting to be found.
+
+        default : Any
+            The default value of the setting if it is not found in the element.
+
+        expected_type : str
+            The expected type of the setting (str, int, float) so that the XML string value can be changed accordingly.
+
+        doe_method : str
+            The DOE method (LHS, Box-Behnken, etc.) of the DOE block.
+
+        required_for_doe_methods : List[str]
+            The DOE methods for which this setting must be found.
+
+    Returns
+    -------
+        doe_setting : Union[str, int, float]
+            The DOE setting that was found or its default value if it was not found.
+    """
+    if isinstance(doe_elem.find('settings/{}'.format(setting)), _Element):
+        doe_setting = doe_elem.find('settings/{}'.format(setting)).text
+    else:
+        if required_for_doe_methods:
+            if doe_method in required_for_doe_methods:
+                warnings.warn('Setting "{}" not specified for DOE element "{}", setting to default "{}".'
+                              .format(setting, doe_elem.attrib['uID'], default))
+                doe_setting = default
+            else:
+                doe_setting = None
+        else:
+            doe_setting = None
+    if doe_setting:
+        return change_object_type(doe_setting, expected_type)
+    else:
+        return doe_setting
 
 
 def get_loop_nesting_obj(elem):

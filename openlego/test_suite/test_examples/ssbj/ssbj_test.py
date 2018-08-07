@@ -23,10 +23,9 @@ import os
 import logging
 import unittest
 
-from openmdao.api import Problem, ScipyOptimizeDriver
-
-from openlego.core.model import LEGOModel
+from openlego.core.problem import LEGOProblem
 import openlego.test_suite.test_examples.ssbj.kb as kb
+from openlego.utils.general_utils import clean_dir_filtered
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
@@ -39,14 +38,13 @@ mdao_definitions = ['unconverged-MDA-GS',     # 0
                     'unconverged-DOE-J-CT',   # 5
                     'converged-DOE-GS-CT',    # 6
                     'converged-DOE-J-CT',     # 7
-                    'converged-DOE-GS-FF',    # 8
-                    'converged-DOE-GS-LH',    # 9
-                    'converged-DOE-GS-MC',    # 10
-                    'MDF-GS',                 # 11
-                    'MDF-J',                  # 12
-                    'IDF',                    # 13
-                    'CO',                     # 14
-                    'BLISS-2000']             # 15
+                    'converged-DOE-GS-LH',    # 8
+                    'converged-DOE-GS-MC',    # 9
+                    'MDF-GS',                 # 10
+                    'MDF-J',                  # 11
+                    'IDF',                    # 12
+                    'CO',                     # 13
+                    'BLISS-2000']             # 14
 
 
 def get_loop_items(analyze_mdao_definitions):
@@ -74,88 +72,31 @@ def run_openlego(analyze_mdao_definitions):
         print('\n-----------------------------------------------')
         print('Running the OpenLEGO of Mdao_{}.xml...'.format(mdao_def))
         print('------------------------------------------------')
-        """Solve the Sellar problem using the given CMDOWS file."""
+        """Solve the SSBJ problem using the given CMDOWS file."""
 
         # 1. Create Problem
-        prob = Problem()  # Create an instance of the Problem class
-        prob.set_solver_print(0)  # Turn off printing of solver information
+        prob = LEGOProblem(os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
+                                        'kb',  # Knowledge base path
+                                        '',  # Output directory
+                                        'ssbj-output-{}.xml'.format(mdao_def))  # Output file
+        # prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
+        prob.set_solver_print(0)  # Set printing of solver information
 
-        # 2. Create the LEGOModel
-        model = prob.model = LEGOModel(os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),
-                                       # CMDOWS file
-                                       'kb',  # Knowledge base path
-                                       '',  # Output directory
-                                       'ssbj-output-{}.xml'.format(mdao_def))  # Output file
-
-        # 3. Create the Driver
-        driver = prob.driver = ScipyOptimizeDriver()  # Use a SciPy for the optimization
-        driver.options['optimizer'] = 'SLSQP'  # Use the SQP algorithm
-        driver.options['disp'] = True  # Print the result
-        driver.opt_settings = {'disp': True, 'iprint': 2}  # Display iterations
-        driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']
-
-        # 4. Setup the Problem
-        prob.setup(mode='fwd')  # Call the OpenMDAO setup() method
-        prob.run_model()  # Run the model once to init. the variables
+        # 2. Initialize the Problem and export N2 chart
+        prob.store_model_view()
         if mdao_def in ['MDF-GS', 'MDF-J', 'IDF', 'CO', 'BLISS-2000']:
-            model.initialize_from_xml('SSBJ-base-mdo.xml')  # Set the initial values from an XML file
+            prob.initialize_from_xml('SSBJ-base-mdo.xml')  # Set the initial values from an XML file
         else:
-            model.initialize_from_xml('SSBJ-base-mda.xml')
+            prob.initialize_from_xml('SSBJ-base-mda.xml')
 
-        # 5. Solve the Problem
-        prob.run_driver()  # Run the optimization
+        # 3. Run the Problem
+        prob.run_driver()  # Run the driver (optimization, DOE, or convergence)
 
-        # 6. Print results
-        x_R = '/dataSchema/aircraft/other/R'
-        x_R__scr = '/dataSchema/scaledData/R/scaler'
+        # 4. Read out the case reader
+        prob.collect_results()
 
-        print('Optimum found!')
-        print('\nObjective function value: {} = {:.3f} ({:.2f}/{:.2f})'.format(prob.model.objective,
-                                                                               prob[prob.model.objective][0],
-                                                                               prob[x_R][0], prob[x_R__scr][0]))
-
-        print('\nDesign variables at optimum:')
-
-        def format_expected_float_value(value):
-            return '{:10.3f}'.format(value) if isinstance(value, float) else '{:10}'.format(value)
-
-        for des_var, metadata in prob.model.design_vars.items():
-            print('{:8} = {:10.3f}     => {:10} < x < {:10}, initial: {:10}'.format(des_var.split('/')[-1],
-                                                                                    prob[des_var][0],
-                                                                                    format_expected_float_value(
-                                                                                        metadata['lower']),
-                                                                                    format_expected_float_value(
-                                                                                        metadata['upper']),
-                                                                                    format_expected_float_value(
-                                                                                        metadata['initial'])))
-
-        print('\nConstraint values at optimum:')
-        for constraint, metadata in prob.model.constraints.items():
-            if metadata['equals'] is not None:
-                print('{:8} = {:10.3f}     => c == {:10}'.format(constraint.split('/')[-1],
-                                                                 prob[constraint][0],
-                                                                 metadata['equals'] if metadata[
-                                                                                           'equals'] is not None else ''))
-            else:
-                print('{:8} = {:10.3f}     => {:10} < c < {:10}'.format(constraint.split('/')[-2],
-                                                                        prob[constraint][0],
-                                                                        format_expected_float_value(metadata['lower']),
-                                                                        format_expected_float_value(metadata['upper'])))
-
-        print('\nAll values at optimum:')
-        print('Inputs')
-        print('------')
-        for input in prob.model._inputs:
-            print('{:105} = {:10.3f}'.format(input, prob[input][0]))
-
-        print('\nOutputs')
-        print('-------')
-        for output in prob.model._outputs:
-            print('{:105} = {:10.3f}'.format(output, prob[output][0]))
-
-        # 7. Cleanup the Problem afterwards
-        prob.cleanup()  # Clear all resources and close the plots
-        model.invalidate()  # Clear the cached properties of the LEGOModel
+        # 5. Cleanup and invalidate the Problem afterwards
+        prob.invalidate()
 
 
 class TestSsbj(unittest.TestCase):
@@ -164,20 +105,61 @@ class TestSsbj(unittest.TestCase):
         kb.deploy()
         super(TestSsbj, self).__call__(*args, **kwargs)
 
+    def test_unc_mda_gs(self):
+        """Test run the SSBJ tools in sequence."""
+        run_openlego(0)
+
+    def test_unc_mda_j(self):
+        """Test run the SSBJ tools in parallel."""
+        run_openlego(1)
+
+    def test_con_mda_gs(self):
+        """Solve the SSBJ system using the Gauss-Seidel convergence scheme."""
+        run_openlego(2)
+
+    def test_con_mda_j(self):
+        """Solve the SSBJ system using the Jacobi convergence scheme."""
+        run_openlego(3)
+
+    def test_unc_doe_gs_ct(self):
+        """Solve multiple (DOE) SSBJ systems (unconverged) in sequence based on a custom design table."""
+        run_openlego(4)
+
+    def test_unc_doe_j_ct(self):
+        """Solve multiple (DOE) SSBJ systems (unconverged) in parallel based on a custom design table."""
+        run_openlego(5)
+
+    def test_con_doe_gs_ct(self):
+        """Solve multiple (DOE) SSBJ systems (converged) in sequence based on a custom design table."""
+        run_openlego(6)
+
+    def test_con_doe_j_ct(self):
+        """Solve multiple (DOE) SSBJ systems (converged) in parallel based on a custom design table."""
+        run_openlego(7)
+
+    def test_con_doe_gs_lh(self):
+        """Solve multiple (DOE) SSBJ systems (converged) in sequence based on a latin hypercube sampling."""
+        run_openlego(8)
+
+    def test_con_doe_gs_mc(self):
+        """Solve multiple (DOE) SSBJ systems (converged) in sequence based on a Monte Carlo sampling."""
+        run_openlego(9)
+
     def test_mdf_gs(self):
         """Solve the SSBJ problem using the MDF architecture and a Gauss-Seidel convergence scheme."""
-        run_openlego(11)
+        run_openlego(10)
 
     def test_mdf_j(self):
         """Solve the SSBJ problem using the MDF architecture and a Jacobi converger."""
-        run_openlego(12)
+        run_openlego(11)
 
     def test_idf(self):
         """Solve the SSBJ problem using the IDF architecture."""
-        run_openlego(13)
+        run_openlego(12)
 
     def __del__(self):
         kb.clean()
+        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'ssbj-output-'])
 
 
 if __name__ == '__main__':

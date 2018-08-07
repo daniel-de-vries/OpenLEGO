@@ -28,7 +28,7 @@ import numpy as np
 from lxml import etree
 from openmdao.api import Group, IndepVarComp, ExplicitComponent
 from openmdao.vectors.vector import Vector
-from typing import Optional, List, Union, Iterable
+from typing import Optional, List, Union, Iterable, Tuple
 
 from openlego.utils.xml_utils import xml_safe_create_element, xml_to_dict, xpath_to_param, param_to_xpath, xml_merge
 from openlego.partials.partials import Partials
@@ -227,7 +227,7 @@ class XMLComponent(ExplicitComponent):
         raise NotImplementedError
 
     def generate_file_names(self):
-        # type: () -> (str, str, str)
+        # type: () -> Tuple[str, str, str]
         """Generate temporary file names for the input, output, and partials XML files.
 
         Returns

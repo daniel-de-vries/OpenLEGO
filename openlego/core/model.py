@@ -34,6 +34,7 @@ from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
 from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid, get_loop_nesting_obj
 from .abstract_discipline import AbstractDiscipline
+from .cmdows_object import CMDOWSObject
 from .discipline_component import DisciplineComponent
 
 
@@ -46,7 +47,7 @@ class InvalidCMDOWSFileError(ValueError):
         super(InvalidCMDOWSFileError, self).__init__(msg)
 
 
-class LEGOModel(Group):
+class LEGOModel(CMDOWSObject, Group):
     """Specialized OpenMDAO Group class representing the model specified by a CMDOWS file.
 
     An important note about this class in the context of OpenMDAO is that the aggregation pattern of the root Group
@@ -96,33 +97,9 @@ class LEGOModel(Group):
         base_xml_file : str, optional
             Path to a base XML file to update with the problem data.
         """
-        self._cmdows_path = cmdows_path
-        self._kb_path = kb_path
-        self.data_folder = data_folder
-        self.base_xml_file = base_xml_file
-
-        super(LEGOModel, self).__init__(**kwargs)
         self.linear_solver = LinearRunOnce()
         self.nonlinear_solver = NonlinearRunOnce()
-
-    def __getattribute__(self, name):
-        # type: (str) -> Any
-        """Check the integrity before returning any of the cached variables.
-
-        Parameters
-        ----------
-        name : str
-            Name of the attribute to read.
-
-        Returns
-        -------
-            any
-                The value of the requested attribute.
-        """
-        if name != '__class__' and name != '__dict__':
-            if name in [_name for _name, value in self.__class__.__dict__.items() if isinstance(value, CachedProperty)]:
-                self.__integrity_check()
-        return super(LEGOModel, self).__getattribute__(name)
+        super(LEGOModel, self).__init__(cmdows_path, kb_path, data_folder, base_xml_file, **kwargs)
 
     def __setattr__(self, name, value):
         # type: (str, Any) -> None
@@ -138,27 +115,6 @@ class LEGOModel(Group):
         """
         if name not in ['coordinator', 'coupled_group']:
             super(LEGOModel, self).__setattr__(name, value)
-
-    def __integrity_check(self):
-        # type: () -> None
-        """Ensure a CMDOWS file has been supplied.
-
-        Raises
-        ------
-            ValueError
-                If no CMDOWS file has been supplied
-        """
-        if self._cmdows_path is None:
-            raise ValueError('No CMDOWS file specified!')
-
-    def invalidate(self):
-        # type: () -> None
-        """Invalidate the instance.
-
-        All computed (cached) properties will be recomputed upon being read once the instance has been invalidated."""
-        for value in self.__class__.__dict__.values():
-            if isinstance(value, CachedProperty):
-                value.invalidate()
 
     def does_value_fit(self, name, val):
         # type: (str, Union[str, float, np.ndarray]) -> bool
@@ -179,36 +135,6 @@ class LEGOModel(Group):
         """
         return (isinstance(val, np.ndarray) and val.size == self.variable_sizes[name]) \
             or (not isinstance(val, np.ndarray) and self.variable_sizes[name] == 1)
-
-    @property
-    def cmdows_path(self):
-        # type: () -> str
-        """:obj:`str`: Path to the CMDOWS file this class corresponds to.
-
-        When this property is set the instance is automatically invalidated.
-        """
-        return self._cmdows_path
-
-    @cmdows_path.setter
-    def cmdows_path(self, cmdows_path):
-        # type: (str) -> None
-        self._cmdows_path = cmdows_path
-        self.invalidate()
-
-    @property
-    def kb_path(self):
-        # type: () -> str
-        """:obj:`str`: Path to the knowledge base.
-
-        When this property is set the instance is automatically invalidated.
-        """
-        return self._kb_path
-
-    @kb_path.setter
-    def kb_path(self, kb_path):
-        # type: (str) -> None
-        self._kb_path = kb_path
-        self.invalidate()
 
     @CachedProperty
     def elem_cmdows(self):
@@ -474,7 +400,7 @@ class LEGOModel(Group):
 
     @CachedProperty
     def coupling_var_cons(self):
-        # type: () -> Dict[str, str]
+        # type: () -> Optional[Dict[str, str]]
         """:obj:`dict`: Dictionary with coupling variable constraints."""
         coupling_var_cons = dict()
         for var, value in self.coupling_vars.items():
@@ -543,7 +469,7 @@ class LEGOModel(Group):
         for entry in hierarchy:
             if isinstance(entry, dict):
                 keys = entry.keys()
-                if len(keys) == 1:
+                if len(keys) != 1:
                     raise AssertionError('One key is expected in the dictionary of a process hierarchy.')
                 if self.loop_element_details[keys[0]] == 'converger':
                     _coupled_hierarchy.append(entry)
@@ -636,6 +562,7 @@ class LEGOModel(Group):
                     # Obtain the reference value of the constraint
                     constr_ref = convar.find('referenceValue')  # type: etree._Element
                     ref_vals = []
+                    ref = None
                     if constr_ref is not None:
                         refs_str = constr_ref.text
                         if ';' in refs_str:
@@ -714,8 +641,10 @@ class LEGOModel(Group):
         This method enables the iterative configuration of groups of distributed convergers based on the convergence
         hierarchy.
         """
+        subsys = None
         if not root:
             coupled_group = Group()
+
         for entry in hierarchy:
             if isinstance(entry, dict):  # if entry specifies a coupled group
                 uid = entry.keys()[0]
@@ -793,7 +722,7 @@ class LEGOModel(Group):
         If not subsystem optimizations are required based on the CMDOWS file then this property is `None`.
         """
         if self.subsystem_optimizations:
-            pass
+            return None
             # Add inputs (standardized?)
             # Add output
             # Declare partials

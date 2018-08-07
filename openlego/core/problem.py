@@ -29,12 +29,13 @@ from openmdao.api import Problem, ScipyOptimizeDriver, pyOptSparseDriver, DOEDri
 from openmdao.core.driver import Driver
 from typing import Optional, Any, Union, Dict
 
+from openlego.core.cmdows_object import CMDOWSObject
 from openlego.core.model import LEGOModel
 from openlego.utils.cmdows_utils import get_element_by_uid, get_opt_setting_safe, get_doe_setting_safe
 from openlego.utils.general_utils import CachedProperty, print_optional, add_or_append_dict_entry
 
 
-class LEGOProblem(Problem):
+class LEGOProblem(CMDOWSObject, Problem):
     """Specialized OpenMDAO Problem class representing the problem specified by a CMDOWS file.
 
     An important note about this class in the context of OpenMDAO is that the aggregation pattern of the root Problem
@@ -89,36 +90,12 @@ class LEGOProblem(Problem):
         output_case_str : str, optional
             A string indicating the naming for output files such as N2 views and recorders.
         """
-        self._cmdows_path = cmdows_path
-        self._kb_path = kb_path
-        self.data_folder = data_folder
-        self.base_xml_file = base_xml_file
         if output_case_str:
             self.output_case_string = output_case_str
         else:
             self.output_case_string = os.path.splitext(os.path.basename(cmdows_path))[0] + '_' + \
                                       datetime.datetime.now().isoformat()
-
-        super(LEGOProblem, self).__init__(**kwargs)
-
-    def __getattribute__(self, name):
-        # type: (str) -> Any
-        """Check the integrity before returning any of the cached variables.
-
-        Parameters
-        ----------
-        name : str
-            Name of the attribute to read.
-
-        Returns
-        -------
-            any
-                The value of the requested attribute.
-        """
-        if name != '__class__' and name != '__dict__':
-            if name in [_name for _name, value in self.__class__.__dict__.items() if isinstance(value, CachedProperty)]:
-                self.__integrity_check()
-        return super(LEGOProblem, self).__getattribute__(name)
+        super(LEGOProblem, self).__init__(cmdows_path, kb_path, data_folder, base_xml_file, **kwargs)
 
     def __setattr__(self, name, value):
         # type: (str, Any) -> None
@@ -135,18 +112,6 @@ class LEGOProblem(Problem):
         if name not in ['model', 'driver']:
             super(LEGOProblem, self).__setattr__(name, value)
 
-    def __integrity_check(self):
-        # type: () -> None
-        """Ensure a CMDOWS file has been supplied.
-
-        Raises
-        ------
-            ValueError
-                If no CMDOWS file has been supplied
-        """
-        if self._cmdows_path is None:
-            raise ValueError('No CMDOWS file specified!')
-
     def invalidate(self):
         # type: () -> None
         """Invalidate the instance.
@@ -155,40 +120,7 @@ class LEGOProblem(Problem):
         self.cleanup()  # Cleanup the problem
         self.model.invalidate()  # Invalidate the model
         # Invalidate the problem
-        for value in self.__class__.__dict__.values():
-            if isinstance(value, CachedProperty):
-                value.invalidate()
-
-    @property
-    def cmdows_path(self):
-        # type: () -> str
-        """:obj:`str`: Path to the CMDOWS file this class corresponds to.
-
-        When this property is set the instance is automatically invalidated.
-        """
-        return self._cmdows_path
-
-    @cmdows_path.setter
-    def cmdows_path(self, cmdows_path):
-        # type: (str) -> None
-        self._cmdows_path = cmdows_path
-        self.invalidate()
-
-    @property
-    def kb_path(self):
-        # type: () -> str
-        """:obj:`str`: Path to the knowledge base.
-
-        When this property is set the instance is automatically invalidated.
-        """
-        return self._kb_path
-
-    @kb_path.setter
-    def kb_path(self, kb_path):
-        # type: (str) -> None
-        self._kb_path = kb_path
-        self.invalidate()
-
+        super(LEGOProblem, self).invalidate()
 
     @CachedProperty
     def case_reader_path(self):
@@ -413,7 +345,7 @@ class LEGOProblem(Problem):
         if isinstance(cases_to_collect, str):
             if cases_to_collect not in ['default', 'all', 'last']:
                 raise AssertionError('Invalid cases_to_print string value provided.')
-        if cases_to_collect== 'default':
+        if cases_to_collect == 'default':
             if self.driver_type == 'doe':
                 cases_to_collect = 'all'
             elif self.driver_type == 'optimizer':
@@ -459,7 +391,7 @@ class LEGOProblem(Problem):
             var_does = sorted([elem.text for elem in self.model.elem_arch_elems
                               .findall('parameters/doeOutputSampleLists/doeOutputSampleList/relatedParameterUID')])
             var_convs = sorted([elem.text for elem in self.model.elem_problem_def
-                              .findall('problemRoles/parameters/stateVariables/stateVariable/parameterUID')])
+                               .findall('problemRoles/parameters/stateVariables/stateVariable/parameterUID')])
 
             # Print objective
             if var_objectives:

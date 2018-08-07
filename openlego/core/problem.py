@@ -37,11 +37,10 @@ from openlego.utils.general_utils import CachedProperty, print_optional, add_or_
 class LEGOProblem(Problem):
     """Specialized OpenMDAO Problem class representing the problem specified by a CMDOWS file.
 
-    # TODO: Daniel: is this also true here?
     An important note about this class in the context of OpenMDAO is that the aggregation pattern of the root Problem
     class has is changed into a stronger composition pattern. This is because this class directly
     controls the creation and assembly of this class by making use of Python's @property decorator. It is not possible,
-    nor should it be attempted, to manually inject a different instance of Problem in place of these, because the
+    nor should it be attempted, to manually inject a different instance of Problem in place of this, because the
     correspondence between the CMDOWS file and the Problem can then no longer be guaranteed.
 
     Attributes
@@ -225,9 +224,9 @@ class LEGOProblem(Problem):
     def driver_type(self):
         # type: () -> Union[str, None]
         """:obj:`str`: Type of driver as string."""
-        assert len(self.drivers['optimizers']) + len(self.drivers['does']) <= 1, \
-            "Only one driver is allowed at the moment. {} drivers specified ({}) at the moment." \
-                .format(len(self.drivers), self.drivers)
+        if len(self.drivers['optimizers']) + len(self.drivers['does']) > 1:
+            raise AssertionError("Only one driver is allowed at the moment. {} drivers specified ({}) at the moment."
+                                 .format(len(self.drivers), self.drivers))
         if self.drivers['optimizers']:
             return 'optimizer'
         elif self.drivers['does']:
@@ -407,11 +406,13 @@ class LEGOProblem(Problem):
             results : dict of dicts
                 Dictionary containing the results that were collected
         """
-        assert os.path.isfile(self.case_reader_path), 'Could not find the case reader file {}.'\
-            .format(self.case_reader_path)
-        assert isinstance(cases_to_collect, (str, list)), 'cases_to_print must be of type str or list.'
+        if not os.path.isfile(self.case_reader_path):
+            raise AssertionError('Could not find the case reader file {}.'.format(self.case_reader_path))
+        if not isinstance(cases_to_collect, (str, list)):
+            raise AssertionError('cases_to_print must be of type str or list.')
         if isinstance(cases_to_collect, str):
-            assert cases_to_collect in ['default', 'all', 'last'], 'Invalid cases_to_print string value provided.'
+            if cases_to_collect not in ['default', 'all', 'last']:
+                raise AssertionError('Invalid cases_to_print string value provided.')
         if cases_to_collect== 'default':
             if self.driver_type == 'doe':
                 cases_to_collect = 'all'
@@ -444,7 +445,7 @@ class LEGOProblem(Problem):
                 print_optional('Optimum found!', print_in_log)
             else:
                 print_optional('Driver finished!', print_in_log)
-        print_optional('\nPrinting case numbers: {}'.format(num_cases, cases_to_collect), print_in_log)
+        print_optional('\nPrinting case numbers: {}'.format(cases_to_collect), print_in_log)
         for num_case in cases_to_collect:
             case = cases.get_case(num_case)
             print_optional('\n\n  Case {}/{} ({})'.format(num_case, num_cases-1, case.iteration_coordinate),

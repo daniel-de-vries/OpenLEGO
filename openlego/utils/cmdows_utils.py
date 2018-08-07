@@ -22,7 +22,7 @@ from __future__ import absolute_import, division, print_function
 import warnings
 from copy import copy
 from lxml.etree import _Element
-from typing import Tuple, Union
+from typing import Tuple, Union, Any, List
 
 from openlego.utils.general_utils import change_object_type
 
@@ -107,7 +107,29 @@ def get_uid_search_xpath(uid):
 
 
 def get_opt_setting_safe(opt_elem, setting, default, expected_type='str'):
-    # TODO: Add docstring and type
+    # type: (_Element, str, Any, str) -> Union[str, int, float]
+    """Function to read out an optimizer setting from a CMDOWS file, and to provide a default value (and warning) if the
+    setting is not found.
+
+    Parameters
+    ----------
+        opt_elem : _Element
+            The lxml element of the optimizer block in the CMDOWS file.
+
+        setting : str
+            The setting to be found.
+
+        default : Any
+            The default value of the setting if it is not found in the element.
+
+        expected_type : str
+            The expected type of the setting (str, int, float) so that the XML string value can be changed accordingly.
+
+    Returns
+    -------
+        Union[str, int, float]
+            The optimizer setting that was found or its default value if it was not found.
+    """
     if isinstance(opt_elem.find('settings/{}'.format(setting)), _Element):
         opt_setting = opt_elem.find('settings/{}'.format(setting)).text
     else:
@@ -118,7 +140,35 @@ def get_opt_setting_safe(opt_elem, setting, default, expected_type='str'):
 
 
 def get_doe_setting_safe(doe_elem, setting, default, expected_type='str', doe_method=None, required_for_doe_methods=None):
-    # TODO: Add docstring and type
+    # type: (_Element, str, Any, str, str, List[str]) -> Union[str, int, float]
+    """Function to read out a DOE setting from a CMDOWS file based on whether that setting is required, and to provide
+    a default value (and warning) if the setting is not found.
+
+    Parameters
+    ----------
+        doe_elem : _Element
+            The lxml element of the DOE block in the CMDOWS file.
+
+        setting : str
+            The setting to be found.
+
+        default : Any
+            The default value of the setting if it is not found in the element.
+
+        expected_type : str
+            The expected type of the setting (str, int, float) so that the XML string value can be changed accordingly.
+
+        doe_method : str
+            The DOE method (LHS, Box-Behnken, etc.) of the DOE block.
+
+        required_for_doe_methods : List[str]
+            The DOE methods for which this setting must be found.
+
+    Returns
+    -------
+        doe_setting : Union[str, int, float]
+            The DOE setting that was found or its default value if it was not found.
+    """
     if isinstance(doe_elem.find('settings/{}'.format(setting)), _Element):
         doe_setting = doe_elem.find('settings/{}'.format(setting)).text
     else:

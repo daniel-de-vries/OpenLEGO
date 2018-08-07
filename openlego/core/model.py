@@ -28,7 +28,7 @@ from lxml import etree
 from lxml.etree import _Element, _ElementTree
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
     LinearRunOnce, ExecComp, NonlinearRunOnce, DirectSolver
-from typing import Union, Optional, List, Any, Dict, Tuple
+from typing import Union, Optional, List, Any, Dict, Tuple, Set
 
 from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str_to_valid_sys_name, parse_string
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
@@ -499,6 +499,21 @@ class LEGOModel(Group):
         return [uid for position, uid in sorted(zip(positions, uids))]
 
     @CachedProperty
+    def partition_sets(self):
+        # type: () -> Dict[Set[str]]
+        """:obj:`dict` of :obj:`set`: Dictionary of executable block ``uIDs`` per partitionID."""
+        partitions = dict()
+        for block in self.elem_workflow.iterfind('processGraph/metadata/executableBlocksOrder/executableBlock'):
+            if 'partitionID' in block.attrib:
+                partition_id = block.attrib['partitionID']
+                uid = block.text
+                if partition_id not in partitions:
+                    partitions[partition_id] = {uid}
+                else:
+                    partitions[partition_id].add(uid)
+        return partitions
+
+    @CachedProperty
     def coupled_blocks(self):
         # type: () -> List[str]
         """:obj:`list` of :obj:`str`: List of ``uIDs`` of the coupled executable blocks specified in the CMDOWS file."""
@@ -715,6 +730,7 @@ class LEGOModel(Group):
         """
         if not root:
             coupled_group = Group()
+        # TODO: adjust hierarchy to take partitions into account...
         for entry in hierarchy:
             if isinstance(entry, dict):  # if entry specifies a coupled group
                 uid = entry.keys()[0]
@@ -852,11 +868,11 @@ class LEGOModel(Group):
         # type: () -> None
         """Assemble the LEGOModel using the the CMDOWS file and knowledge base."""
         # Add the coordinator
-        self.add_subsystem('coordinator', self.coordinator, ['*'])
+        self.add_subsystem('coordinator', self.coordinator, ['*'])  # TODO: Adjust based on driver_id
 
         # Add all pre-coupling and post-coupling components
         for name, component in self.discipline_components.items():
-            if name not in self.coupled_blocks:
+            if name not in self.coupled_blocks:  # TODO: Adjust based on driver_id
                 promotes = ['*']
                 # Change input variable names if they are provided as copies of coupling variables
                 for i in component.inputs_from_xml.keys():
@@ -874,18 +890,24 @@ class LEGOModel(Group):
         if self.coupled_hierarchy:
             self._configure_coupled_groups(self.coupled_hierarchy, True)
 
-        # Put the blocks in the correct order
-        self.set_order(list(self.system_order))
+        # TODO phase 3: Add the subdriver groups
+        """for name in self.subdrivers:
+            self.add_subsystem(str_to_valid_sys_name(name),
+                               SubDriver(cmdows=self.elem_cmdows, driver_id=name))
+        """
 
-        # Add the design variables
+        # Put the blocks in the correct order
+        self.set_order(list(self.system_order))  # TODO phase 3: Add the subdrivers in the order...
+
+        # Add the design variables  TODO: Adjust based on driver_id
         for name, value in self.design_vars.items():
             self.add_design_var(name, lower=value['lower'], upper=value['upper'], ref0=value['ref0'], ref=value['ref'])
 
-        # Add the constraints
+        # Add the constraints  TODO: Adjust based on driver_id
         for name, value in self.constraints.items():
             self.add_constraint(name, lower=value['lower'], upper=value['upper'], equals=value['equals'])
 
-        # Add the objective
+        # Add the objective  TODO: Adjust based on driver_id
         if self.objective:
             self.add_objective(self.objective)
 

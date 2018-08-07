@@ -394,11 +394,11 @@ def change_object_type(obj, new_type):
         raise IOError('expected_type "{}" is not supported in this function.'.format(new_type))
 
 
-def clean_dir_filtered(dir, filters):
+def clean_dir_filtered(dr, filters):
     # type: (path, List[str]) -> None
     """Removes files in a directory that contain the strings provided in the filter."""
-    for file in os.listdir(dir):
-        for filter in filters:
-            if filter in file:
-                os.remove(file)
+    for f in os.listdir(dr):
+        for fltr in filters:
+            if fltr in f:
+                os.remove(f)
                 continue

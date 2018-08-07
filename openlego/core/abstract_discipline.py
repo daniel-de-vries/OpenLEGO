@@ -21,7 +21,6 @@ from __future__ import absolute_import, division, print_function
 
 import abc
 import inspect
-import json
 import os
 
 from openlego.partials.partials import Partials
@@ -36,30 +35,6 @@ class AbstractDiscipline(object):
         # type: () -> str
         """:obj:`str`: Name of this discipline."""
         return self.__class__.__name__
-
-    @property
-    def version(self):
-        # type: () -> float
-        """:obj:`str`: Version number of this discipline."""
-        return 1.0
-
-    @property
-    def creator(self):
-        # type: () -> str
-        """:obj:`str`: Name of the person that created this discipline."""
-        return 'Placeholder'
-
-    @property
-    def description(self):
-        # type: () -> str
-        """:obj:`str`: Description of this discipline."""
-        return 'Abstract discipline'
-
-    @property
-    def precision(self):
-        # type: () -> int
-        """:obj:`int`: Precision of this discipline."""
-        return 0
 
     @property
     def path(self):
@@ -78,12 +53,6 @@ class AbstractDiscipline(object):
         # type: () -> str
         """:obj:`str`: Path of the template output XML file of this discipline."""
         return os.path.join(self.path, self.name + '-output.xml')
-
-    @property
-    def json_file(self):
-        # type: () -> str
-        """:obj:`str`: Path of the information JSON file of this discipline."""
-        return os.path.join(self.path, self.name + '-info.json')
 
     @property
     def partials_file(self):
@@ -125,25 +94,6 @@ class AbstractDiscipline(object):
         """
         raise NotImplementedError
 
-    def generate_info_json(self):
-        # type: () -> str
-        """Generate the information JSON file for this discipline.
-
-        This method should be overridden or extended to specify a non-standard info JSON file for a specific discipline.
-
-        Returns
-        -------
-            str
-                String representation of the info JSON file
-        """
-        return json.dumps({'general_info': {'name': self.name,
-                                            'version': self.version,
-                                            'creator': self.creator,
-                                            'description': self.description},
-                           'execution_info': [{'mode': 'main',
-                                               'description': 'main execution mode',
-                                               'precision': self.precision}]}, indent=4)
-
     def generate_partials_xml(self):
         # type: () -> str
         """Generate the template partials XML file for this discipline.
@@ -164,8 +114,6 @@ class AbstractDiscipline(object):
             f.write(self.generate_input_xml())
         with open(self.out_file, 'w') as f:
             f.write(self.generate_output_xml())
-        with open(self.json_file, 'w') as f:
-            f.write(self.generate_info_json())
         with open(self.partials_file, 'w') as f:
             f.write(self.generate_partials_xml())
 

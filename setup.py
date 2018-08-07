@@ -62,7 +62,6 @@ setup(
         'openmdao',
         'lxml',
         'numpy',
-        'matplotlib',
         'ssbj-kadmos'
     ],
     include_package_data=True,

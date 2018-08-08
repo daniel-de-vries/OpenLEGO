@@ -29,7 +29,7 @@ from openmdao.api import Problem, ScipyOptimizeDriver, pyOptSparseDriver, DOEDri
 from openmdao.core.driver import Driver
 from typing import Optional, Any, Union, Dict
 
-from openlego.core.cmdows_object import CMDOWSObject
+from openlego.core.cmdows import CMDOWSObject
 from openlego.core.model import LEGOModel
 from openlego.utils.cmdows_utils import get_element_by_uid, get_opt_setting_safe, get_doe_setting_safe
 from openlego.utils.general_utils import CachedProperty, print_optional, add_or_append_dict_entry
@@ -146,8 +146,8 @@ class LEGOProblem(CMDOWSObject, Problem):
     def drivers(self):
         # type: () -> dict
         """:obj:`dict`: Dictionary containing the optimizer and DOE element UIDs from the CMDOWS file."""
-        optimizer_elems = self.model.elem_arch_elems.findall('executableBlocks/optimizers/optimizer')
-        doe_elems = self.model.elem_arch_elems.findall('executableBlocks/does/doe')
+        optimizer_elems = self.elem_arch_elems.findall('executableBlocks/optimizers/optimizer')
+        doe_elems = self.elem_arch_elems.findall('executableBlocks/does/doe')
         optimizers = [elem.get('uID') for elem in optimizer_elems]
         does = [elem.get('uID') for elem in doe_elems]
         return {'optimizers': optimizers, 'does': does}
@@ -194,7 +194,7 @@ class LEGOProblem(CMDOWSObject, Problem):
             if self.driver_type == 'optimizer':
                 # Find optimizer element in CMDOWS file
                 opt_uid = self.drivers['optimizers'][0]
-                opt_elem = get_element_by_uid(self.model.elem_cmdows, opt_uid)
+                opt_elem = get_element_by_uid(self.elem_cmdows, opt_uid)
                 # Load settings from CMDOWS file
                 opt_package = get_opt_setting_safe(opt_elem, 'package', 'SciPy')
                 opt_algo = get_opt_setting_safe(opt_elem, 'algorithm', 'SLSQP')
@@ -233,7 +233,7 @@ class LEGOProblem(CMDOWSObject, Problem):
             elif self.driver_type == 'doe':
                 # Find DOE element in CMDOWS file
                 doe_uid = self.drivers['does'][0]
-                doe_elem = get_element_by_uid(self.model.elem_cmdows, doe_uid)
+                doe_elem = get_element_by_uid(self.elem_cmdows, doe_uid)
                 # Load settings from CMDOWS file
                 doe_method = get_doe_setting_safe(doe_elem, 'method', 'Uniform design')
                 doe_runs = get_doe_setting_safe(doe_elem, 'runs', 5, expected_type='int', doe_method=doe_method,
@@ -388,9 +388,9 @@ class LEGOProblem(CMDOWSObject, Problem):
             var_objectives = sorted(list(recorded_objectives.keys))
             var_desvars = sorted(list(recorded__desvars.keys))
             var_constraints = sorted(list(recorded_constraints.keys))
-            var_does = sorted([elem.text for elem in self.model.elem_arch_elems
+            var_does = sorted([elem.text for elem in self.elem_arch_elems
                               .findall('parameters/doeOutputSampleLists/doeOutputSampleList/relatedParameterUID')])
-            var_convs = sorted([elem.text for elem in self.model.elem_problem_def
+            var_convs = sorted([elem.text for elem in self.elem_problem_def
                                .findall('problemRoles/parameters/stateVariables/stateVariable/parameterUID')])
 
             # Print objective

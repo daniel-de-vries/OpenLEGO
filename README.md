@@ -27,7 +27,7 @@ The following packages are required by *OpenLEGO*:
 - [numpy](https://pypi.python.org/pypi/numpy)
 - [ssbj-kadmos](https://pypi.python.org/pypi/ssbj-kadmos)
 
-*OpenLEGO* is also on [pip](https://pypi.python.org/pypi/openlego), so it can also be installed simply using 
+*OpenLEGO* is also on [PyPi](https://pypi.python.org/pypi/openlego), so it can also be installed simply using 
 `pip install openlego`.
 
 ## Usage

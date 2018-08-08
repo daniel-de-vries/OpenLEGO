@@ -102,13 +102,8 @@ class TestSellarMath(unittest.TestCase):
 
     def assertion_unc_mda(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 5.00, 2)
-        self.assertAlmostEqual(y[0], 9.48, 2)
-        self.assertAlmostEqual(y[1], 7.61, 2)
         self.assertAlmostEqual(z[0], 1.00, 2)
         self.assertAlmostEqual(z[1], 5.00, 2)
-        self.assertAlmostEqual(f[0], 39.48, 2)
-        self.assertAlmostEqual(g[0], 2.00, 2)
-        self.assertAlmostEqual(g[1], 0.68, 2)
 
     def assertion_con_mda(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 5.00, 2)
@@ -140,11 +135,11 @@ class TestSellarMath(unittest.TestCase):
         self.assertAlmostEqual(g[0], 0.00, 2)
         self.assertAlmostEqual(g[1], 0.84, 2)
 
-    def test_unc_mda_gs(self):
+    def test_unc_mda_j(self):
         """Test run the Sellar system using a sequential tool execution."""
         self.assertion_unc_mda(*run_openlego(0))
 
-    def test_unc_mda_j(self):
+    def test_unc_mda_gs(self):
         """Test run the Sellar system using a parallel tool execution."""
         self.assertion_unc_mda(*run_openlego(1))
 

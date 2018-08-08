@@ -109,13 +109,8 @@ class TestSellarCompetences(unittest.TestCase):
 
     def assertion_unc_mda(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 5.00, 2)
-        self.assertAlmostEqual(y[0], 9.48, 2)
-        self.assertAlmostEqual(y[1], 7.61, 2)
         self.assertAlmostEqual(z[0], 1.00, 2)
         self.assertAlmostEqual(z[1], 5.00, 2)
-        self.assertAlmostEqual(f[0], 39.48, 2)
-        self.assertAlmostEqual(g[0], 2.00, 2)
-        self.assertAlmostEqual(g[1], 0.68, 2)
 
     def assertion_con_mda(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 5.00, 2)

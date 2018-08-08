@@ -631,6 +631,7 @@ class LEGOModel(Group):
                         part_dict['_Partition_{}'.format(part_id)].append(entry[entry.keys()[0]][part_id_idx])
                     for part_id_idx in sorted(part_id_idxs, reverse=True):
                         del basic_hierarchy_new[idx][entry.keys()[0]][part_id_idx]
+                        del partitions_ids[part_id_idx]
                     # Add the new partition group to the hierarchy
                     basic_hierarchy_new[idx][entry.keys()[0]].append(part_dict)
         return basic_hierarchy_new

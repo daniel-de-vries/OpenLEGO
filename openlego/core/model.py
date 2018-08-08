@@ -615,8 +615,9 @@ class LEGOModel(Group):
                 if len(part_id_idxs) > 1:  # create new partition group for this case
                     # Sort the part_id_idxs based on the step number
                     process_steps = []
+                    updated_bhn = basic_hierarchy_new[idx][basic_hierarchy_new[idx].keys()[0]]
                     for part_id_idx in part_id_idxs:
-                        list_item = entry[entry.keys()[0]][part_id_idx]
+                        list_item = updated_bhn[part_id_idx]
                         if isinstance(list_item, dict):
                             item_uid = list_item.keys()[0]
                         elif isinstance(list_item, str):
@@ -628,7 +629,7 @@ class LEGOModel(Group):
                     # Create a partition group and delete items that have become part of the group
                     part_dict = {'_Partition_{}'.format(part_id): []}
                     for part_id_idx in part_id_idxs_sorted:
-                        part_dict['_Partition_{}'.format(part_id)].append(entry[entry.keys()[0]][part_id_idx])
+                        part_dict['_Partition_{}'.format(part_id)].append(updated_bhn[part_id_idx])
                     for part_id_idx in sorted(part_id_idxs, reverse=True):
                         del basic_hierarchy_new[idx][entry.keys()[0]][part_id_idx]
                         del partitions_ids[part_id_idx]

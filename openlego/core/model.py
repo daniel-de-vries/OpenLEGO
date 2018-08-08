@@ -634,9 +634,16 @@ class LEGOModel(CMDOWSObject, Group):
 
             # Add the design variable to the dict
             node_name = name if name not in self.coupling_vars else self.coupling_vars[name]['copy']
+
+            # Check if the main driver is not a DOE with a Custom design table (then ref0 and ref should be None)
+            ref0 = bounds[0]
+            ref = bounds[1]
+            if self.has_doe:
+                if self.elem_arch_elems.findtext('executableBlocks/does/doe/settings/method') == 'Custom design table':
+                    ref0, ref = None, None
             design_vars.update({node_name: {'initial': initial,
                                             'lower': bounds[0], 'upper': bounds[1],
-                                            'ref0': bounds[0], 'ref': bounds[1]}})
+                                            'ref0': ref0, 'ref': ref}})
         return design_vars
 
     @CachedProperty

@@ -30,14 +30,6 @@ from openlego.partials.partials import Partials
 class G1(AbstractDiscipline):
 
     @property
-    def creator(self):
-        return u'D. de Vries'
-
-    @property
-    def description(self):
-        return u'First constraint function of the Sellar problem'
-
-    @property
     def supplies_partials(self):
         return True
 

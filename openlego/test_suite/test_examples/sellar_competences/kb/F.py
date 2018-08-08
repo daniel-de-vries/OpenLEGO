@@ -32,14 +32,6 @@ from openlego.partials.partials import Partials
 class F(AbstractDiscipline):
 
     @property
-    def creator(self):
-        return u'D. de Vries'
-
-    @property
-    def description(self):
-        return u'Objective function of the Sellar problem'
-
-    @property
     def supplies_partials(self):
         return True
 

@@ -25,7 +25,10 @@ The following packages are required by *OpenLEGO*:
 - [OpenMDAO](https://testpypi.python.org/pypi/openmdao)
 - [lxml](https://pypi.python.org/pypi/lxml)
 - [numpy](https://pypi.python.org/pypi/numpy)
-- [matplotlib](https://pypi.python.org/pypi/matplotlib/)
+- [ssbj-kadmos](https://pypi.python.org/pypi/ssbj-kadmos)
+
+*OpenLEGO* is also on [pip](https://pypi.python.org/pypi/openlego), so it can also be installed simply using 
+`pip install openlego`.
 
 ## Usage
 

@@ -31,14 +31,6 @@ from openlego.partials.partials import Partials
 class D2(AbstractDiscipline):
 
     @property
-    def creator(self):
-        return u'D. de Vries'
-
-    @property
-    def description(self):
-        return u'Second discipline of the Sellar problem'
-
-    @property
     def supplies_partials(self):
         return True
 

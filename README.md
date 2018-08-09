@@ -21,13 +21,12 @@ should automatically be installed alongside it.
 
 The following packages are required by *OpenLEGO*:
 
-- [KADMOS](https://pypi.python.org/pypi/kadmos)
 - [OpenMDAO](https://testpypi.python.org/pypi/openmdao)
 - [lxml](https://pypi.python.org/pypi/lxml)
 - [numpy](https://pypi.python.org/pypi/numpy)
 - [ssbj-kadmos](https://pypi.python.org/pypi/ssbj-kadmos)
 
-*OpenLEGO* is also on [pip](https://pypi.python.org/pypi/openlego), so it can also be installed simply using 
+*OpenLEGO* is also on [PyPi](https://pypi.python.org/pypi/openlego), so it can also be installed simply using 
 `pip install openlego`.
 
 ## Usage

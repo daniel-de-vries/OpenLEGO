@@ -19,9 +19,20 @@ This file contains the definition of the `CMDOWSObject` class.
 """
 from __future__ import absolute_import, division, print_function
 
+from lxml import etree
+from lxml.etree import _Element
 from typing import Any, Optional
 
 from openlego.utils.general_utils import CachedProperty
+
+
+class InvalidCMDOWSFileError(ValueError):
+
+    def __init__(self, reason=None):
+        msg = 'Invalid CMDOWS file'
+        if reason is not None:
+            msg += ': {}'.format(reason)
+        super(InvalidCMDOWSFileError, self).__init__(msg)
 
 
 class CMDOWSObject(object):
@@ -105,7 +116,7 @@ class CMDOWSObject(object):
         """Invalidate the instance.
 
         All computed (cached) properties will be recomputed upon being read once the instance has been invalidated."""
-        for value in self.__class__.__dict__.values():
+        for value in self.__class__.__dict__.values() + CMDOWSObject.__dict__.values():
             if isinstance(value, CachedProperty):
                 value.invalidate()
 
@@ -138,3 +149,48 @@ class CMDOWSObject(object):
         # type: (str) -> None
         self._kb_path = kb_path
         self.invalidate()
+
+    @CachedProperty
+    def elem_cmdows(self):
+        # type: () -> _Element
+        """:obj:`etree._Element`: Root element of the CMDOWS XML file."""
+        return etree.parse(self.cmdows_path).getroot()
+
+    @CachedProperty
+    def elem_problem_def(self):
+        # type: () -> _Element
+        """:obj:`etree._Element`: The problemDefition element of the CMDOWS file."""
+        return self.elem_cmdows.find('problemDefinition')
+
+    @CachedProperty
+    def elem_workflow(self):
+        # type: () -> _Element
+        """:obj:`etree._Element`: The workflow element of the CMDOWS file."""
+        return self.elem_cmdows.find('workflow')
+
+    @CachedProperty
+    def elem_params(self):
+        # type: () -> _Element
+        """:obj:`etree._Element`: The problemRoles/parameters element of the CMDOWS file."""
+        params = self.elem_cmdows.find('problemDefinition/problemRoles/parameters')
+        if params is None:
+            raise InvalidCMDOWSFileError('does not contain (valid) parameters in the problemRoles')
+        return params
+
+    @CachedProperty
+    def elem_arch_elems(self):
+        # type: () -> _Element
+        """:obj:`etree._Element`: The architectureElements element of the CMDOWS file."""
+        arch_elems = self.elem_cmdows.find('architectureElements')
+        if arch_elems is None:
+            raise InvalidCMDOWSFileError('does not contain (valid) architecture elements')
+        return arch_elems
+
+    @CachedProperty
+    def elem_loop_nesting(self):
+        # type: () -> _Element
+        """:obj:`etree._Element`: The loopNesting element of the CMDOWS file."""
+        loop_nesting = self.elem_workflow.find('processGraph/metadata/loopNesting')
+        if loop_nesting is None:
+            raise InvalidCMDOWSFileError('does not contain loopNesting element')
+        return loop_nesting

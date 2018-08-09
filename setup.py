@@ -58,7 +58,6 @@ setup(
         'openlego.test_suite.test_examples'
     ],
     install_requires=[
-        'kadmos==0.8',
         'openmdao',
         'lxml',
         'numpy',

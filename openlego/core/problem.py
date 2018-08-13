@@ -23,7 +23,7 @@ import datetime
 import os
 
 from lxml.etree import _Element, _ElementTree
-from openmdao.api import Problem, ScipyOptimizeDriver, pyOptSparseDriver, DOEDriver, UniformGenerator, \
+from openmdao.api import Problem, ScipyOptimizeDriver, DOEDriver, UniformGenerator, \
     FullFactorialGenerator, BoxBehnkenGenerator, LatinHypercubeGenerator, ListGenerator, view_model, SqliteRecorder, \
     CaseReader
 from openmdao.core.driver import Driver
@@ -94,7 +94,7 @@ class LEGOProblem(CMDOWSObject, Problem):
             self.output_case_string = output_case_str
         else:
             self.output_case_string = os.path.splitext(os.path.basename(cmdows_path))[0] + '_' + \
-                                      datetime.datetime.now().isoformat()
+                                      datetime.datetime.now().strftime("%Y%m%d_%H%M%S%f")[:-4]
         super(LEGOProblem, self).__init__(cmdows_path, kb_path, driver_uid, data_folder, base_xml_file, **kwargs)
 
     def __setattr__(self, name, value):
@@ -201,6 +201,13 @@ class LEGOProblem(CMDOWSObject, Problem):
             if opt_package == 'SciPy':
                 driver = ScipyOptimizeDriver()
             elif opt_package == 'pyOptSparse':
+                try:
+                    from openmdao.api import pyOptSparseDriver
+                except ImportError:
+                    raise ImportError("Cannot import name pyOptSparseDriver. This probably means that this package has "
+                                      "not been installed to your Python packages. Note that it needs to be installed"
+                                      " to your Python manually (no PyPIdistribution available). pyOptSparse can be "
+                                      "downloaded here: https://github.com/mdolab/pyoptsparse")
                 driver = pyOptSparseDriver()
             else:
                 raise ValueError('Unsupported package {} encountered in CMDOWS file for optimizer "{}".'

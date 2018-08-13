@@ -19,6 +19,7 @@ This file contains the definition of the `CMDOWSObject` class.
 """
 from __future__ import absolute_import, division, print_function
 
+import os
 
 from lxml import etree
 from lxml.etree import _Element
@@ -111,6 +112,23 @@ class CMDOWSObject(object):
                 self.__integrity_check()
         return super(CMDOWSObject, self).__getattribute__(name)
 
+    def __setattr__(self, name, value):
+        # type: (str, Any) -> None
+        """Add check on data_folder when setting it.
+
+        Parameters
+        ----------
+            name : str
+                Name of the attribute.
+
+            value : any
+                Value to set the attribute to.
+        """
+        if name == 'data_folder':
+            self.__data_folder_check(value)
+
+        super(CMDOWSObject, self).__setattr__(name, value)
+
     def __integrity_check(self):
         # type: () -> None
         """Ensure a CMDOWS file has been supplied.
@@ -122,6 +140,11 @@ class CMDOWSObject(object):
         """
         if self._cmdows_path is None:
             raise ValueError('No CMDOWS file specified!')
+
+    def __data_folder_check(self, folder_string):
+        # TODO: Add docstring etc.
+        if not os.path.exists(folder_string):
+            os.makedirs(folder_string)
 
     def __check_for_super_driver(self):
         # TODO Add docstring etc.

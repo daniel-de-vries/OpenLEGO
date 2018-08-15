@@ -143,8 +143,9 @@ class CMDOWSObject(object):
 
     def __data_folder_check(self, folder_string):
         # TODO: Add docstring etc.
-        if not os.path.exists(folder_string):
-            os.makedirs(folder_string)
+        if folder_string:
+            if not os.path.exists(folder_string):
+                os.makedirs(folder_string)
 
     def __check_for_super_driver(self):
         # TODO Add docstring etc.

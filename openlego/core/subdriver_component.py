@@ -20,6 +20,7 @@ This file contains the definition the `SubDriverComponent` class.
 
 from openmdao.api import ExplicitComponent
 
+
 class SubDriverComponent(ExplicitComponent):
     """Abstract base class exposing an interface to use subdriver (or nested) drivers within an OpenMDAO model. This
     nested subdriver appears as an ExplicitComponent in the top-level hierarchy, but configures and executes its own
@@ -29,15 +30,18 @@ class SubDriverComponent(ExplicitComponent):
     ----------
     TODO: Add attributes and complete class description
     """
+
     def initialize(self):
-        self.options.declare('driver_id')
-        self.options.declare('cmdows_elem')  # TODO: or CMDOWS object?
+        self.options.declare('driver_uid')
+        self.options.declare('cmdows_path')
+        self.options.declare('kb_path')
+        self.options.declare('data_folder')
+        self.options.declare('base_xml_file')
         self.options.declare('show_model')
 
     def setup(self):
-
         # Add inputs
-        #self.add_input()
+        # self.add_input()
 
         # Add outputs
         # self.add_output()
@@ -46,20 +50,25 @@ class SubDriverComponent(ExplicitComponent):
         # self.declare_partials('*', '*')
 
         # Set subproblem
-        #self.prob = LEGOProblem(other inputs?, subdriver_id = self.options['driver_id'])
+        from openlego.core.problem import LEGOProblem
+        p = self.prob = LEGOProblem(cmdows_path=self.options['cmdows_path'],  # CMDOWS file
+                                    kb_path=self.options['kb_path'],
+                                    data_folder=self.options['data_folder'],  # Output directory
+                                    base_xml_file=self.options['base_xml_file'],
+                                    driver_uid=self.options['driver_uid'])
 
         # Add missing connections (?)
 
         # Setup
-        #self.prob.setup()
-        #self.prob.final_setup()
+        p.setup()
+        # self.prob.final_setup()
 
         # View model?
-        #if self.options['show_model']:
+        # if self.options['show_model']:
         pass
 
     def compute(self, inputs, outputs):
-        #p = self.prob
+        # p = self.prob
 
         # Push global inputs down
         # p['x'] = inputs['x']

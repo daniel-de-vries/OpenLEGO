@@ -223,6 +223,8 @@ class LEGOModel(CMDOWSObject, Group):
         """:obj:`dict`: Dictionary of execute components by their mathematical function ``uID`` from CMDOWS.
         """
         _mathematical_functions = dict()
+        # TODO: The extra output for mathematical functions should be combined in a smart way to only keep the actual
+        # TODO: calculation block and relevant outputs.
         for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
             if mathematical_function.attrib['uID'] in self.all_executable_blocks:
                 uid = mathematical_function.attrib['uID']
@@ -719,9 +721,11 @@ class LEGOModel(CMDOWSObject, Group):
         # Add the coordinator
         self.add_subsystem('coordinator', self.coordinator, ['*'])  # TODO: Adjust based on driver_id
 
+        # TODO: Add superdrivers as IndepVarComps
+
         # Add all pre-coupling and post-coupling components
         for name, component in self.discipline_components.items():
-            if name not in self.coupled_blocks and name in self.all_executable_blocks:  # TODO: Adjust based on driver_id
+            if name not in self.coupled_blocks and name in self.all_executable_blocks:
                 promotes = ['*']
                 # Change input variable names if they are provided as copies of coupling variables
                 for i in component.inputs_from_xml.keys():
@@ -741,9 +745,14 @@ class LEGOModel(CMDOWSObject, Group):
 
         # TODO phase 3: Add the subdriver groups
         for name in self.sub_drivers:
-            self.add_subsystem(str_to_valid_sys_name(name), Group())
-            #self.add_subsystem(str_to_valid_sys_name(name),
-            #                   SubDriverComponent(cmdows=self.elem_cmdows, driver_id=name))
+            from openlego.core.subdriver_component import SubDriverComponent
+            self.add_subsystem(str_to_valid_sys_name(name),
+                               SubDriverComponent(cmdows_path=self._cmdows_path,
+                                                  driver_uid=name,
+                                                  kb_path=self._kb_path,
+                                                  data_folder=self.data_folder,
+                                                  base_xml_file=self.base_xml_file,  # TODO: adjust for subdriver
+                                                  show_model=True))
 
         # Put the blocks in the correct order
         self.set_order(list(self.system_order))  # TODO phase 3: Add the subdrivers in the order...

@@ -29,8 +29,8 @@ from openmdao.api import Problem, ScipyOptimizeDriver, DOEDriver, UniformGenerat
 from openmdao.core.driver import Driver
 from typing import Optional, Any, Union, Dict
 
+from openlego.api import LEGOModel
 from openlego.core.cmdows import CMDOWSObject
-from openlego.core.model import LEGOModel
 from openlego.utils.cmdows_utils import get_element_by_uid, get_opt_setting_safe, get_doe_setting_safe
 from openlego.utils.general_utils import CachedProperty, print_optional, add_or_append_dict_entry
 

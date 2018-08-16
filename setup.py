@@ -61,7 +61,8 @@ setup(
         'openmdao',
         'lxml',
         'numpy',
-        'ssbj-kadmos'
+        'ssbj-kadmos',
+        'cached-property'
     ],
     include_package_data=True,
     zip_safe=False

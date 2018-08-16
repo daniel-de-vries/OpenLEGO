@@ -37,7 +37,7 @@ class SubDriverComponent(ExplicitComponent):
         self.options.declare('kb_path')
         self.options.declare('data_folder')
         self.options.declare('base_xml_file')
-        self.options.declare('show_model')
+        self.options.declare('show_model', default=False)
 
     def setup(self):
         # Add inputs
@@ -51,11 +51,13 @@ class SubDriverComponent(ExplicitComponent):
 
         # Set subproblem
         from openlego.core.problem import LEGOProblem
-        p = self.prob = LEGOProblem(cmdows_path=self.options['cmdows_path'],  # CMDOWS file
+        p = self.prob = LEGOProblem(cmdows_path=self.options['cmdows_path'],
                                     kb_path=self.options['kb_path'],
                                     data_folder=self.options['data_folder'],  # Output directory
                                     base_xml_file=self.options['base_xml_file'],
                                     driver_uid=self.options['driver_uid'])
+        p.invalidate()
+        p.model.invalidate()
 
         # Add missing connections (?)
 
@@ -64,8 +66,8 @@ class SubDriverComponent(ExplicitComponent):
         # self.prob.final_setup()
 
         # View model?
-        # if self.options['show_model']:
-        pass
+        if self.options['show_model']:
+            p.store_model_view(open_in_browser=True)
 
     def compute(self, inputs, outputs):
         # p = self.prob

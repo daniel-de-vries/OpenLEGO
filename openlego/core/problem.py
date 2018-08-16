@@ -165,9 +165,9 @@ class LEGOProblem(CMDOWSObject, Problem):
     def model(self):
         # type: () -> LEGOModel
         """:obj:`LEGOModel`: The LEGOModel that is automatically built from the CMDOWS file and knowledge base."""
-        return LEGOModel(self._cmdows_path,   # CMDOWS file
-                         self._kb_path,       # Knowledge base path
-                         self._driver_uid,    # Driver UID
+        return LEGOModel(self.cmdows_path,   # CMDOWS file
+                         self.kb_path,       # Knowledge base path
+                         self.driver_uid,    # Driver UID
                          self.data_folder,    # Output directory
                          self.base_xml_file)  # Output file
 

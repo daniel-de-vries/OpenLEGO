@@ -179,9 +179,11 @@ class LEGOModel(CMDOWSObject, Group):
         """:obj:`dict`: Dictionary of parameters that are mapped in the CMDOWS file, for example as copies."""
         mapped_params = dict()
         for elem_category in self.elem_arch_elems.find('parameters').iterchildren():
-            for elem_param in elem_category.iterchildren():
-                param, mapped = get_related_parameter_uid(elem_param, self.elem_cmdows)
-                mapped_params.update({param: mapped})
+            # Make exception for copyDesignVariables which need to exist separately.
+            if elem_category.tag != 'copyDesignVariables':
+                for elem_param in elem_category.iterchildren():
+                    param, mapped = get_related_parameter_uid(elem_param, self.elem_cmdows)
+                    mapped_params.update({param: mapped})
         return mapped_params
 
     @CachedProperty
@@ -223,19 +225,37 @@ class LEGOModel(CMDOWSObject, Group):
         """:obj:`dict`: Dictionary of execute components by their mathematical function ``uID`` from CMDOWS.
         """
         _mathematical_functions = dict()
-        # TODO: The extra output for mathematical functions should be combined in a smart way to only keep the actual
-        # TODO: calculation block and relevant outputs.
+        implemented_eqs = []
         for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
             if mathematical_function.attrib['uID'] in self.all_executable_blocks:
                 uid = mathematical_function.attrib['uID']
                 group = Group()
 
-                eq_mapping = dict()
+                # First select outputs for which subsystems should actually be added
+                required_outputs = []
                 for output in mathematical_function.iter('output'):
-                    if output.find('equations') is not None:
-                        for equation in output.iter('equation'):
+                    output_name = output.find('parameterUID').text
+                    if '/architectureNodes/finalOutputVariables/' not in output_name:
+                        required_outputs.append(output_name)
+
+                # Then create mathematical subsystems for each output
+                # TODO: Add a check on whether equation has already been defined (check UIDs used)
+                for output in mathematical_function.iter('output'):
+                    if output.find('parameterUID').text in required_outputs:
+                        if output.find('equations') is None:
+                            eq_uid = output.find('equationsUID')
+                            if eq_uid is not None:
+                                eqs_elem = get_element_by_uid(self.elem_cmdows, eq_uid.text)
+                            else:
+                                raise AssertionError('Could not find equation UID.')
+                        else:
+                            eqs_elem = output.find('equations')
+                        for equation in eqs_elem.iter('equation'):
                             if equation.attrib['language'] == 'Python':
                                 eq_uid = equation.getparent().attrib['uID']
+                                if eq_uid in implemented_eqs:
+                                    raise AssertionError('Equation with UID {} is already defined.'.format(eq_uid))
+                                implemented_eqs.append(eq_uid)
                                 eq_expr = equation.text
                                 eq_output = xpath_to_param(output.find('parameterUID').text)
 
@@ -247,24 +267,9 @@ class LEGOModel(CMDOWSObject, Group):
 
                                     if eq_label in eq_expr:
                                         promotes.append((eq_label, input_name))
-
-                                eq_mapping.update({eq_uid: eq_output})
                                 group.add_subsystem(str_to_valid_sys_name(eq_uid),
                                                     ExecComp('output = ' + eq_expr),
                                                     promotes=promotes + [('output', eq_output), ])
-
-                extra_output_counter = 0
-                for output in mathematical_function.iter('output'):
-                    eq_uid = output.find('equationsUID')
-                    if eq_uid is not None:
-                        eq_uid = eq_uid.text
-                        eq_output = xpath_to_param(output.find('parameterUID').text)
-
-                        group.add_subsystem('extra_output_{}'.format(extra_output_counter),
-                                            ExecComp('output = input'),
-                                            promotes=[('output', eq_output), ('input', eq_mapping[eq_uid])])
-                        extra_output_counter += 1
-
                 _mathematical_functions.update({uid: group})
 
         return _mathematical_functions
@@ -410,6 +415,18 @@ class LEGOModel(CMDOWSObject, Group):
                 else:
                     return self._get_basic_coupled_hierarchy(entry[keys[0]])
         return _coupled_hierarchy
+
+    @CachedProperty
+    def model_sub_drivers(self):
+        return [name for name in self.sub_drivers if '__SubDriverComponent__' + name in self.all_executable_blocks]
+
+    @CachedProperty
+    def model_super_drivers(self):
+        return [name for name in self.super_drivers if '__SuperDriverComponent__' + name in self.all_loop_elements]
+
+    @CachedProperty
+    def model_super_components(self):
+        return [name for name in self.all_executable_blocks if '__SuperComponent__' in name]
 
     @CachedProperty
     def system_inputs(self):
@@ -677,6 +694,9 @@ class LEGOModel(CMDOWSObject, Group):
         # type: () -> List[str]
         """:obj:`list` of :obj:`str`: List system names in the order specified in the CMDOWS file."""
         _system_order = ['coordinator']
+        for name in self.model_super_drivers:
+            _system_order.append(str_to_valid_sys_name(name))
+
         coupled_group_set = False
         n = 0
         for block in self.block_order:
@@ -686,7 +706,7 @@ class LEGOModel(CMDOWSObject, Group):
                     for entry in self.coupled_hierarchy:
                         _system_order.append(str_to_valid_sys_name(entry.keys()[0]))
                     coupled_group_set = True
-            elif block in self.discipline_components or block in self.mathematical_functions_groups or block in self.sub_drivers:
+            elif block in self.all_executable_blocks or '__SubDriverComponent__' + block in self.all_executable_blocks:
                 n += 1
                 _system_order.append(str_to_valid_sys_name(block))
 
@@ -715,13 +735,29 @@ class LEGOModel(CMDOWSObject, Group):
 
         return coordinator
 
+    def configure_super_driver(self, name):
+        # type: () -> IndepVarComp
+        """:obj:`IndepVarComp`: An `IndepVarComp` representing a super driver in a subdriver system."""
+        super_driver = IndepVarComp()
+
+        # Add superdriver outputs
+        for value in self.elem_cmdows.xpath(
+                r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/toParameterUID/text()'.format(name)):
+            if 'architectureNodes/finalDesignVariables' not in value:
+                name = xpath_to_param(value)
+                super_driver.add_output(xpath_to_param(value), self.variable_sizes[name])
+        return super_driver
+
+
     def setup(self):
         # type: () -> None
         """Assemble the LEGOModel using the the CMDOWS file and knowledge base."""
         # Add the coordinator
         self.add_subsystem('coordinator', self.coordinator, ['*'])  # TODO: Adjust based on driver_id
 
-        # TODO: Add superdrivers as IndepVarComps
+        # Add superdrivers as IndepVarComps
+        for name in self.model_super_drivers:
+            self.add_subsystem(str_to_valid_sys_name(name), self.configure_super_driver(name), ['*'])
 
         # Add all pre-coupling and post-coupling components
         for name, component in self.discipline_components.items():
@@ -744,28 +780,29 @@ class LEGOModel(CMDOWSObject, Group):
             self._configure_coupled_groups(self.coupled_hierarchy, True)
 
         # TODO phase 3: Add the subdriver groups
-        for name in self.sub_drivers:
+        for name in self.model_sub_drivers:
             from openlego.core.subdriver_component import SubDriverComponent
             self.add_subsystem(str_to_valid_sys_name(name),
-                               SubDriverComponent(cmdows_path=self._cmdows_path,
+                               SubDriverComponent(cmdows_path=self.cmdows_path,
                                                   driver_uid=name,
-                                                  kb_path=self._kb_path,
+                                                  kb_path=self.kb_path,
                                                   data_folder=self.data_folder,
                                                   base_xml_file=self.base_xml_file,  # TODO: adjust for subdriver
                                                   show_model=True))
 
         # Put the blocks in the correct order
-        self.set_order(list(self.system_order))  # TODO phase 3: Add the subdrivers in the order...
+        self.set_order(list(self.system_order))
 
-        # Add the design variables  TODO: Adjust based on driver_id
+        # TODO: Check addition of responses
+        # Add the design variables
         for name, value in self.design_vars.items():
             self.add_design_var(name, lower=value['lower'], upper=value['upper'], ref0=value['ref0'], ref=value['ref'])
 
-        # Add the constraints  TODO: Adjust based on driver_id
+        # Add the constraints
         for name, value in self.constraints.items():
             self.add_constraint(name, lower=value['lower'], upper=value['upper'], equals=value['equals'])
 
-        # Add the objective  TODO: Adjust based on driver_id
+        # Add the objective
         if self.objective:
             self.add_objective(self.objective)
 

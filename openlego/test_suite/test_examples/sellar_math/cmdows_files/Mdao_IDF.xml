@@ -3,14 +3,14 @@
   <header>
     <creator>Imco van Gent</creator>
     <description>Mdao CMDOWS file of the well-known Sellar problem</description>
-    <timestamp>2018-08-06T10:09:18.689152</timestamp>
+    <timestamp>2018-08-13T17:33:48.436498</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2018-08-06T10:09:18.689152</timestamp>
+        <timestamp>2018-08-13T17:33:48.436498</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -838,15 +838,6 @@
             </loopElement>
           </loopElements>
         </loopNesting>
-        <executableBlocksOrder>
-          <executableBlock position="1">A</executableBlock>
-          <executableBlock position="2">D2</executableBlock>
-          <executableBlock position="3">D1</executableBlock>
-          <executableBlock position="4">F1</executableBlock>
-          <executableBlock position="5">G2</executableBlock>
-          <executableBlock position="6">G1</executableBlock>
-          <executableBlock position="7">Gc</executableBlock>
-        </executableBlocksOrder>
       </metadata>
     </processGraph>
   </workflow>
@@ -998,6 +989,12 @@
             </constraintVariable>
             <constraintVariable>
               <constraintVariableUID>__conVar__/dataSchema/analyses/g2</constraintVariableUID>
+            </constraintVariable>
+            <constraintVariable>
+              <constraintVariableUID>__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</constraintVariableUID>
+            </constraintVariable>
+            <constraintVariable>
+              <constraintVariableUID>__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</constraintVariableUID>
             </constraintVariable>
           </constraintVariables>
         </optimizer>

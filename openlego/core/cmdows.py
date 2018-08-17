@@ -26,7 +26,8 @@ from lxml.etree import _Element
 from typing import Any, Optional, Dict, Set, List, Union
 
 from openlego.utils.cmdows_utils import get_loop_nesting_obj, get_element_by_uid
-from openlego.utils.general_utils import CachedProperty
+from typing import Any, Optional
+from cached_property import cached_property
 
 
 class InvalidCMDOWSFileError(ValueError):
@@ -108,7 +109,7 @@ class CMDOWSObject(object):
                 The value of the requested attribute.
         """
         if name != '__class__' and name != '__dict__':
-            if name in [_name for _name, value in self.__class__.__dict__.items() if isinstance(value, CachedProperty)]:
+            if name in [_name for _name, value in self.__class__.__dict__.items() if isinstance(value, cached_property)]:
                 self.__integrity_check()
         return super(CMDOWSObject, self).__getattribute__(name)
 
@@ -165,12 +166,12 @@ class CMDOWSObject(object):
                     super_drivers.extend(self._get_super_drivers(item[item.keys()[0]]))
         return super_drivers
 
-    @CachedProperty
+    @cached_property
     def super_drivers(self):
         # TODO add doc
         return self._get_super_drivers(self.full_loop_nesting_list)
 
-    @CachedProperty
+    @cached_property
     def sub_drivers(self):
         # TODO Add doc
         return self._get_sub_drivers(self.full_loop_nesting_list)
@@ -196,9 +197,12 @@ class CMDOWSObject(object):
         """Invalidate the instance.
 
         All computed (cached) properties will be recomputed upon being read once the instance has been invalidated."""
-        for value in self.__class__.__dict__.values() + CMDOWSObject.__dict__.values():
-            if isinstance(value, CachedProperty):
-                value.invalidate()
+        __dict__ = self.__class__.__dict__.copy()
+        __dict__.update(CMDOWSObject.__dict__)
+        for name, value in __dict__.items():
+            if isinstance(value, cached_property):
+                if name in self.__dict__:
+                    del self.__dict__[name]
 
     @property
     def cmdows_path(self):
@@ -245,25 +249,25 @@ class CMDOWSObject(object):
         self._driver_uid = driver_uid
         self.invalidate()
 
-    @CachedProperty
+    @cached_property
     def elem_cmdows(self):
         # type: () -> _Element
         """:obj:`etree._Element`: Root element of the CMDOWS XML file."""
         return etree.parse(self.cmdows_path).getroot()
 
-    @CachedProperty
+    @cached_property
     def elem_problem_def(self):
         # type: () -> _Element
         """:obj:`etree._Element`: The problemDefition element of the CMDOWS file."""
         return self.elem_cmdows.find('problemDefinition')
 
-    @CachedProperty
+    @cached_property
     def elem_workflow(self):
         # type: () -> _Element
         """:obj:`etree._Element`: The workflow element of the CMDOWS file."""
         return self.elem_cmdows.find('workflow')
 
-    @CachedProperty
+    @cached_property
     def elem_params(self):
         # type: () -> _Element
         """:obj:`etree._Element`: The problemRoles/parameters element of the CMDOWS file."""
@@ -272,7 +276,7 @@ class CMDOWSObject(object):
             raise InvalidCMDOWSFileError('does not contain (valid) parameters in the problemRoles')
         return params
 
-    @CachedProperty
+    @cached_property
     def elem_arch_elems(self):
         # type: () -> _Element
         """:obj:`etree._Element`: The architectureElements element of the CMDOWS file."""
@@ -281,7 +285,7 @@ class CMDOWSObject(object):
             raise InvalidCMDOWSFileError('does not contain (valid) architecture elements')
         return arch_elems
 
-    @CachedProperty
+    @cached_property
     def elem_loop_nesting(self):
         # type: () -> _Element
         """:obj:`etree._Element`: The loopNesting element of the CMDOWS file."""
@@ -290,7 +294,7 @@ class CMDOWSObject(object):
             raise InvalidCMDOWSFileError('does not contain loopNesting element')
         return loop_nesting
 
-    @CachedProperty
+    @cached_property
     def elem_model_driver(self):
         # type: () -> Union[_Element, None]
         """:obj:`etree._Element`: The XML element of the super driver."""
@@ -304,13 +308,13 @@ class CMDOWSObject(object):
         else:
             return None
 
-    @CachedProperty
+    @cached_property
     def full_loop_nesting_list(self):
         # type: () -> List[str, dict]
         """:obj:`dict`: Dictionary of the loopNesting XML element."""
         return get_loop_nesting_obj(self.elem_loop_nesting)
 
-    @CachedProperty
+    @cached_property
     def filtered_loop_nesting_list(self):
         # TODO Add docstring
         return self.filter_loop_nesting_list(self.full_loop_nesting_list)
@@ -364,7 +368,7 @@ class CMDOWSObject(object):
                 raise AssertionError('Invalid type {} found in loop nesting object.'.format(type(item)))
         return _filtered_loop_nesting_list
 
-    @CachedProperty
+    @cached_property
     def all_executable_blocks(self):
         # TODO Add docstring
         return self.collect_all_executable_blocks(self.filtered_loop_nesting_list)
@@ -380,7 +384,7 @@ class CMDOWSObject(object):
                 all_executable_blocks.append(item)
         return all_executable_blocks
 
-    @CachedProperty
+    @cached_property
     def all_loop_elements(self):
         # TODO Add docstring
         return self.collect_all_loop_elements(self.filtered_loop_nesting_list)
@@ -395,7 +399,7 @@ class CMDOWSObject(object):
                 all_loop_elements.extend(self.collect_all_loop_elements(item[loop_elem_name]))
         return all_loop_elements
 
-    @CachedProperty
+    @cached_property
     def has_optimizer(self):
         # type: () -> bool
         """:obj:`bool`: True if there is an optimizer, False if not."""
@@ -404,7 +408,7 @@ class CMDOWSObject(object):
                 return True
         return False
 
-    @CachedProperty
+    @cached_property
     def has_doe(self):
         # type: () -> bool
         """:obj:`bool`: True if there is a DOE component, False if not."""
@@ -413,7 +417,7 @@ class CMDOWSObject(object):
                 return True
         return False
 
-    @CachedProperty
+    @cached_property
     def has_driver(self):
         # type: () -> bool
         """:obj:`bool`: True if there is a driver component (DOE or optimizer), False if not."""
@@ -421,12 +425,12 @@ class CMDOWSObject(object):
             return True
         return False
 
-    @CachedProperty
+    @cached_property
     def block_order(self):
         # TODO: Add type and docstring
         return [x for _, x in sorted(zip(self.process_info['step_numbers'], self.process_info['uids']))]
 
-    @CachedProperty
+    @cached_property
     def partition_sets(self):
         # type: () -> Dict[Set[str]]
         """:obj:`dict` of :obj:`set`: Dictionary of executable block ``uIDs`` per partitionID."""
@@ -440,7 +444,7 @@ class CMDOWSObject(object):
                     partitions[partition_id].add(block)
         return partitions
 
-    @CachedProperty
+    @cached_property
     def coupled_blocks(self):
         # type: () -> List[str]
         """:obj:`list` of :obj:`str`: List of ``uIDs`` of the coupled executable blocks specified in the CMDOWS file."""
@@ -451,7 +455,7 @@ class CMDOWSObject(object):
                 _coupled_blocks.append(block.text)
         return _coupled_blocks
 
-    @CachedProperty
+    @cached_property
     def loop_element_types(self):
         # type: () -> Dict[str]
         """:obj:`dict` of :obj:`str`: Dictionary with mapping of loop elements specified in the CMDOWS file."""
@@ -466,7 +470,7 @@ class CMDOWSObject(object):
             _loopelement_details[elem.attrib['uID']] = 'doe'
         return _loopelement_details
 
-    @CachedProperty
+    @cached_property
     def process_info(self):
         # TODO: Add type and docstring
         _uids = []
@@ -481,7 +485,7 @@ class CMDOWSObject(object):
                 _partition_ids.append(None)
         return {'uids': _uids, 'step_numbers': _process_step_numbers, 'partition_ids': _partition_ids}
 
-    @CachedProperty
+    @cached_property
     def process_step_numbers(self):
         # TODO: Add type and docstring
         _process_step_numbers = {}

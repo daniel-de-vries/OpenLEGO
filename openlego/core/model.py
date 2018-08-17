@@ -25,15 +25,17 @@ import os
 import warnings
 
 import numpy as np
+
+from cached_property import cached_property
 from lxml import etree
 from lxml.etree import _Element, _ElementTree
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
     LinearRunOnce, ExecComp, NonlinearRunOnce, DirectSolver
 from typing import Union, Optional, List, Any, Dict, Tuple
 
-from openlego.utils.general_utils import CachedProperty, parse_cmdows_value, str_to_valid_sys_name, parse_string
+from openlego.utils.general_utils import parse_cmdows_value, str_to_valid_sys_name, parse_string
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
-from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid
+from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid, get_loop_nesting_obj
 from .abstract_discipline import AbstractDiscipline
 from .cmdows import CMDOWSObject, InvalidCMDOWSFileError
 from .discipline_component import DisciplineComponent
@@ -128,7 +130,7 @@ class LEGOModel(CMDOWSObject, Group):
         return (isinstance(val, np.ndarray) and val.size == self.variable_sizes[name]) \
             or (not isinstance(val, np.ndarray) and self.variable_sizes[name] == 1)
 
-    @CachedProperty
+    @cached_property
     def objective_required(self):
         # type: () -> bool
         """:obj:`bool`: True if an objective value is required, False if not."""
@@ -136,7 +138,7 @@ class LEGOModel(CMDOWSObject, Group):
             return True
         return False
 
-    @CachedProperty
+    @cached_property
     def discipline_components(self):
         # type: () -> Dict[str, DisciplineComponent]
         """:obj:`dict`: Dictionary of discipline components by their design competence ``uID`` from CMDOWS.
@@ -173,7 +175,7 @@ class LEGOModel(CMDOWSObject, Group):
                 _discipline_components.update({uid: component})
         return _discipline_components
 
-    @CachedProperty
+    @cached_property
     def mapped_parameters(self):
         # type: () -> Dict[str, str]
         """:obj:`dict`: Dictionary of parameters that are mapped in the CMDOWS file, for example as copies."""
@@ -186,7 +188,7 @@ class LEGOModel(CMDOWSObject, Group):
                     mapped_params.update({param: mapped})
         return mapped_params
 
-    @CachedProperty
+    @cached_property
     def mathematical_functions_inputs(self):
         # type: () -> Dict[str, List[Tuple[str]]]
         """:obj:`dict`: Dictionary of all mathematical function blocks with a list of their input variables."""
@@ -203,7 +205,7 @@ class LEGOModel(CMDOWSObject, Group):
             _inputs.update({uid: local_inputs})
         return _inputs
 
-    @CachedProperty
+    @cached_property
     def mathematical_functions_outputs(self):
         # type: () -> Dict[str, List[Tuple[str]]]
         """:obj:`dict`: Dictionary of all mathematical function blocks with a list of their output variables."""
@@ -219,7 +221,7 @@ class LEGOModel(CMDOWSObject, Group):
             _outputs.update({uid: local_outputs})
         return _outputs
 
-    @CachedProperty
+    @cached_property
     def mathematical_functions_groups(self):
         # type: () -> Dict[str, Group]
         """:obj:`dict`: Dictionary of execute components by their mathematical function ``uID`` from CMDOWS.
@@ -235,7 +237,7 @@ class LEGOModel(CMDOWSObject, Group):
                 required_outputs = []
                 for output in mathematical_function.iter('output'):
                     output_name = output.find('parameterUID').text
-                    if '/architectureNodes/finalOutputVariables/' not in output_name:
+                    if '/architectureNodes/final' not in output_name:
                         required_outputs.append(output_name)
 
                 # Then create mathematical subsystems for each output
@@ -274,7 +276,7 @@ class LEGOModel(CMDOWSObject, Group):
 
         return _mathematical_functions
 
-    @CachedProperty
+    @cached_property
     def variable_sizes(self):
         # type: () -> Dict[str, int]
         """:obj:`dict`: Dictionary of the sizes of all variables by their names."""
@@ -293,7 +295,7 @@ class LEGOModel(CMDOWSObject, Group):
 
         return variable_sizes
 
-    @CachedProperty
+    @cached_property
     def coupling_vars(self):
         # type: () -> Dict[str, Dict[str, str]]
         """:obj:`dict`: Dictionary with coupling variables."""
@@ -313,7 +315,7 @@ class LEGOModel(CMDOWSObject, Group):
             coupling_vars.update({param: {'copy': coupling_vars[param], 'con': xpath_to_param(convar.attrib['uID'])}})
         return coupling_vars
 
-    @CachedProperty
+    @cached_property
     def coupling_var_copies(self):
         # type: () -> Dict[str, str]
         """:obj:`dict`: Dictionary with coupling variable copies."""
@@ -322,7 +324,7 @@ class LEGOModel(CMDOWSObject, Group):
             coupling_var_copies.update({var: value['copy']})
         return coupling_var_copies
 
-    @CachedProperty
+    @cached_property
     def coupling_var_cons(self):
         # type: () -> Optional[Dict[str, str]]
         """:obj:`dict`: Dictionary with coupling variable constraints."""
@@ -336,7 +338,28 @@ class LEGOModel(CMDOWSObject, Group):
         else:
             return None
 
-    @CachedProperty
+    @cached_property
+    def loop_nesting_dict(self):
+        # type: () -> Dict[str, dict]
+        """:obj:`dict`: Dictionary of the loopNesting XML element."""
+        return get_loop_nesting_obj(self.elem_loop_nesting)
+
+    @cached_property
+    def loop_element_details(self):
+        # type: () -> Dict[str]
+        """:obj:`dict` of :obj:`str`: Dictionary with mapping of loop elements specified in the CMDOWS file."""
+        _loopelement_details = {}
+        for elem in self.elem_arch_elems.iterfind('executableBlocks/coordinators/coordinator'):
+            _loopelement_details[elem.attrib['uID']] = 'coordinator'
+        for elem in self.elem_arch_elems.iterfind('executableBlocks/convergers/converger'):
+            _loopelement_details[elem.attrib['uID']] = 'converger'
+        for elem in self.elem_arch_elems.iterfind('executableBlocks/optimizers/optimizer'):
+            _loopelement_details[elem.attrib['uID']] = 'optimizer'
+        for elem in self.elem_arch_elems.iterfind('executableBlocks/does/doe'):
+            _loopelement_details[elem.attrib['uID']] = 'doe'
+        return _loopelement_details
+
+    @cached_property
     def coupled_hierarchy(self):
         # type: () -> List[dict]
         """:obj:`list`: List containing the hierarchy of the coupled blocks for grouped convergence."""
@@ -416,19 +439,19 @@ class LEGOModel(CMDOWSObject, Group):
                     return self._get_basic_coupled_hierarchy(entry[keys[0]])
         return _coupled_hierarchy
 
-    @CachedProperty
+    @cached_property
     def model_sub_drivers(self):
         return [name for name in self.sub_drivers if '__SubDriverComponent__' + name in self.all_executable_blocks]
 
-    @CachedProperty
+    @cached_property
     def model_super_drivers(self):
         return [name for name in self.super_drivers if '__SuperDriverComponent__' + name in self.all_loop_elements]
 
-    @CachedProperty
+    @cached_property
     def model_super_components(self):
         return [name for name in self.all_executable_blocks if '__SuperComponent__' in name]
 
-    @CachedProperty
+    @cached_property
     def system_inputs(self):
         # type: () -> Dict[str, int]
         """:obj:`dict`: Dictionary containing the system input sizes by their names."""
@@ -441,7 +464,7 @@ class LEGOModel(CMDOWSObject, Group):
 
         return system_inputs
 
-    @CachedProperty
+    @cached_property
     def design_vars(self):
         # type: () -> Dict[str, Dict[str, Any]]
         """:obj:`dict`: Dictionary containing the design variables' initial values, lower bounds, and upper bounds."""
@@ -500,7 +523,7 @@ class LEGOModel(CMDOWSObject, Group):
                                             'ref0': ref0, 'ref': ref}})
         return design_vars
 
-    @CachedProperty
+    @cached_property
     def constraints(self):
         # type: () -> Dict[str, Dict[str, Any]]
         """:obj:`dict`: Dictionary containing the constraints' lower, upper, and equals reference values."""
@@ -587,7 +610,7 @@ class LEGOModel(CMDOWSObject, Group):
             constraints.update({name: con})
         return constraints
 
-    @CachedProperty
+    @cached_property
     def objective(self):
         # type: () -> str
         """:obj:`str`: Name of the objective variable."""
@@ -689,7 +712,7 @@ class LEGOModel(CMDOWSObject, Group):
         else:
             return coupled_group
 
-    @CachedProperty
+    @cached_property
     def system_order(self):
         # type: () -> List[str]
         """:obj:`list` of :obj:`str`: List system names in the order specified in the CMDOWS file."""
@@ -715,7 +738,7 @@ class LEGOModel(CMDOWSObject, Group):
 
         return _system_order
 
-    @CachedProperty
+    @cached_property
     def coordinator(self):
         # type: () -> IndepVarComp
         """:obj:`IndepVarComp`: An `IndepVarComp` representing the system's ``Coordinator`` block.

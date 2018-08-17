@@ -93,61 +93,6 @@ def try_hard(fun, *args, **kwargs):
     return return_value
 
 
-class CachedProperty(property):
-    """Subclass of `property` using a cache to avoid recalculating an expensive `property` every time it is read.
-
-    An attribute can be decorated with this class is the same way as with a normal `property`. It adds the possibility
-    to invalidate the cache when necessary.
-    """
-
-    def __init__(self, fget=None, fset=None, fdel=None, doc=None):
-        # type: (Optional[Callable], Optional[Callable], Optional[Callable], Optional[str]) -> None
-        """Initialize the `CachedProperty`.
-
-        Parameters
-        ----------
-            fget, fset, fdel : function, optional
-                Getter, setter, and deleter functions.
-
-            doc : str, optional
-                Docstring of the property.
-        """
-        super(CachedProperty, self).__init__(fget, fset, fdel, doc)
-        self.__cache = None
-        self.__dirty = True
-
-    def __get__(self, instance, owner=None):
-        # type: (Any, Optional[type]) -> Any
-        """Get the value of the property.
-
-        This method checks if the cache of this property is still valid first. If it is, it simply returns the cached
-        value. If it isn't, it calls the `super()` to recompute the cached variable, stores it, and then returns the
-        newly calculated value.
-
-        Parameters
-        ----------
-            instance : any
-                The instance through which the attribute is accessed.
-
-            owner : type, optional
-                The owner of the attribute.
-
-        Returns
-        -------
-            any
-                The value of the attribute.
-        """
-        if self.__dirty:
-            self.__cache = super(CachedProperty, self).__get__(instance, owner)
-            self.__dirty = False
-        return self.__cache
-
-    def invalidate(self):
-        # type: () -> None
-        """Marks the cache of the property as invalid, prompting its recomputation the next time it is accessed."""
-        self.__dirty = True
-
-
 def parse_string(s):
     # type: (str) -> Union[str, np.ndarray, float]
     """Convert a string to a numpy array of floats or float if possible.

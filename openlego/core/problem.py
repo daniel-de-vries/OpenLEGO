@@ -22,6 +22,7 @@ from __future__ import absolute_import, division, print_function
 import datetime
 import os
 
+from cached_property import cached_property
 from lxml.etree import _Element, _ElementTree
 from openmdao.api import Problem, ScipyOptimizeDriver, DOEDriver, UniformGenerator, \
     FullFactorialGenerator, BoxBehnkenGenerator, LatinHypercubeGenerator, ListGenerator, view_model, SqliteRecorder, \
@@ -32,7 +33,7 @@ from typing import Optional, Any, Union, Dict
 from openlego.api import LEGOModel
 from openlego.core.cmdows import CMDOWSObject
 from openlego.utils.cmdows_utils import get_element_by_uid, get_opt_setting_safe, get_doe_setting_safe
-from openlego.utils.general_utils import CachedProperty, print_optional, add_or_append_dict_entry
+from openlego.utils.general_utils import print_optional, add_or_append_dict_entry
 
 
 class LEGOProblem(CMDOWSObject, Problem):
@@ -122,7 +123,7 @@ class LEGOProblem(CMDOWSObject, Problem):
         # Invalidate the problem
         super(LEGOProblem, self).invalidate()
 
-    @CachedProperty
+    @cached_property
     def case_reader_path(self):
         # type: () -> str
         """:obj:`str`: Path to the case reader that has been added to the driver."""
@@ -132,7 +133,7 @@ class LEGOProblem(CMDOWSObject, Problem):
         else:
             return filename
 
-    @CachedProperty
+    @cached_property
     def model_view_path(self):
         # type: () -> str
         """:obj:`str`: Path to the model view html view that is created with store_model_view()."""
@@ -142,7 +143,7 @@ class LEGOProblem(CMDOWSObject, Problem):
         else:
             return filename
 
-    @CachedProperty
+    @cached_property
     def drivers(self):
         # type: () -> dict
         """:obj:`dict`: Dictionary containing the optimizer and DOE element UIDs from the CMDOWS file."""
@@ -152,7 +153,7 @@ class LEGOProblem(CMDOWSObject, Problem):
         does = [elem.get('uID') for elem in doe_elems]
         return {'optimizers': optimizers, 'does': does}
 
-    @CachedProperty
+    @cached_property
     def driver_type(self):
         # type: () -> Union[str, None]
         """:obj:`str`: Type of driver as string."""
@@ -161,7 +162,7 @@ class LEGOProblem(CMDOWSObject, Problem):
         else:
             return None
 
-    @CachedProperty
+    @cached_property
     def model(self):
         # type: () -> LEGOModel
         """:obj:`LEGOModel`: The LEGOModel that is automatically built from the CMDOWS file and knowledge base."""
@@ -171,7 +172,7 @@ class LEGOProblem(CMDOWSObject, Problem):
                          self.data_folder,    # Output directory
                          self.base_xml_file)  # Output file
 
-    @CachedProperty
+    @cached_property
     def driver(self):
         # type: () -> Driver
         """Method to return a preconfigured driver.

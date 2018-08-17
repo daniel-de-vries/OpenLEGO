@@ -97,84 +97,83 @@ def run_openlego(analyze_mdao_definitions):
 
         return x, y, z, f, g
 
-#
-# class TestSellarMath(unittest.TestCase):
-#
-#     def assertion_unc_mda(self, x, y, z, f, g):
-#         self.assertAlmostEqual(x[0], 5.00, 2)
-#         self.assertAlmostEqual(z[0], 1.00, 2)
-#         self.assertAlmostEqual(z[1], 5.00, 2)
-#
-#     def assertion_con_mda(self, x, y, z, f, g):
-#         self.assertAlmostEqual(x[0], 5.00, 2)
-#         self.assertAlmostEqual(y[0], 9.19, 2)
-#         self.assertAlmostEqual(y[1], 9.03, 2)
-#         self.assertAlmostEqual(z[0], 1.00, 2)
-#         self.assertAlmostEqual(z[1], 5.00, 2)
-#         self.assertAlmostEqual(f[0], 39.19, 2)
-#         self.assertAlmostEqual(g[0], 1.91, 2)
-#         self.assertAlmostEqual(g[1], 0.62, 2)
-#
-#     def assertion_doe(self, x, y, z, f, g):
-#         self.assertAlmostEqual(x[0], 2.75, 2)
-#         self.assertAlmostEqual(y[0], 4.15, 2)
-#         self.assertAlmostEqual(y[1], 4.54, 2)
-#         self.assertAlmostEqual(z[0], 0.75, 2)
-#         self.assertAlmostEqual(z[1], 1.75, 2)
-#         self.assertAlmostEqual(f[0], 13.48, 2)
-#         self.assertAlmostEqual(g[0], 0.31, 2)
-#         self.assertAlmostEqual(g[1], 0.81, 2)
-#
-#     def assertion_mdo(self, x, y, z, f, g):
-#         self.assertAlmostEqual(x[0], 0.00, 2)
-#         self.assertAlmostEqual(y[0], 3.16, 2)
-#         self.assertAlmostEqual(y[1], 3.76, 2)
-#         self.assertAlmostEqual(z[0], 1.98, 2)
-#         self.assertAlmostEqual(z[1], 0.00, 2)
-#         self.assertAlmostEqual(f[0], 3.18, 2)
-#         self.assertAlmostEqual(g[0], 0.00, 2)
-#         self.assertAlmostEqual(g[1], 0.84, 2)
-#
-#     def test_unc_mda_j(self):
-#         """Test run the Sellar system using a sequential tool execution."""
-#         self.assertion_unc_mda(*run_openlego(0))
-#
-#     def test_unc_mda_gs(self):
-#         """Test run the Sellar system using a parallel tool execution."""
-#         self.assertion_unc_mda(*run_openlego(1))
-#
-#     def test_doe_gs(self):
-#         """Solve the Sellar system using a DOE architecture and a Gauss-Seidel convergence scheme."""
-#         self.assertion_doe(*run_openlego(2))
-#
-#     def test_doe_j(self):
-#         """Solve the Sellar system using a DOE architecture and a Jacobi convergence scheme."""
-#         self.assertion_doe(*run_openlego(3))
-#
-#     def test_mda_j(self):
-#         """Solve the Sellar system using a Jacobi convergence scheme."""
-#         self.assertion_con_mda(*run_openlego(4))
-#
-#     def test_mda_gs(self):
-#         """Solve the Sellar system using Gauss-Seidel convergence scheme."""
-#         self.assertion_con_mda(*run_openlego(5))
-#
-#     def test_mdf_gs(self):
-#         """Solve the Sellar problem using the MDF architecture and a Gauss-Seidel convergence scheme."""
-#         self.assertion_mdo(*run_openlego(6))
-#
-#     def test_mdf_j(self):
-#         """Solve the Sellar problem using the MDF architecture and a Jacobi converger."""
-#         self.assertion_mdo(*run_openlego(7))
-#
-#     def test_idf(self):
-#         """Solve the Sellar problem using the IDF architecture."""
-#         self.assertion_mdo(*run_openlego(8))
-#
-#     def __del__(self):
-#         clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'sellar-output.xml'])
+
+class TestSellarMath(unittest.TestCase):
+
+    def assertion_unc_mda(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 5.00, 2)
+        self.assertAlmostEqual(z[0], 1.00, 2)
+        self.assertAlmostEqual(z[1], 5.00, 2)
+
+    def assertion_con_mda(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 5.00, 2)
+        self.assertAlmostEqual(y[0], 9.19, 2)
+        self.assertAlmostEqual(y[1], 9.03, 2)
+        self.assertAlmostEqual(z[0], 1.00, 2)
+        self.assertAlmostEqual(z[1], 5.00, 2)
+        self.assertAlmostEqual(f[0], 39.19, 2)
+        self.assertAlmostEqual(g[0], 1.91, 2)
+        self.assertAlmostEqual(g[1], 0.62, 2)
+
+    def assertion_doe(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 2.75, 2)
+        self.assertAlmostEqual(y[0], 4.15, 2)
+        self.assertAlmostEqual(y[1], 4.54, 2)
+        self.assertAlmostEqual(z[0], 0.75, 2)
+        self.assertAlmostEqual(z[1], 1.75, 2)
+        self.assertAlmostEqual(f[0], 13.48, 2)
+        self.assertAlmostEqual(g[0], 0.31, 2)
+        self.assertAlmostEqual(g[1], 0.81, 2)
+
+    def assertion_mdo(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 0.00, 2)
+        self.assertAlmostEqual(y[0], 3.16, 2)
+        self.assertAlmostEqual(y[1], 3.76, 2)
+        self.assertAlmostEqual(z[0], 1.98, 2)
+        self.assertAlmostEqual(z[1], 0.00, 2)
+        self.assertAlmostEqual(f[0], 3.18, 2)
+        self.assertAlmostEqual(g[0], 0.00, 2)
+        self.assertAlmostEqual(g[1], 0.84, 2)
+
+    def test_unc_mda_j(self):
+        """Test run the Sellar system using a sequential tool execution."""
+        self.assertion_unc_mda(*run_openlego(0))
+
+    def test_unc_mda_gs(self):
+        """Test run the Sellar system using a parallel tool execution."""
+        self.assertion_unc_mda(*run_openlego(1))
+
+    def test_doe_gs(self):
+        """Solve the Sellar system using a DOE architecture and a Gauss-Seidel convergence scheme."""
+        self.assertion_doe(*run_openlego(2))
+
+    def test_doe_j(self):
+        """Solve the Sellar system using a DOE architecture and a Jacobi convergence scheme."""
+        self.assertion_doe(*run_openlego(3))
+
+    def test_mda_j(self):
+        """Solve the Sellar system using a Jacobi convergence scheme."""
+        self.assertion_con_mda(*run_openlego(4))
+
+    def test_mda_gs(self):
+        """Solve the Sellar system using Gauss-Seidel convergence scheme."""
+        self.assertion_con_mda(*run_openlego(5))
+
+    def test_mdf_gs(self):
+        """Solve the Sellar problem using the MDF architecture and a Gauss-Seidel convergence scheme."""
+        self.assertion_mdo(*run_openlego(6))
+
+    def test_mdf_j(self):
+        """Solve the Sellar problem using the MDF architecture and a Jacobi converger."""
+        self.assertion_mdo(*run_openlego(7))
+
+    def test_idf(self):
+        """Solve the Sellar problem using the IDF architecture."""
+        self.assertion_mdo(*run_openlego(8))
+
+    def __del__(self):
+        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'sellar-output.xml'])
 
 
 if __name__ == '__main__':
-    #unittest.main()
-    run_openlego(9)
+    unittest.main()

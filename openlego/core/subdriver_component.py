@@ -20,6 +20,8 @@ This file contains the definition the `SubDriverComponent` class.
 
 from openmdao.api import ExplicitComponent
 
+from openlego.utils.general_utils import str_to_valid_sys_name
+
 
 class SubDriverComponent(ExplicitComponent):
     """Abstract base class exposing an interface to use subdriver (or nested) drivers within an OpenMDAO model. This
@@ -40,15 +42,6 @@ class SubDriverComponent(ExplicitComponent):
         self.options.declare('show_model', default=False)
 
     def setup(self):
-        # Add inputs
-        # self.add_input()
-
-        # Add outputs
-        # self.add_output()
-
-        # Declare partials
-        # self.declare_partials('*', '*')
-
         # Set subproblem
         from openlego.core.problem import LEGOProblem
         p = self.prob = LEGOProblem(cmdows_path=self.options['cmdows_path'],
@@ -56,29 +49,42 @@ class SubDriverComponent(ExplicitComponent):
                                     data_folder=self.options['data_folder'],  # Output directory
                                     base_xml_file=self.options['base_xml_file'],
                                     driver_uid=self.options['driver_uid'])
-        p.invalidate()
-        p.model.invalidate()
+        #p.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
+        # Add inputs
+        for input_name, shape in p.model.model_constants.items():
+            self.add_input(input_name, shape=shape)
 
-        # Add missing connections (?)
+        for input_name, value in p.model.model_super_inputs.items():
+            self.add_input(input_name, val=value)
+
+        # Add outputs
+        for output_name, value in p.model.model_super_outputs.items():
+            self.add_output(output_name, val=value)
+
+        # Declare partials
+        self.declare_partials('*', '*')
 
         # Setup
         p.setup()
-        # self.prob.final_setup()
+        p.final_setup()
 
         # View model?
         if self.options['show_model']:
-            p.store_model_view(open_in_browser=True)
+            p.store_model_view(open_in_browser=self.options['show_model'])
 
     def compute(self, inputs, outputs):
-        # p = self.prob
+        p = self.prob
 
         # Push global inputs down
-        # p['x'] = inputs['x']
-        # etc.
+        for input_name in p.model.model_constants:
+            p[input_name] = inputs[input_name]
+
+        for input_name in p.model.model_super_inputs:
+            p[input_name] = inputs[input_name]
 
         # Run the driver
-        # p.run_driver()
+        p.run_driver()
 
         # Pull the value back up to the output array
-        # outputs['y'] = p['y']
-        pass
+        for output_name in p.model.model_super_outputs:
+            outputs[output_name] = p[output_name]

@@ -369,7 +369,7 @@ class CMDOWSObject(object):
         return _filtered_loop_nesting_list
 
     @cached_property
-    def all_executable_blocks(self):
+    def model_executable_blocks(self):
         # TODO Add docstring
         return self.collect_all_executable_blocks(self.filtered_loop_nesting_list)
 
@@ -451,7 +451,7 @@ class CMDOWSObject(object):
         _coupled_blocks = []
         for block in self.elem_arch_elems.iterfind(
                 'executableBlocks/coupledAnalyses/coupledAnalysis/relatedExecutableBlockUID'):
-            if block.text in self.all_executable_blocks:
+            if block.text in self.model_executable_blocks:
                 _coupled_blocks.append(block.text)
         return _coupled_blocks
 

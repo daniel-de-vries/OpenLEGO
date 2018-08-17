@@ -151,7 +151,7 @@ class LEGOModel(CMDOWSObject, Group):
         # Ensure that the knowledge base path is specified.
         _discipline_components = dict()
         for design_competence in self.elem_cmdows.iter('designCompetence'):
-            if design_competence.attrib['uID'] in self.all_executable_blocks:
+            if design_competence.attrib['uID'] in self.model_executable_blocks:
                 if not self._kb_path or not os.path.isdir(self._kb_path):
                     raise ValueError('No valid knowledge base path ({}) specified while the CMDOWS file contains design'
                                      ' competences.'.format(self._kb_path))
@@ -229,7 +229,7 @@ class LEGOModel(CMDOWSObject, Group):
         _mathematical_functions = dict()
         implemented_eqs = []
         for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
-            if mathematical_function.attrib['uID'] in self.all_executable_blocks:
+            if mathematical_function.attrib['uID'] in self.model_executable_blocks:
                 uid = mathematical_function.attrib['uID']
                 group = Group()
 
@@ -260,6 +260,9 @@ class LEGOModel(CMDOWSObject, Group):
                                 implemented_eqs.append(eq_uid)
                                 eq_expr = equation.text
                                 eq_output = xpath_to_param(output.find('parameterUID').text)
+                                eq_output_label = output.find('parameterUID').text.split('/')[-1]
+                                if eq_output_label in eq_expr:  # check to avoid use of output name in expression
+                                    eq_output_label = eq_output_label + '__output'
 
                                 promotes = list()
                                 for eq_label, input_name in self.mathematical_functions_inputs[uid]:
@@ -270,8 +273,8 @@ class LEGOModel(CMDOWSObject, Group):
                                     if eq_label in eq_expr:
                                         promotes.append((eq_label, input_name))
                                 group.add_subsystem(str_to_valid_sys_name(eq_uid),
-                                                    ExecComp('output = ' + eq_expr),
-                                                    promotes=promotes + [('output', eq_output), ])
+                                                    ExecComp(eq_output_label + ' = ' + eq_expr),
+                                                    promotes=promotes + [(eq_output_label, eq_output), ])
                 _mathematical_functions.update({uid: group})
 
         return _mathematical_functions
@@ -311,7 +314,6 @@ class LEGOModel(CMDOWSObject, Group):
             param = xpath_to_param(convar.find('relatedParameterUID').text)
             if param not in coupling_vars:
                 raise InvalidCMDOWSFileError()
-
             coupling_vars.update({param: {'copy': coupling_vars[param], 'con': xpath_to_param(convar.attrib['uID'])}})
         return coupling_vars
 
@@ -441,7 +443,7 @@ class LEGOModel(CMDOWSObject, Group):
 
     @cached_property
     def model_sub_drivers(self):
-        return [name for name in self.sub_drivers if '__SubDriverComponent__' + name in self.all_executable_blocks]
+        return [name for name in self.sub_drivers if '__SubDriverComponent__' + name in self.model_executable_blocks]
 
     @cached_property
     def model_super_drivers(self):
@@ -449,20 +451,70 @@ class LEGOModel(CMDOWSObject, Group):
 
     @cached_property
     def model_super_components(self):
-        return [name for name in self.all_executable_blocks if '__SuperComponent__' in name]
+        return [name for name in self.model_executable_blocks if '__SuperComponent__' in name]
 
     @cached_property
     def system_inputs(self):
         # type: () -> Dict[str, int]
         """:obj:`dict`: Dictionary containing the system input sizes by their names."""
-        system_inputs = {}
+        _system_inputs = {}
         for value in self.elem_cmdows.xpath(
                     r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="Coordinator"]/toParameterUID/text()'):
             if 'architectureNodes' not in value or 'designVariables' in value:
                 name = xpath_to_param(value)
-                system_inputs.update({name: self.variable_sizes[name]})
+                _system_inputs.update({name: self.variable_sizes[name]})
+        return _system_inputs
 
-        return system_inputs
+    @cached_property
+    def model_required_inputs(self):
+        # TODO: add docstring
+        _model_required_inputs = []
+        for ex_block in self.model_executable_blocks:
+            for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[toExecutableBlockUID="{}"]/fromParameterUID/text()'.format(ex_block)):
+                _model_required_inputs.append(value)
+        return _model_required_inputs
+
+    @cached_property
+    def model_all_outputs(self):
+        _model_all_outputs = []
+        for ex_block in self.model_executable_blocks:
+            for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/toParameterUID/text()'.format(ex_block)):
+                _model_all_outputs.append(value)
+        return _model_all_outputs
+
+    @cached_property
+    def model_super_inputs(self):
+        # TODO add docstring
+        _model_super_inputs = {}
+        for super_driver in self.super_drivers:
+            for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/toParameterUID/text()'.format(super_driver)):
+                if value in self.model_required_inputs:
+                    name = xpath_to_param(value)
+                    _model_super_inputs.update({name: self.variable_sizes[name]})
+        return _model_super_inputs
+
+    @cached_property
+    def model_constants(self):
+        # TODO Add docstring
+        _model_constants = {}
+        for name, shape in self.system_inputs.items():
+            if name not in self.design_vars.keys():
+                _model_constants.update({name: shape})
+        return _model_constants
+
+    @cached_property
+    def model_super_outputs(self):
+        # TODO add docstring
+        _model_super_outputs = {}
+        for output in self.model_all_outputs:
+            for ex_block in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID="{}"]/toExecutableBlockUID/text()'.format(output)):
+                if ex_block not in self.model_executable_blocks and ex_block not in self.all_loop_elements:
+                    if output in self.mapped_parameters:
+                        output = self.mapped_parameters[output]
+                    name = xpath_to_param(output)
+                    _model_super_outputs.update({name: self.variable_sizes[name]})
+                    continue
+        return _model_super_outputs
 
     @cached_property
     def design_vars(self):
@@ -536,7 +588,10 @@ class LEGOModel(CMDOWSObject, Group):
         for convar_uid in convars_uids:
             elem_convar = get_element_by_uid(self.elem_cmdows, convar_uid)
             con = {'lower': None, 'upper': None, 'equals': None}
-            name = xpath_to_param(elem_convar.find('parameterUID').text)
+            param_uid = elem_convar.find('parameterUID').text
+            if param_uid in self.mapped_parameters:
+                param_uid = self.mapped_parameters[param_uid]
+            name = xpath_to_param(param_uid)
 
             if self.coupling_var_cons is not None and name in self.coupling_var_cons.values():
                 # If this is a coupling variable consistency constraint, equals should just be zero
@@ -729,7 +784,7 @@ class LEGOModel(CMDOWSObject, Group):
                     for entry in self.coupled_hierarchy:
                         _system_order.append(str_to_valid_sys_name(entry.keys()[0]))
                     coupled_group_set = True
-            elif block in self.all_executable_blocks or '__SubDriverComponent__' + block in self.all_executable_blocks:
+            elif block in self.model_executable_blocks or '__SubDriverComponent__' + block in self.model_executable_blocks:
                 n += 1
                 _system_order.append(str_to_valid_sys_name(block))
 
@@ -752,9 +807,8 @@ class LEGOModel(CMDOWSObject, Group):
             coordinator.add_output(name, value['initial'])
 
         # Add system constants
-        for name, shape in self.system_inputs.items():
-            if name not in self.design_vars.keys():
-                coordinator.add_output(name, shape=shape)
+        for name, shape in self.model_constants.items():
+            coordinator.add_output(name, shape=shape)
 
         return coordinator
 
@@ -766,7 +820,7 @@ class LEGOModel(CMDOWSObject, Group):
         # Add superdriver outputs
         for value in self.elem_cmdows.xpath(
                 r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/toParameterUID/text()'.format(name)):
-            if 'architectureNodes/finalDesignVariables' not in value:
+            if 'architectureNodes/finalDesignVariables' not in value and value in self.model_required_inputs:
                 name = xpath_to_param(value)
                 super_driver.add_output(xpath_to_param(value), self.variable_sizes[name])
         return super_driver
@@ -784,7 +838,7 @@ class LEGOModel(CMDOWSObject, Group):
 
         # Add all pre-coupling and post-coupling components
         for name, component in self.discipline_components.items():
-            if name not in self.coupled_blocks and name in self.all_executable_blocks:
+            if name not in self.coupled_blocks and name in self.model_executable_blocks:
                 promotes = ['*']
                 # Change input variable names if they are provided as copies of coupling variables
                 for i in component.inputs_from_xml.keys():
@@ -794,7 +848,7 @@ class LEGOModel(CMDOWSObject, Group):
                                 promotes.append((i, self.coupling_vars[i]['copy']))
                 self.add_subsystem(str_to_valid_sys_name(name), component, promotes)
         for name, component in self.mathematical_functions_groups.items():
-            if name not in self.coupled_blocks and name in self.all_executable_blocks:
+            if name not in self.coupled_blocks and name in self.model_executable_blocks:
                 # TODO: Adjust promotion of variables for copies?
                 self.add_subsystem(str_to_valid_sys_name(name), component, ['*'])
 
@@ -811,7 +865,7 @@ class LEGOModel(CMDOWSObject, Group):
                                                   kb_path=self.kb_path,
                                                   data_folder=self.data_folder,
                                                   base_xml_file=self.base_xml_file,  # TODO: adjust for subdriver
-                                                  show_model=True))
+                                                  show_model=False), promotes=['*'])
 
         # Put the blocks in the correct order
         self.set_order(list(self.system_order))

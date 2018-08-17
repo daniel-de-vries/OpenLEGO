@@ -189,7 +189,7 @@ class LEGOProblem(CMDOWSObject, Problem):
         """
         if self.driver_type == 'optimizer':
             # Find optimizer element in CMDOWS file
-            opt_uid = self.drivers['optimizers'][0]
+            opt_uid = self.driver_uid
             opt_elem = get_element_by_uid(self.elem_cmdows, opt_uid)
             # Load settings from CMDOWS file
             opt_package = get_opt_setting_safe(opt_elem, 'package', 'SciPy')
@@ -235,7 +235,7 @@ class LEGOProblem(CMDOWSObject, Problem):
             return driver
         elif self.driver_type == 'doe':
             # Find DOE element in CMDOWS file
-            doe_uid = self.drivers['does'][0]
+            doe_uid = self.driver_uid
             doe_elem = get_element_by_uid(self.elem_cmdows, doe_uid)
             # Load settings from CMDOWS file
             doe_method = get_doe_setting_safe(doe_elem, 'method', 'Uniform design')

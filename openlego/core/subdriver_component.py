@@ -50,6 +50,7 @@ class SubDriverComponent(ExplicitComponent):
                                     base_xml_file=self.options['base_xml_file'],
                                     driver_uid=self.options['driver_uid'])
         #p.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
+
         # Add inputs
         for input_name, shape in p.model.model_constants.items():
             self.add_input(input_name, shape=shape)
@@ -62,7 +63,7 @@ class SubDriverComponent(ExplicitComponent):
             self.add_output(output_name, val=value)
 
         # Declare partials
-        self.declare_partials('*', '*')
+        self.declare_partials('*', '*', method='fd', step=1e-4, step_calc='abs')
 
         # Setup
         p.setup()

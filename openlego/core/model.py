@@ -589,7 +589,7 @@ class LEGOModel(CMDOWSObject, Group):
             elem_convar = get_element_by_uid(self.elem_cmdows, convar_uid)
             con = {'lower': None, 'upper': None, 'equals': None}
             param_uid = elem_convar.find('parameterUID').text
-            if param_uid in self.mapped_parameters:
+            if param_uid in self.mapped_parameters and 'architectureNodes/consistencyConstraint' not in param_uid:
                 param_uid = self.mapped_parameters[param_uid]
             name = xpath_to_param(param_uid)
 

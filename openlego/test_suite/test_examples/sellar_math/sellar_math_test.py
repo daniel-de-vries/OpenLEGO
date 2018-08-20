@@ -86,11 +86,20 @@ def run_openlego(analyze_mdao_definitions):
         prob.collect_results()
 
         # 5. Collect test results for test assertions
-        x = [prob['/dataSchema/geometry/x1']]
-        y = [prob['/dataSchema/analyses/y1'], prob['/dataSchema/analyses/y2']]
-        z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
-        f = [prob['/dataSchema/analyses/f']]
-        g = [prob['/dataSchema/analyses/g1'], prob['/dataSchema/analyses/g2']]
+        if '/dataSchema/geometry/x1' in prob.model._outputs:
+            x = [prob['/dataSchema/geometry/x1']]
+            y = [prob['/dataSchema/analyses/y1'], prob['/dataSchema/analyses/y2']]
+            z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
+            f = [prob['/dataSchema/analyses/f']]
+            g = [prob['/dataSchema/analyses/g1'], prob['/dataSchema/analyses/g2']]
+        elif '/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/geometry/x1' in prob.model._outputs:
+            x = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/geometry/x1']]
+            y = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1'],
+                 prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y2']]
+            z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
+            f = [prob['/dataSchema/analyses/f']]
+            g = [prob.model.SubOptimizer0.prob['/dataSchema/analyses/g1'],
+                 prob.model.SubOptimizer1.prob['/dataSchema/analyses/g2']]
 
         # 6. Cleanup and invalidate the Problem afterwards
         prob.invalidate()
@@ -135,6 +144,16 @@ class TestSellarMath(unittest.TestCase):
         self.assertAlmostEqual(g[0], 0.00, 2)
         self.assertAlmostEqual(g[1], 0.84, 2)
 
+    def assertion_co(self, x, y, z, f, g):
+        self.assertAlmostEqual(x[0], 0.00, 1)
+        self.assertAlmostEqual(y[0], 3.16, 1)
+        self.assertAlmostEqual(y[1], 3.76, 1)
+        self.assertAlmostEqual(z[0], 1.98, 1)
+        self.assertAlmostEqual(z[1], 0.00, 1)
+        self.assertAlmostEqual(f[0], 3.18, 2)
+        self.assertAlmostEqual(g[0], 0.00, 2)
+        self.assertAlmostEqual(g[1], 0.84, 2)
+
     def test_unc_mda_j(self):
         """Test run the Sellar system using a sequential tool execution."""
         self.assertion_unc_mda(*run_openlego(0))
@@ -170,6 +189,10 @@ class TestSellarMath(unittest.TestCase):
     def test_idf(self):
         """Solve the Sellar problem using the IDF architecture."""
         self.assertion_mdo(*run_openlego(8))
+
+    def test_co(self):
+        """Solve the Sellar problem using the Collaborative Optimization architecture."""
+        self.assertion_co(*run_openlego(9))
 
     def __del__(self):
         clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'sellar-output.xml'])

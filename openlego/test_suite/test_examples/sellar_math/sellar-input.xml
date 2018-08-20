@@ -10,12 +10,23 @@
     </geometry>
     <architectureNodes>
         <couplingCopyVariables>
-            <data_schemaCopy>
+            <dataSchemaCopy>
                 <analyses>
-                    <y1>5.0</y1>
-                    <y2>5.0</y2>
+                    <y1>2.0</y1>
+                    <y2>2.0</y2>
                 </analyses>
-            </data_schemaCopy>
+            </dataSchemaCopy>
         </couplingCopyVariables>
+        <copyDesignVariables>
+            <dataSchemaCopy>
+                <analyses>
+                    <y1>2.0</y1>
+                    <y2>2.0</y2>
+                </analyses>
+                <geometry>
+                    <x1>5.0</x1>
+                </geometry>
+            </dataSchemaCopy>
+        </copyDesignVariables>
     </architectureNodes>
 </dataSchema>

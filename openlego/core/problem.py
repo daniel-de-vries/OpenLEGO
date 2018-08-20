@@ -418,7 +418,7 @@ class LEGOProblem(CMDOWSObject, Problem):
                 for var_constraint in var_constraints:
                     value = recorded_constraints[var_constraint]
                     print_optional('    {}: {}'.format(var_constraint, value), print_in_log)
-                    results = add_or_append_dict_entry(results, 'desvars', var_constraint, value)
+                    results = add_or_append_dict_entry(results, 'constraints', var_constraint, value)
 
             # Print DOE quantities of interest
             if var_does:

@@ -104,7 +104,7 @@ def run_openlego(analyze_mdao_definitions):
         # 6. Cleanup and invalidate the Problem afterwards
         prob.invalidate()
 
-        return x, y, z, f, g
+    return x, y, z, f, g
 
 
 class TestSellarMath(unittest.TestCase):
@@ -135,24 +135,14 @@ class TestSellarMath(unittest.TestCase):
         self.assertAlmostEqual(g[1], 0.81, 2)
 
     def assertion_mdo(self, x, y, z, f, g):
-        self.assertAlmostEqual(x[0], 0.00, 2)
-        self.assertAlmostEqual(y[0], 3.16, 2)
-        self.assertAlmostEqual(y[1], 3.76, 2)
-        self.assertAlmostEqual(z[0], 1.98, 2)
-        self.assertAlmostEqual(z[1], 0.00, 2)
-        self.assertAlmostEqual(f[0], 3.18, 2)
-        self.assertAlmostEqual(g[0], 0.00, 2)
-        self.assertAlmostEqual(g[1], 0.84, 2)
-
-    def assertion_co(self, x, y, z, f, g):
-        self.assertAlmostEqual(x[0], 0.00, 1)
-        self.assertAlmostEqual(y[0], 3.16, 1)
-        self.assertAlmostEqual(y[1], 3.76, 1)
-        self.assertAlmostEqual(z[0], 1.98, 1)
-        self.assertAlmostEqual(z[1], 0.00, 1)
-        self.assertAlmostEqual(f[0], 3.18, 2)
-        self.assertAlmostEqual(g[0], 0.00, 2)
-        self.assertAlmostEqual(g[1], 0.84, 2)
+        self.assertAlmostEqual(x[0], 0.00, delta=0.1)
+        self.assertAlmostEqual(y[0], 3.16, delta=0.1)
+        self.assertAlmostEqual(y[1], 3.76, delta=0.1)
+        self.assertAlmostEqual(z[0], 1.98, delta=0.1)
+        self.assertAlmostEqual(z[1], 0.00, delta=0.1)
+        self.assertAlmostEqual(f[0], 3.18, delta=0.1)
+        self.assertAlmostEqual(g[0], 0.00, delta=0.1)
+        self.assertAlmostEqual(g[1], 0.84, delta=0.1)
 
     def test_unc_mda_j(self):
         """Test run the Sellar system using a sequential tool execution."""
@@ -192,7 +182,7 @@ class TestSellarMath(unittest.TestCase):
 
     def test_co(self):
         """Solve the Sellar problem using the Collaborative Optimization architecture."""
-        self.assertion_co(*run_openlego(9))
+        self.assertion_mdo(*run_openlego(9))
 
     def __del__(self):
         clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'sellar-output.xml'])

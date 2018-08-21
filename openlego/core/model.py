@@ -182,10 +182,10 @@ class LEGOModel(CMDOWSObject, Group):
         mapped_params = dict()
         for elem_category in self.elem_arch_elems.find('parameters').iterchildren():
             # Make exception for copyDesignVariables which need to exist separately.
-            if elem_category.tag != 'copyDesignVariables':
-                for elem_param in elem_category.iterchildren():
-                    param, mapped = get_related_parameter_uid(elem_param, self.elem_cmdows)
-                    mapped_params.update({param: mapped})
+            #if elem_category.tag != 'copyDesignVariables':
+            for elem_param in elem_category.iterchildren():
+                param, mapped = get_related_parameter_uid(elem_param, self.elem_cmdows)
+                mapped_params.update({param: mapped})
         return mapped_params
 
     @cached_property
@@ -267,7 +267,7 @@ class LEGOModel(CMDOWSObject, Group):
                                 promotes = list()
                                 for eq_label, input_name in self.mathematical_functions_inputs[uid]:
                                     # TODO: This mapping of the input name should get a more sophisticated logic
-                                    if input_name in self.mapped_parameters and input_name not in self.design_vars:
+                                    if input_name in self.mapped_parameters and input_name not in self.design_vars and not 'copyDesignVariable' in input_name:
                                         input_name = self.mapped_parameters[input_name]
 
                                     if eq_label in eq_expr:
@@ -339,6 +339,17 @@ class LEGOModel(CMDOWSObject, Group):
             return coupling_var_cons
         else:
             return None
+
+    @cached_property
+    def des_var_copies(self):
+        # type: () -> Optional[Dict[str, str]]
+        """:obj:`dict`: Dictionary with design variable copies."""
+        _des_var_copies = dict()
+        for var in self.elem_arch_elems.iter('copyDesignVariable'):
+            if var.attrib['uID'] in self.design_vars.keys():
+                param, mapped = get_related_parameter_uid(var, self.elem_cmdows)
+                _des_var_copies.update({xpath_to_param(mapped): xpath_to_param(param)})
+        return _des_var_copies
 
     @cached_property
     def loop_nesting_dict(self):
@@ -488,10 +499,26 @@ class LEGOModel(CMDOWSObject, Group):
         _model_super_inputs = {}
         for super_driver in self.super_drivers:
             for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/toParameterUID/text()'.format(super_driver)):
+                targets = []
                 if value in self.model_required_inputs:
                     name = xpath_to_param(value)
-                    _model_super_inputs.update({name: self.variable_sizes[name]})
+                    if name not in _model_super_inputs:
+                        # Determine the targets of this input
+                        targets = [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID="{}"]/toExecutableBlockUID/text()'.format(value)) if x in self.model_executable_blocks]
+                        _model_super_inputs.update({name: {'val':self.variable_sizes[name], 'targets':targets}})
         return _model_super_inputs
+
+    @cached_property
+    def model_super_inputs_inv_map(self):
+        # TODO Add docstring
+        _model_super_inputs_inv_map = dict()
+        for msi in self.model_super_inputs:
+            if msi in self.mapped_parameters:
+                if self.mapped_parameters[msi] not in _model_super_inputs_inv_map:
+                    _model_super_inputs_inv_map.update({self.mapped_parameters[msi]: msi})
+                else:
+                    raise AssertionError('Model super input "{}" has already been mapped, cannot be mapped again.'.format(msi))
+        return _model_super_inputs_inv_map
 
     @cached_property
     def model_constants(self):
@@ -558,15 +585,13 @@ class LEGOModel(CMDOWSObject, Group):
                         if not self.does_value_fit(name, bounds[index]):
                             raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
             else:
-                bounds[0] = None
-                bounds[1] = None
+                bounds[0], bounds[1] = None, None
 
             # Add the design variable to the dict
             node_name = name if name not in self.coupling_vars else self.coupling_vars[name]['copy']
 
             # Check if the main driver is not a DOE with a Custom design table (then ref0 and ref should be None)
-            ref0 = bounds[0]
-            ref = bounds[1]
+            ref0, ref = bounds[0], bounds[1]
             if self.has_doe:
                 if self.elem_arch_elems.findtext('executableBlocks/does/doe/settings/method') == 'Custom design table':
                     ref0, ref = None, None
@@ -652,7 +677,8 @@ class LEGOModel(CMDOWSObject, Group):
                             con['upper'] = ref_vals[0]
                     elif constr_type.text == 'equality':
                         if elem_convar.find('constraintOperator') is not None:
-                            warnings.warn('constraintOperator given for an equalityConstraint will be ignored')
+                            if elem_convar.find('constraintOperator').text != '==':
+                                warnings.warn('constraintOperator given for an equalityConstraint will be ignored')
                         con['equals'] = ref_vals[0]
                     else:
                         raise ValueError(
@@ -846,6 +872,13 @@ class LEGOModel(CMDOWSObject, Group):
                         if isinstance(self.coupling_vars[i], dict):
                             if 'copy' in self.coupling_vars[i]:
                                 promotes.append((i, self.coupling_vars[i]['copy']))
+                    elif i in self.des_var_copies:
+                        promotes.append((i, self.des_var_copies[i]))
+                    elif i in self.model_super_inputs_inv_map:
+                        mapped_var = self.model_super_inputs_inv_map[i]
+                        if mapped_var in self.model_super_inputs:
+                            if name in self.model_super_inputs[mapped_var]['targets']:
+                                promotes.append((i, mapped_var))
                 self.add_subsystem(str_to_valid_sys_name(name), component, promotes)
         for name, component in self.mathematical_functions_groups.items():
             if name not in self.coupled_blocks and name in self.model_executable_blocks:

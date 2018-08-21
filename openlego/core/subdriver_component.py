@@ -55,8 +55,8 @@ class SubDriverComponent(ExplicitComponent):
         for input_name, shape in p.model.model_constants.items():
             self.add_input(input_name, shape=shape)
 
-        for input_name, value in p.model.model_super_inputs.items():
-            self.add_input(input_name, val=value)
+        for input_name, attrbs in p.model.model_super_inputs.items():
+            self.add_input(input_name, val=attrbs['val'])
 
         # Add outputs
         for output_name, value in p.model.model_super_outputs.items():

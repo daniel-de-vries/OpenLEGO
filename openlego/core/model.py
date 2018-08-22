@@ -51,7 +51,7 @@ class LEGOModel(CMDOWSObject, Group):
     correspondence between the CMDOWS file and the Problem can then no longer be guaranteed.
 
     Attributes
-    ----------
+    ---------- TODO: update
         cmdows_path
         kb_path
         discipline_components
@@ -151,7 +151,7 @@ class LEGOModel(CMDOWSObject, Group):
         # Ensure that the knowledge base path is specified.
         _discipline_components = dict()
         for design_competence in self.elem_cmdows.iter('designCompetence'):
-            if design_competence.attrib['uID'] in self.model_executable_blocks:
+            if design_competence.attrib['uID'] in self.model_executable_blocks or self.driver_uid in self.super_drivers:
                 if not self._kb_path or not os.path.isdir(self._kb_path):
                     raise ValueError('No valid knowledge base path ({}) specified while the CMDOWS file contains design'
                                      ' competences.'.format(self._kb_path))
@@ -181,12 +181,22 @@ class LEGOModel(CMDOWSObject, Group):
         """:obj:`dict`: Dictionary of parameters that are mapped in the CMDOWS file, for example as copies."""
         mapped_params = dict()
         for elem_category in self.elem_arch_elems.find('parameters').iterchildren():
-            # Make exception for copyDesignVariables which need to exist separately.
-            #if elem_category.tag != 'copyDesignVariables':
             for elem_param in elem_category.iterchildren():
                 param, mapped = get_related_parameter_uid(elem_param, self.elem_cmdows)
                 mapped_params.update({param: mapped})
         return mapped_params
+
+    @cached_property
+    def mapped_parameters_inv(self):
+        # type: () -> Dict[str, list]
+        """:obj:`dict`: Dictionary with the inverse mapping of the parameters in the CMDOWS file."""
+        mapped_params_inv = dict()
+        for mapped_param, mapping in self.mapped_parameters.items():
+            if mapping not in mapped_params_inv:
+                mapped_params_inv[mapping] = [mapped_param]
+            else:
+                mapped_params_inv[mapping].append(mapped_param)
+        return mapped_params_inv
 
     @cached_property
     def mathematical_functions_inputs(self):
@@ -195,13 +205,11 @@ class LEGOModel(CMDOWSObject, Group):
         _inputs = dict()
         for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
             uid = mathematical_function.attrib['uID']
-
             local_inputs = list()
             for _input in mathematical_function.iter('input'):
                 input_name = xpath_to_param(_input.find('parameterUID').text)
                 eq_label = _input.find('equationLabel').text
                 local_inputs.append((eq_label, input_name))
-
             _inputs.update({uid: local_inputs})
         return _inputs
 
@@ -212,12 +220,10 @@ class LEGOModel(CMDOWSObject, Group):
         _outputs = dict()
         for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
             uid = mathematical_function.attrib['uID']
-
             local_outputs = list()
             for _output in mathematical_function.iter('output'):
                 output_name = xpath_to_param(_output.find('parameterUID').text)
                 local_outputs.append(output_name)
-
             _outputs.update({uid: local_outputs})
         return _outputs
 
@@ -229,7 +235,7 @@ class LEGOModel(CMDOWSObject, Group):
         _mathematical_functions = dict()
         implemented_eqs = []
         for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
-            if mathematical_function.attrib['uID'] in self.model_executable_blocks:
+            if mathematical_function.attrib['uID'] in self.model_executable_blocks or self.driver_uid in self.super_drivers:
                 uid = mathematical_function.attrib['uID']
                 group = Group()
 
@@ -241,7 +247,6 @@ class LEGOModel(CMDOWSObject, Group):
                         required_outputs.append(output_name)
 
                 # Then create mathematical subsystems for each output
-                # TODO: Add a check on whether equation has already been defined (check UIDs used)
                 for output in mathematical_function.iter('output'):
                     if output.find('parameterUID').text in required_outputs:
                         if output.find('equations') is None:
@@ -266,8 +271,9 @@ class LEGOModel(CMDOWSObject, Group):
 
                                 promotes = list()
                                 for eq_label, input_name in self.mathematical_functions_inputs[uid]:
-                                    # TODO: This mapping of the input name should get a more sophisticated logic
-                                    if input_name in self.mapped_parameters and input_name not in self.design_vars and not 'copyDesignVariable' in input_name:
+                                    # TODO: This mapping of the input name could get a more sophisticated logic
+                                    if input_name in self.mapped_parameters and input_name not in self.design_vars and\
+                                            not 'copyDesignVariable' in input_name:
                                         input_name = self.mapped_parameters[input_name]
 
                                     if eq_label in eq_expr:
@@ -374,7 +380,7 @@ class LEGOModel(CMDOWSObject, Group):
 
     @cached_property
     def coupled_hierarchy(self):
-        # type: () -> List[dict]
+        # type: () -> List[dict, str]
         """:obj:`list`: List containing the hierarchy of the coupled blocks for grouped convergence."""
         return self._get_coupled_hierarchy(self.full_loop_nesting_list)
 
@@ -472,8 +478,9 @@ class LEGOModel(CMDOWSObject, Group):
         for value in self.elem_cmdows.xpath(
                     r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="Coordinator"]/toParameterUID/text()'):
             if 'architectureNodes' not in value or 'designVariables' in value:
-                name = xpath_to_param(value)
-                _system_inputs.update({name: self.variable_sizes[name]})
+                if value in self.model_required_inputs or self.driver_uid in self.super_drivers:
+                    name = xpath_to_param(value)
+                    _system_inputs.update({name: self.variable_sizes[name]})
         return _system_inputs
 
     @cached_property
@@ -499,7 +506,6 @@ class LEGOModel(CMDOWSObject, Group):
         _model_super_inputs = {}
         for super_driver in self.super_drivers:
             for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/toParameterUID/text()'.format(super_driver)):
-                targets = []
                 if value in self.model_required_inputs:
                     name = xpath_to_param(value)
                     if name not in _model_super_inputs:
@@ -564,16 +570,6 @@ class LEGOModel(CMDOWSObject, Group):
             elem_desvar = get_element_by_uid(self.elem_cmdows, desvar_uid)
             name = xpath_to_param(elem_desvar.find('parameterUID').text)
 
-            # Obtain the initial value
-            initial = elem_desvar.find('nominalValue')
-            if initial is not None:
-                initial = parse_cmdows_value(initial)
-                if not self.does_value_fit(name, initial):
-                    raise ValueError('incompatible size of nominalValue for design variable "%s"' % name)
-            else:
-                warnings.warn('no nominalValue given for designVariable "%s". Default is all zeros.' % name)
-                initial = np.zeros(self.variable_sizes[name])
-
             # Obtain the lower and upper bounds
             bounds = 2 * [None]  # type: List[Optional[str]]
             limit_range = elem_desvar.find('validRanges/limitRange')
@@ -586,6 +582,22 @@ class LEGOModel(CMDOWSObject, Group):
                             raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
             else:
                 bounds[0], bounds[1] = None, None
+
+            # Obtain the initial value
+            # TODO: Adjust string formatting method to {}-notation
+            initial = elem_desvar.find('nominalValue')
+            if initial is not None:
+                initial = parse_cmdows_value(initial)
+                if not self.does_value_fit(name, initial):
+                    raise ValueError('Incompatible size of nominalValue for design variable "%s"' % name)
+            else:
+                if bounds[0] is None and bounds[1] is None:
+                    warnings.warn('No nominalValue given for designVariable "%s". Default is all zeros.' % name)
+                    initial = np.zeros(self.variable_sizes[name])
+                else:
+                    initial = (bounds[1] + bounds[0]) / 2.
+                    warnings.warn('No nominalValue given for designVariable "{}". Defaulted to middle value w.r.t. '
+                                  'bounds: {}.'.format(name, initial))
 
             # Add the design variable to the dict
             node_name = name if name not in self.coupling_vars else self.coupling_vars[name]['copy']
@@ -814,8 +826,8 @@ class LEGOModel(CMDOWSObject, Group):
                 n += 1
                 _system_order.append(str_to_valid_sys_name(block))
 
-        if n < len(self.discipline_components) + len(self.mathematical_functions_groups):
-            raise InvalidCMDOWSFileError('executableBlocksOrder is incomplete')
+        if len(self.discipline_components) + len(self.mathematical_functions_groups) < n:
+            raise InvalidCMDOWSFileError('something is wrong with the executableBlocksOrder')
 
         return _system_order
 
@@ -889,7 +901,7 @@ class LEGOModel(CMDOWSObject, Group):
         if self.coupled_hierarchy:
             self._configure_coupled_groups(self.coupled_hierarchy, True)
 
-        # TODO phase 3: Add the subdriver groups
+        # Add the subdriver groups
         for name in self.model_sub_drivers:
             from openlego.core.subdriver_component import SubDriverComponent
             self.add_subsystem(str_to_valid_sys_name(name),
@@ -903,7 +915,6 @@ class LEGOModel(CMDOWSObject, Group):
         # Put the blocks in the correct order
         self.set_order(list(self.system_order))
 
-        # TODO: Check addition of responses
         # Add the design variables
         for name, value in self.design_vars.items():
             self.add_design_var(name, lower=value['lower'], upper=value['upper'], ref0=value['ref0'], ref=value['ref'])
@@ -933,3 +944,15 @@ class LEGOModel(CMDOWSObject, Group):
                 self._outputs[name] = value
             elif name in self._inputs:
                 self._inputs[name] = value
+            if name in self.mapped_parameters_inv:
+                for mapping in self.mapped_parameters_inv[name]:
+                    if mapping in self._outputs:
+                        self._outputs[mapping] = value
+                    try:
+                        if mapping in self._inputs:
+                            self._inputs[mapping] = value
+                    except RuntimeError as e:
+                        if 'The promoted name' in e[0] and 'is invalid' in e[0]:
+                            warnings.warn('Could not automatically set this invalid promoted name from the XML: {}.'.format(mapping))
+                        else:
+                            raise RuntimeError(e)

@@ -193,7 +193,7 @@ class TestSellarCompetences(unittest.TestCase):
 
     def __del__(self):
         kb.clean()
-        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'sellar-output.xml'])
+        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'sellar-output.xml', 'SLSQP.out'])
 
 
 if __name__ == '__main__':

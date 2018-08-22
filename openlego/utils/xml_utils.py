@@ -87,10 +87,12 @@ def value_to_xml(elem, value):
 
     if isinstance(value, np.ndarray):
         if value.size == 1:
-            elem.text = str(value[0])
+            elem.text = str('{:.16f}'.format(value[0]))
         else:
-            elem.text = ';'.join([str(v) for v in value[:]])
+            elem.text = ';'.join([str('{:.16f}'.format(v)) for v in value[:]])
             elem.attrib.update({'mapType': 'vector'})
+    elif isinstance(value, float):
+        elem.text = str('{:.16f}'.format(value))
     else:
         elem.text = str(value)
 

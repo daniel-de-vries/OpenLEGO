@@ -386,9 +386,9 @@ class LEGOProblem(CMDOWSObject, Problem):
             recorded_objectives = case.get_objectives()
             recorded__desvars = case.get_desvars()
             recorded_constraints = case.get_constraints()
-            var_objectives = sorted(list(recorded_objectives.keys))
-            var_desvars = sorted(list(recorded__desvars.keys))
-            var_constraints = sorted(list(recorded_constraints.keys))
+            var_objectives = sorted(list(recorded_objectives.keys()))
+            var_desvars = sorted(list(recorded__desvars.keys()))
+            var_constraints = sorted(list(recorded_constraints.keys()))
             var_does = sorted([elem.text for elem in self.elem_arch_elems
                               .findall('parameters/doeOutputSampleLists/doeOutputSampleList/relatedParameterUID')])
             var_convs = sorted([elem.text for elem in self.elem_problem_def

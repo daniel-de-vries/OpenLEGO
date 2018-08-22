@@ -17,10 +17,7 @@ limitations under the License.
 
 This file contains the definition the `SubDriverComponent` class.
 """
-
 from openmdao.api import ExplicitComponent
-
-from openlego.utils.general_utils import str_to_valid_sys_name
 
 
 class SubDriverComponent(ExplicitComponent):
@@ -74,6 +71,7 @@ class SubDriverComponent(ExplicitComponent):
             p.store_model_view(open_in_browser=self.options['show_model'])
 
     def compute(self, inputs, outputs):
+        # Define problem of subdriver
         p = self.prob
 
         # Push global inputs down
@@ -83,9 +81,16 @@ class SubDriverComponent(ExplicitComponent):
         for input_name in p.model.model_super_inputs:
             p[input_name] = inputs[input_name]
 
+        # Set initial values of design variables back to original ones (to avoid using values of last run)
+        for des_var, attrbs in p.model.design_vars.items():
+            p[des_var] = attrbs['initial']
+
         # Run the driver
+        print('Optimizing subdriver {}'.format(self.options['driver_uid']))
         p.run_driver()
 
         # Pull the value back up to the output array
         for output_name in p.model.model_super_outputs:
             outputs[output_name] = p[output_name]
+
+        p.cleanup()

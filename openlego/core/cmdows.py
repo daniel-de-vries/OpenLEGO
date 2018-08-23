@@ -190,7 +190,7 @@ class CMDOWSObject(object):
     def _get_sub_drivers(self, loop_nesting_obj, super_driver_encountered=False):
         # type: (List[str, dict], bool) -> List[str]
         """Function to determine the subdrivers in a CMDOWS file.
-        
+
         Parameters
         ----------
             loop_nesting_obj : List[dict, str]

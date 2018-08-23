@@ -195,10 +195,10 @@ class CMDOWSObject(object):
         ----------
             loop_nesting_obj : List[dict, str]
                 Object containing the way different elements are nested.
-            
+
             super_driver_encountered : bool
                 Boolean on whether the superdriver has been encountered (used for iterative use of this function).
-        
+
         Returns
         -------
             sub_drivers : List[str]

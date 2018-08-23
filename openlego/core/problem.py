@@ -357,6 +357,10 @@ class LEGOProblem(CMDOWSObject, Problem):
         cases = CaseReader(self.case_reader_path).driver_cases
         num_cases = cases.num_cases
 
+        if num_cases == 0:
+            raise AssertionError('No cases were recorded and therefore no results can be collected. Note that '
+                                 'collect_results only works after the driver has been run.')
+
         # Change cases_to_print to a list of integers with case numbers
         if isinstance(cases_to_collect, str):
             if cases_to_collect == 'all':

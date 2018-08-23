@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Copyright 2018 D. de Vries
+Copyright 2018 D. de Vries and I. van Gent
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ This file contains the definition of the `LEGOModel` class.
 """
 from __future__ import absolute_import, division, print_function
 
+import copy
 import imp
 import os
 import warnings
@@ -51,25 +52,39 @@ class LEGOModel(CMDOWSObject, Group):
 
     Attributes
     ----------
-        cmdows_path
-        kb_path
+        objective_required
         discipline_components
-        block_order
-        coupled_blocks
-        system_order
-        system_variables
+        mapped_parameters
+        mapped_parameters_inv
+        mathematical_functions_inputs
+        mathematical_functions_outputs
+        mathematical_functions_groups
+        variables_sizes
+        coupling_vars
+        coupling_var_copies
+        coupling_var_cons
+        des_var_copies
+        loop_nesting_obj
+        loop_nesting_details
+        coupled_hierarchy
+        model_sub_drivers
+        model_super_drivers
+        model_super_components
         system_inputs
-        driver
+        model_required_inputs
+        model_all_outputs
+        model_super_inputs
+        model_super_inputs_inv
+        model_constants
+        model_super_outputs
+        design_vars
+        constraints
+        objective
+        system_order
         coordinator
-
-        data_folder : str, optional
-            Path to the folder in which to store all data generated during the `Problem`'s execution.
-
-        base_xml_file : str, optional
-            Path to an XML file which should be kept up-to-date with the latest data describing the problem.
     """
 
-    def __init__(self, cmdows_path=None, kb_path='', data_folder=None, base_xml_file=None, **kwargs):
+    def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None, base_xml_file=None, **kwargs):
         # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
         """Initialize a CMDOWS Problem from a given CMDOWS file and knowledge base.
 
@@ -92,7 +107,7 @@ class LEGOModel(CMDOWSObject, Group):
         """
         self.linear_solver = LinearRunOnce()
         self.nonlinear_solver = NonlinearRunOnce()
-        super(LEGOModel, self).__init__(cmdows_path, kb_path, data_folder, base_xml_file, **kwargs)
+        super(LEGOModel, self).__init__(cmdows_path, kb_path, driver_uid, data_folder, base_xml_file, **kwargs)
 
     def __setattr__(self, name, value):
         # type: (str, Any) -> None
@@ -130,38 +145,6 @@ class LEGOModel(CMDOWSObject, Group):
             or (not isinstance(val, np.ndarray) and self.variable_sizes[name] == 1)
 
     @cached_property
-    def has_optimizer(self):
-        # type: () -> bool
-        """:obj:`bool`: True if there is an optimizer, False if not."""
-        if self.elem_arch_elems.find('executableBlocks/optimizers/optimizer') is not None:
-            return True
-        return False
-
-    @cached_property
-    def has_doe(self):
-        # type: () -> bool
-        """:obj:`bool`: True if there is a DOE component, False if not."""
-        if self.elem_arch_elems.find('executableBlocks/does/doe') is not None:
-            return True
-        return False
-
-    @cached_property
-    def has_driver(self):
-        # type: () -> bool
-        """:obj:`bool`: True if there is a driver component (DOE or optimizer), False if not."""
-        if self.has_doe or self.has_optimizer:
-            return True
-        return False
-
-    @cached_property
-    def has_converger(self):
-        # type: () -> bool
-        """:obj:`bool`: True if there is a converger, False if not."""
-        if self.elem_arch_elems.find('executableBlocks/convergers/converger') is not None:
-            return True
-        return False
-
-    @cached_property
     def objective_required(self):
         # type: () -> bool
         """:obj:`bool`: True if an objective value is required, False if not."""
@@ -182,27 +165,28 @@ class LEGOModel(CMDOWSObject, Group):
         # Ensure that the knowledge base path is specified.
         _discipline_components = dict()
         for design_competence in self.elem_cmdows.iter('designCompetence'):
-            if not self._kb_path or not os.path.isdir(self._kb_path):
-                raise ValueError('No valid knowledge base path ({}) specified while the CMDOWS file contains design'
-                                 ' competences.'.format(self._kb_path))
-            uid = design_competence.attrib['uID']
-            name = design_competence.find('ID').text
-            try:
-                fp, pathname, description = imp.find_module(name, [self.kb_path])
-                mod = imp.load_module(name, fp, pathname, description)
-                cls = getattr(mod, name)  # type: AbstractDiscipline.__class__
-                if not issubclass(cls, AbstractDiscipline):
-                    raise RuntimeError
-            except Exception:
-                raise ValueError(
-                    'Unable to process CMDOWS file: no proper discipline found for design competence with name %s'
-                    % name)
-            finally:
-                if 'fp' in locals():
-                    fp.close()
+            if design_competence.attrib['uID'] in self.model_exec_blocks or self.driver_uid in self.super_drivers:
+                if not self._kb_path or not os.path.isdir(self._kb_path):
+                    raise ValueError('No valid knowledge base path ({}) specified while the CMDOWS file contains design'
+                                     ' competences.'.format(self._kb_path))
+                uid = design_competence.attrib['uID']
+                name = design_competence.find('ID').text
+                try:
+                    fp, pathname, description = imp.find_module(name, [self.kb_path])
+                    mod = imp.load_module(name, fp, pathname, description)
+                    cls = getattr(mod, name)  # type: AbstractDiscipline.__class__
+                    if not issubclass(cls, AbstractDiscipline):
+                        raise RuntimeError
+                except Exception:
+                    raise ValueError(
+                        'Unable to process CMDOWS file: no proper discipline found for design competence with name %s'
+                        % name)
+                finally:
+                    if 'fp' in locals():
+                        fp.close()
 
-            component = DisciplineComponent(cls(), data_folder=self.data_folder, base_file=self.base_xml_file)
-            _discipline_components.update({uid: component})
+                component = DisciplineComponent(cls(), data_folder=self.data_folder, base_file=self.base_xml_file)
+                _discipline_components.update({uid: component})
         return _discipline_components
 
     @cached_property
@@ -217,35 +201,43 @@ class LEGOModel(CMDOWSObject, Group):
         return mapped_params
 
     @cached_property
+    def mapped_parameters_inv(self):
+        # type: () -> Dict[str, list]
+        """:obj:`dict`: Dictionary with the inverse mapping of the parameters in the CMDOWS file."""
+        mapped_params_inv = dict()
+        for mapped_param, mapping in self.mapped_parameters.items():
+            if mapping not in mapped_params_inv:
+                mapped_params_inv[mapping] = [mapped_param]
+            else:
+                mapped_params_inv[mapping].append(mapped_param)
+        return mapped_params_inv
+
+    @cached_property
     def mathematical_functions_inputs(self):
-        # type: () -> Dict[str, List[Tuple[str]]]
+        # type: () -> dict
         """:obj:`dict`: Dictionary of all mathematical function blocks with a list of their input variables."""
         _inputs = dict()
         for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
             uid = mathematical_function.attrib['uID']
-
             local_inputs = list()
             for _input in mathematical_function.iter('input'):
                 input_name = xpath_to_param(_input.find('parameterUID').text)
                 eq_label = _input.find('equationLabel').text
                 local_inputs.append((eq_label, input_name))
-
             _inputs.update({uid: local_inputs})
         return _inputs
 
     @cached_property
     def mathematical_functions_outputs(self):
-        # type: () -> Dict[str, List[Tuple[str]]]
+        # type: () -> dict
         """:obj:`dict`: Dictionary of all mathematical function blocks with a list of their output variables."""
         _outputs = dict()
         for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
             uid = mathematical_function.attrib['uID']
-
             local_outputs = list()
             for _output in mathematical_function.iter('output'):
                 output_name = xpath_to_param(_output.find('parameterUID').text)
                 local_outputs.append(output_name)
-
             _outputs.update({uid: local_outputs})
         return _outputs
 
@@ -255,46 +247,56 @@ class LEGOModel(CMDOWSObject, Group):
         """:obj:`dict`: Dictionary of execute components by their mathematical function ``uID`` from CMDOWS.
         """
         _mathematical_functions = dict()
+        implemented_eqs = []
         for mathematical_function in self.elem_cmdows.iter('mathematicalFunction'):
-            uid = mathematical_function.attrib['uID']
-            group = Group()
+            if mathematical_function.attrib['uID'] in self.model_exec_blocks or \
+                    self.driver_uid in self.super_drivers:
+                uid = mathematical_function.attrib['uID']
+                group = Group()
 
-            eq_mapping = dict()
-            for output in mathematical_function.iter('output'):
-                if output.find('equations') is not None:
-                    for equation in output.iter('equation'):
-                        if equation.attrib['language'] == 'Python':
-                            eq_uid = equation.getparent().attrib['uID']
-                            eq_expr = equation.text
-                            eq_output = xpath_to_param(output.find('parameterUID').text)
+                # First select outputs for which subsystems should actually be added
+                required_outputs = []
+                for output in mathematical_function.iter('output'):
+                    output_name = output.find('parameterUID').text
+                    if '/architectureNodes/final' not in output_name:
+                        required_outputs.append(output_name)
 
-                            promotes = list()
-                            for eq_label, input_name in self.mathematical_functions_inputs[uid]:
-                                # TODO: This mapping of the input name should get a more sophisticated logic
-                                if input_name in self.mapped_parameters and input_name not in self.design_vars:
-                                    input_name = self.mapped_parameters[input_name]
+                # Then create mathematical subsystems for each output
+                for output in mathematical_function.iter('output'):
+                    if output.find('parameterUID').text in required_outputs:
+                        if output.find('equations') is None:
+                            eq_uid = output.find('equationsUID')
+                            if eq_uid is not None:
+                                eqs_elem = get_element_by_uid(self.elem_cmdows, eq_uid.text)
+                            else:
+                                raise AssertionError('Could not find equation UID.')
+                        else:
+                            eqs_elem = output.find('equations')
+                        for equation in eqs_elem.iter('equation'):
+                            if equation.attrib['language'] == 'Python':
+                                eq_uid = equation.getparent().attrib['uID']
+                                if eq_uid in implemented_eqs:
+                                    raise AssertionError('Equation with UID {} is already defined.'.format(eq_uid))
+                                implemented_eqs.append(eq_uid)
+                                eq_expr = equation.text
+                                eq_output = xpath_to_param(output.find('parameterUID').text)
+                                eq_output_label = output.find('parameterUID').text.split('/')[-1]
+                                if eq_output_label in eq_expr:  # check to avoid use of output name in expression
+                                    eq_output_label = eq_output_label + '__output'
 
-                                if eq_label in eq_expr:
-                                    promotes.append((eq_label, input_name))
+                                promotes = list()
+                                for eq_label, input_name in self.mathematical_functions_inputs[uid]:
+                                    # TODO: This mapping of the input name could get a more sophisticated logic
+                                    if input_name in self.mapped_parameters and input_name not in self.design_vars and \
+                                            'copyDesignVariable' not in input_name:
+                                        input_name = self.mapped_parameters[input_name]
 
-                            eq_mapping.update({eq_uid: eq_output})
-                            group.add_subsystem(str_to_valid_sys_name(eq_uid),
-                                                ExecComp('output = ' + eq_expr),
-                                                promotes=promotes + [('output', eq_output), ])
-
-            extra_output_counter = 0
-            for output in mathematical_function.iter('output'):
-                eq_uid = output.find('equationsUID')
-                if eq_uid is not None:
-                    eq_uid = eq_uid.text
-                    eq_output = xpath_to_param(output.find('parameterUID').text)
-
-                    group.add_subsystem('extra_output_{}'.format(extra_output_counter),
-                                        ExecComp('output = input'),
-                                        promotes=[('output', eq_output), ('input', eq_mapping[eq_uid])])
-                    extra_output_counter += 1
-
-            _mathematical_functions.update({uid: group})
+                                    if eq_label in eq_expr:
+                                        promotes.append((eq_label, input_name))
+                                group.add_subsystem(str_to_valid_sys_name(eq_uid),
+                                                    ExecComp(eq_output_label + ' = ' + eq_expr),
+                                                    promotes=promotes + [(eq_output_label, eq_output), ])
+                _mathematical_functions.update({uid: group})
 
         return _mathematical_functions
 
@@ -333,7 +335,6 @@ class LEGOModel(CMDOWSObject, Group):
             param = xpath_to_param(convar.find('relatedParameterUID').text)
             if param not in coupling_vars:
                 raise InvalidCMDOWSFileError()
-
             coupling_vars.update({param: {'copy': coupling_vars[param], 'con': xpath_to_param(convar.attrib['uID'])}})
         return coupling_vars
 
@@ -361,29 +362,18 @@ class LEGOModel(CMDOWSObject, Group):
             return None
 
     @cached_property
-    def block_order(self):
-        # type: () -> List[str]
-        """:obj:`list` of :obj:`str`: List of executable block ``uIDs`` in the order specified in the CMDOWS file."""
-        positions = list()
-        uids = list()
-        for block in self.elem_workflow.iterfind('processGraph/metadata/executableBlocksOrder/executableBlock'):
-            uid = block.text
-            positions.append(int(block.attrib['position']))
-            uids.append(uid)
-        return [uid for position, uid in sorted(zip(positions, uids))]
+    def des_var_copies(self):
+        # type: () -> Optional[Dict[str, str]]
+        """:obj:`dict`: Dictionary with design variable copies."""
+        _des_var_copies = dict()
+        for var in self.elem_arch_elems.iter('copyDesignVariable'):
+            if var.attrib['uID'] in self.design_vars.keys():
+                param, mapped = get_related_parameter_uid(var, self.elem_cmdows)
+                _des_var_copies.update({xpath_to_param(mapped): xpath_to_param(param)})
+        return _des_var_copies
 
     @cached_property
-    def coupled_blocks(self):
-        # type: () -> List[str]
-        """:obj:`list` of :obj:`str`: List of ``uIDs`` of the coupled executable blocks specified in the CMDOWS file."""
-        _coupled_blocks = []
-        for block in self.elem_arch_elems.iterfind(
-                'executableBlocks/coupledAnalyses/coupledAnalysis/relatedExecutableBlockUID'):
-            _coupled_blocks.append(block.text)
-        return _coupled_blocks
-
-    @cached_property
-    def loop_nesting_dict(self):
+    def loop_nesting_obj(self):
         # type: () -> Dict[str, dict]
         """:obj:`dict`: Dictionary of the loopNesting XML element."""
         return get_loop_nesting_obj(self.elem_loop_nesting)
@@ -407,178 +397,355 @@ class LEGOModel(CMDOWSObject, Group):
     def coupled_hierarchy(self):
         # type: () -> List[dict]
         """:obj:`list`: List containing the hierarchy of the coupled blocks for grouped convergence."""
-        return self._get_coupled_hierarchy(self.loop_nesting_dict)
+        return self._get_coupled_hierarchy(self.full_loop_nesting)
 
     def _get_coupled_hierarchy(self, hierarchy):
+        # type: (List[str, dict]) -> List[dict]
+        """:obj:`list`: List containing the partitioned hierarchy of the coupled blocks for grouped convergence."""
+        basic_hierarchy = self._get_basic_coupled_hierarchy(hierarchy)
+        basic_hierarchy_new = copy.deepcopy(basic_hierarchy)
+        # First determine the partition IDs of the different functions and converger groups.
+        for idx, entry in enumerate(basic_hierarchy):
+            sublevel_list = entry[entry.keys()[0]]
+            partitions_ids = [None]*len(sublevel_list)
+            # Find out to which partition the converger dictionaries and separate functions belong
+            for jdx, item in enumerate(sublevel_list):
+                if isinstance(item, dict):
+                    funcs = item[item.keys()[0]]
+                    funcs_partition_ids = [None]*len(funcs)
+                    for kdx, fun in enumerate(funcs):
+                        for key, part_set in self.partition_sets.items():
+                            if fun in part_set:
+                                funcs_partition_ids[kdx] = key
+                                continue
+                    # Check that all partition IDs are the same
+                    if not funcs_partition_ids.count(funcs_partition_ids[0]) == len(funcs_partition_ids):
+                        raise AssertionError('The functions inside the converger {} do not belong to the same '
+                                             'partition.'.format(item.keys()[0]))
+                    else:
+                        partitions_ids[jdx] = funcs_partition_ids[0]
+                elif isinstance(item, str):
+                    for key, part_set in self.partition_sets.items():
+                        if item in part_set:
+                            partitions_ids[jdx] = key
+                            continue
+            # If multiple items belong to multiple partitions, then create a partition group
+            for part_id in self.partition_sets.keys():
+                part_id_idxs = [i for i, j in enumerate(partitions_ids) if j == part_id]
+                if len(part_id_idxs) > 1:  # create new partition group for this case
+                    # Sort the part_id_idxs based on the step number
+                    process_steps = []
+                    updated_bhn = basic_hierarchy_new[idx][basic_hierarchy_new[idx].keys()[0]]
+                    for part_id_idx in part_id_idxs:
+                        list_item = updated_bhn[part_id_idx]
+                        if isinstance(list_item, dict):
+                            item_uid = list_item.keys()[0]
+                        elif isinstance(list_item, str):
+                            item_uid = list_item
+                        else:
+                            raise AssertionError('Could not map list_item.')
+                        process_steps.append(self.block_step_numbers[item_uid])
+                        part_id_idxs_sorted = [x for _, x in sorted(zip(process_steps, part_id_idxs))]
+                    # Create a partition group and delete items that have become part of the group
+                    part_dict = {'_Partition_{}'.format(part_id): []}
+                    for part_id_idx in part_id_idxs_sorted:
+                        part_dict['_Partition_{}'.format(part_id)].append(updated_bhn[part_id_idx])
+                    for part_id_idx in sorted(part_id_idxs, reverse=True):
+                        del basic_hierarchy_new[idx][entry.keys()[0]][part_id_idx]
+                        del partitions_ids[part_id_idx]
+                    # Add the new partition group to the hierarchy
+                    basic_hierarchy_new[idx][entry.keys()[0]].append(part_dict)
+        return basic_hierarchy_new
+
+    def _get_basic_coupled_hierarchy(self, hierarchy):
         # type: (List) -> List[dict]
-        """:obj:`list`: List containing the hierarchy of the coupled functions which defines the hierarchy of converged
-        groups."""
+        """:obj:`list`: List containing the basic (no partitions) hierarchy of the coupled functions which defines the
+        hierarchy of converged groups."""
         _coupled_hierarchy = []
         for entry in hierarchy:
             if isinstance(entry, dict):
                 keys = entry.keys()
                 if len(keys) != 1:
                     raise AssertionError('One key is expected in the dictionary of a process hierarchy.')
-                if self.loop_element_details[keys[0]] == 'converger':
+                if self.loop_element_types[keys[0]] == 'converger':
                     _coupled_hierarchy.append(entry)
                 else:
-                    return self._get_coupled_hierarchy(entry[keys[0]])
+                    return self._get_basic_coupled_hierarchy(entry[keys[0]])
         return _coupled_hierarchy
+
+    @cached_property
+    def model_sub_drivers(self):
+        # type: () -> List[str]
+        """:obj:`List[str]`: List with the subdrivers of the current model."""
+        return [name for name in self.sub_drivers if self.SUBDRIVER_PREFIX + name in self.model_exec_blocks]
+
+    @cached_property
+    def model_super_drivers(self):
+        # type: () -> List[str]
+        """:obj:`List[str]`: List with the superdrivers of the current model."""
+        return [name for name in self.super_drivers if self.SUPERDRIVER_PREFIX + name in self.all_loop_elements]
+
+    @cached_property
+    def model_super_components(self):
+        # type: () -> List[str]
+        """:obj:`List[str]`: List with the supercomponents of the current model."""
+        return [name for name in self.model_exec_blocks if self.SUPERCOMP_PREFIX in name]
 
     @cached_property
     def system_inputs(self):
         # type: () -> Dict[str, int]
-        """:obj:`dict`: Dictionary containing the system input sizes by their names."""
-        system_inputs = {}
+        """:obj:`Dict[str, int]`: Dictionary containing the system input sizes by their names."""
+        _system_inputs = {}
         for value in self.elem_cmdows.xpath(
                     r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="Coordinator"]/toParameterUID/text()'):
             if 'architectureNodes' not in value or 'designVariables' in value:
-                name = xpath_to_param(value)
-                system_inputs.update({name: self.variable_sizes[name]})
+                if value in self.model_required_inputs or self.driver_uid in self.super_drivers:
+                    name = xpath_to_param(value)
+                    _system_inputs.update({name: self.variable_sizes[name]})
+        return _system_inputs
 
-        return system_inputs
+    @cached_property
+    def model_required_inputs(self):
+        # type: () -> List[str]
+        """:obj:List[str]`: List with all inputs that are required in the model."""
+        _model_required_inputs = []
+        for ex_block in self.model_exec_blocks:
+            for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[toExecutableBlockUID="{}"]/'
+                                                r'fromParameterUID/text()'.format(ex_block)):
+                _model_required_inputs.append(value)
+        return _model_required_inputs
+
+    @cached_property
+    def model_all_outputs(self):
+        # type: () -> List[str]
+        """:obj:List[str]`: List with all outputs that are provided in the model."""
+        _model_all_outputs = []
+        for ex_block in self.model_exec_blocks:
+            for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/'
+                                                r'toParameterUID/text()'.format(ex_block)):
+                _model_all_outputs.append(value)
+        return _model_all_outputs
+
+    @cached_property
+    def model_super_inputs(self):
+        # type: () -> Dict[str, dict]
+        """:obj:`Dict[str, dict]`: Dictionary with the super inputs (keys) and their value and targets (values)."""
+        _model_super_inputs = {}
+        for super_driver in self.super_drivers:
+            for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/'
+                                                r'toParameterUID/text()'.format(super_driver)):
+                if value in self.model_required_inputs:
+                    name = xpath_to_param(value)
+                    if name not in _model_super_inputs:
+                        # Determine the targets of this input
+                        targets = [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID'
+                                                                     r'="{}"]/toExecutableBlockUID/text()'
+                                                                     .format(value)) if x in self.model_exec_blocks]
+                        _model_super_inputs.update({name: {'val': self.variable_sizes[name], 'targets': targets}})
+        return _model_super_inputs
+
+    @cached_property
+    def model_super_inputs_inv(self):
+        # type: () -> Dict[str]
+        """:obj:`Dict[str]`: Inverse mapping of the model super inputs."""
+        _model_super_inputs_inv_map = dict()
+        for msi in self.model_super_inputs:
+            if msi in self.mapped_parameters:
+                if self.mapped_parameters[msi] not in _model_super_inputs_inv_map:
+                    _model_super_inputs_inv_map.update({self.mapped_parameters[msi]: msi})
+                else:
+                    raise AssertionError('Model super input "{}" has already been mapped, cannot be mapped again.'
+                                         .format(msi))
+        return _model_super_inputs_inv_map
+
+    @cached_property
+    def model_constants(self):
+        # type: () -> Dict[str]
+        """:obj:`Dict[str]`: Constants used in the model."""
+        _model_constants = {}
+        for name, shape in self.system_inputs.items():
+            if name not in self.design_vars.keys():
+                _model_constants.update({name: shape})
+        return _model_constants
+
+    @cached_property
+    def model_super_outputs(self):
+        # type () -> Dict[str]
+        """:obj:`Dict[str]`: Super outputs of the model to be used outside its own group."""
+        _model_super_outputs = {}
+        for output in self.model_all_outputs:
+            for ex_block in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID="{}"]/'
+                                                   r'toExecutableBlockUID/text()'.format(output)):
+                if ex_block not in self.model_exec_blocks and ex_block not in self.all_loop_elements:
+                    if output in self.mapped_parameters:
+                        output = self.mapped_parameters[output]
+                    name = xpath_to_param(output)
+                    _model_super_outputs.update({name: self.variable_sizes[name]})
+                    continue
+        return _model_super_outputs
 
     @cached_property
     def design_vars(self):
         # type: () -> Dict[str, Dict[str, Any]]
         """:obj:`dict`: Dictionary containing the design variables' initial values, lower bounds, and upper bounds."""
-        desvars = self.elem_params.find('designVariables')
-        if desvars is None:
+        if self.has_driver:
+            desvars_uids = [elem.text for elem in
+                            self.elem_model_driver.findall('designVariables/designVariable/designVariableUID')]
+        else:
+            desvars_uids = []
+        if not desvars_uids:
             if self.has_driver:
-                raise Exception(
-                    'CMDOWS file {} does contain an optimizer, but no (valid) design variables'.format(self.cmdows_path)
-                )
+                raise Exception('CMDOWS file {} does contain an optimizer, but no (valid) design variables'
+                                .format(self.cmdows_path))
             else:
                 return {}
         design_vars = {}
-        for desvar in desvars:
-            name = xpath_to_param(desvar.find('parameterUID').text)
-
-            # Obtain the initial value
-            initial = desvar.find('nominalValue')
-            if initial is not None:
-                initial = parse_cmdows_value(initial)
-                if not self.does_value_fit(name, initial):
-                    raise ValueError('incompatible size of nominalValue for design variable "%s"' % name)
-            else:
-                warnings.warn('no nominalValue given for designVariable "%s". Default is all zeros.' % name)
-                initial = np.zeros(self.variable_sizes[name])
+        for desvar_uid in desvars_uids:
+            elem_desvar = get_element_by_uid(self.elem_cmdows, desvar_uid)
+            name = xpath_to_param(elem_desvar.find('parameterUID').text)
 
             # Obtain the lower and upper bounds
-            bounds = 2 * [None]  # type: List[Optional[str]]
-            limit_range = desvar.find('validRanges/limitRange')
+            bounds = 2 * [None]  # type: List[Optional[float, np.array]]
+            limit_range = elem_desvar.find('validRanges/limitRange')
             if limit_range is not None:
                 for index, bnd, in enumerate(['minimum', 'maximum']):
                     elem = limit_range.find(bnd)
                     if elem is not None:
                         bounds[index] = parse_cmdows_value(elem)
                         if not self.does_value_fit(name, bounds[index]):
-                            raise ValueError('incompatible size of %s for design variable %s' % (bnd, name))
+                            raise ValueError('incompatible size of {} for design variable {}'.format(bnd, name))
             else:
-                bounds[0] = None
-                bounds[1] = None
+                bounds[0], bounds[1] = None, None
+
+            # Obtain the initial value
+            initial = elem_desvar.find('nominalValue')
+            if initial is not None:
+                initial = parse_cmdows_value(initial)
+                if not self.does_value_fit(name, initial):
+                    raise ValueError('Incompatible size of nominalValue for design variable "{}"'.format(name))
+            else:
+                if bounds[0] is None and bounds[1] is None:
+                    warnings.warn('No nominalValue given for designVariable "{}". Default is all zeros.'.format(name))
+                    initial = np.zeros(self.variable_sizes[name])
+                else:
+                    initial = (bounds[1] + bounds[0]) / 2.
+                    warnings.warn('No nominalValue given for designVariable "{}". Defaulted to middle value w.r.t. '
+                                  'bounds: {}.'.format(name, initial))
 
             # Add the design variable to the dict
             node_name = name if name not in self.coupling_vars else self.coupling_vars[name]['copy']
+
+            # Check if the main driver is not a DOE with a Custom design table (then ref0 and ref should be None)
+            ref0, ref = bounds[0], bounds[1]
+            if self.has_doe:
+                if self.elem_arch_elems.findtext('executableBlocks/does/doe/settings/method') == 'Custom design table':
+                    ref0, ref = None, None
             design_vars.update({node_name: {'initial': initial,
                                             'lower': bounds[0], 'upper': bounds[1],
-                                            'ref0': bounds[0], 'ref': bounds[1]}})
+                                            'ref0': ref0, 'ref': ref}})
         return design_vars
 
     @cached_property
     def constraints(self):
         # type: () -> Dict[str, Dict[str, Any]]
         """:obj:`dict`: Dictionary containing the constraints' lower, upper, and equals reference values."""
-        convars = self.elem_params.find('constraintVariables')
+        if self.elem_model_driver is not None:
+            convars_uids = [elem.text for elem in
+                            self.elem_model_driver.findall('constraintVariables/constraintVariable/constraintVariableUID')]
+        else:
+            convars_uids = []
         constraints = {}
-        if convars is not None:
-            for convar in convars:
-                con = {'lower': None, 'upper': None, 'equals': None}
-                name = xpath_to_param(convar.find('parameterUID').text)
+        for convar_uid in convars_uids:
+            elem_convar = get_element_by_uid(self.elem_cmdows, convar_uid)
+            con = {'lower': None, 'upper': None, 'equals': None}
+            param_uid = elem_convar.find('parameterUID').text
+            if param_uid in self.mapped_parameters and 'architectureNodes/consistencyConstraint' not in param_uid:
+                param_uid = self.mapped_parameters[param_uid]
+            name = xpath_to_param(param_uid)
 
-                if self.coupling_var_cons is not None and name in self.coupling_var_cons.values():
-                    # If this is a coupling variable consistency constraint, equals should just be zero
-                    for key, value in self.coupling_var_cons.items():
-                        if name == value:
-                            size = self.variable_sizes[key]
-                            if size == 1:
-                                con['equals'] = 0.
-                            else:
-                                con['equals'] = np.zeros(self.variable_sizes[key])
-                            break
+            if self.coupling_var_cons is not None and name in self.coupling_var_cons.values():
+                # If this is a coupling variable consistency constraint, equals should just be zero
+                for key, value in self.coupling_var_cons.items():
+                    if name == value:
+                        size = self.variable_sizes[key]
+                        if size == 1:
+                            con['equals'] = 0.
+                        else:
+                            con['equals'] = np.zeros(self.variable_sizes[key])
+                        break
+            else:
+                # Obtain the reference value of the constraint
+                constr_ref = elem_convar.find('referenceValue')  # type: etree._Element
+                ref_vals = []
+                ref = None
+                if constr_ref is not None:
+                    refs_str = constr_ref.text
+                    if ';' in refs_str:
+                        refs = refs_str.split(';')
+                    else:
+                        refs = [refs_str]
+                    for ref in refs:
+                        ref_val = parse_string(ref)
+                        if isinstance(ref_val, str):
+                            raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
+                        elif not self.does_value_fit(name, ref_val):
+                            warnings.warn(
+                                'incompatible size of constraint "%s". Will assume the same for all.' % name)
+                            ref_val = np.ones(self.variable_sizes[name]) * np.atleast_1d(ref_val)[0]
+                        ref_vals.append(ref_val)
                 else:
-                    # Obtain the reference value of the constraint
-                    constr_ref = convar.find('referenceValue')  # type: etree._Element
-                    ref_vals = []
-                    ref = None
-                    if constr_ref is not None:
-                        refs_str = constr_ref.text
-                        if ';' in refs_str:
-                            refs = refs_str.split(';')
-                        else:
-                            refs = [refs_str]
-                        for ref in refs:
-                            ref_val = parse_string(ref)
-                            if isinstance(ref_val, str):
-                                raise ValueError('referenceValue for constraint "%s" is not numerical' % name)
-                            elif not self.does_value_fit(name, ref_val):
-                                warnings.warn(
-                                    'incompatible size of constraint "%s". Will assume the same for all.' % name)
-                                ref_val = np.ones(self.variable_sizes[name]) * np.atleast_1d(ref_val)[0]
-                            ref_vals.append(ref_val)
-                    else:
-                        warnings.warn('no referenceValue given for constraint "%s". Default is all zeros.' % name)
-                        ref_vals = [np.zeros(self.variable_sizes[name])]
+                    warnings.warn('no referenceValue given for constraint "%s". Default is all zeros.' % name)
+                    ref_vals = [np.zeros(self.variable_sizes[name])]
 
-                    # Process the constraint type
-                    constr_type = convar.find('constraintType')
-                    if constr_type is not None:
-                        if constr_type.text == 'inequality':
-                            constr_oper = convar.find('constraintOperator')
-                            if constr_oper is not None:
-                                opers_str = constr_oper.text
-                                if ';' in opers_str:
-                                    opers = opers_str.split(';')
-                                else:
-                                    opers = [opers_str]
-                                for idx, oper in enumerate(opers):
-                                    if oper == '>=' or oper == '>':
-                                        con['lower'] = ref_vals[idx]
-                                    elif oper == '<=' or oper == '<':
-                                        con['upper'] = ref_vals[idx]
-                                    else:
-                                        raise ValueError(
-                                            'invalid constraintOperator "%s" for constraint "%s"' % (oper, name))
+                # Process the constraint type
+                constr_type = elem_convar.find('constraintType')
+                if constr_type is not None:
+                    if constr_type.text == 'inequality':
+                        constr_oper = elem_convar.find('constraintOperator')
+                        if constr_oper is not None:
+                            opers_str = constr_oper.text
+                            if ';' in opers_str:
+                                opers = opers_str.split(';')
                             else:
-                                warnings.warn(
-                                    'no constraintOperator given for inequality constraint. Default is "&lt;=".')
-                                con['upper'] = ref_vals[0]
-                        elif constr_type.text == 'equality':
-                            if convar.find('constraintOperator') is not None:
-                                warnings.warn('constraintOperator given for an equalityConstraint will be ignored')
-                            con['equals'] = ref_vals[0]
+                                opers = [opers_str]
+                            for idx, oper in enumerate(opers):
+                                if oper == '>=' or oper == '>':
+                                    con['lower'] = ref_vals[idx]
+                                elif oper == '<=' or oper == '<':
+                                    con['upper'] = ref_vals[idx]
+                                else:
+                                    raise ValueError(
+                                        'invalid constraintOperator "%s" for constraint "%s"' % (oper, name))
                         else:
-                            raise ValueError(
-                                'invalid constraintType "%s" for constraint "%s".' % (constr_type.text, name))
+                            warnings.warn(
+                                'no constraintOperator given for inequality constraint. Default is "&lt;=".')
+                            con['upper'] = ref_vals[0]
+                    elif constr_type.text == 'equality':
+                        if elem_convar.find('constraintOperator') is not None:
+                            if elem_convar.find('constraintOperator').text != '==':
+                                warnings.warn('constraintOperator given for an equalityConstraint will be ignored')
+                        con['equals'] = ref_vals[0]
                     else:
-                        warnings.warn('no constraintType specified for constraint "%s". Default is a <= inequality.')
-                        con['upper'] = ref
+                        raise ValueError(
+                            'invalid constraintType "%s" for constraint "%s".' % (constr_type.text, name))
+                else:
+                    warnings.warn('no constraintType specified for constraint "%s". Default is a <= inequality.')
+                    con['upper'] = ref
 
-                # Add constraint to the dictionary
-                constraints.update({name: con})
+            # Add constraint to the dictionary
+            constraints.update({name: con})
         return constraints
 
     @cached_property
     def objective(self):
         # type: () -> str
         """:obj:`str`: Name of the objective variable."""
-        objvars = self.elem_params.find('objectiveVariables')
         if self.objective_required:
-            if objvars is None:
-                raise InvalidCMDOWSFileError('does not contain (valid) objective variables')
-            if len(objvars) > 1:
-                raise InvalidCMDOWSFileError('contains multiple objectives, but this is not supported')
-            return xpath_to_param(objvars[0].find('parameterUID').text)
+            uid_obj = self.elem_model_driver.findtext('objectiveVariables/objectiveVariable/objectiveVariableUID')
+            if uid_obj is None:
+                raise InvalidCMDOWSFileError('does not contain (valid) objective variable')
+            obj_elem = get_element_by_uid(self.elem_cmdows, uid_obj)
+            return xpath_to_param(obj_elem.findtext('parameterUID'))
         else:
             pass
 
@@ -602,42 +769,52 @@ class LEGOModel(CMDOWSObject, Group):
                 else:
                     subsys = coupled_group.add_subsystem(str_to_valid_sys_name(uid),
                                                          self._configure_coupled_groups(entry[uid], False), ['*'])
-                conv_elem = get_element_by_uid(self.elem_arch_elems, uid)
-                # Define linear solver
-                linsol_elem = conv_elem.find('settings/linearSolver')
-                if isinstance(linsol_elem, _Element):
-                    if linsol_elem.find('method').text == 'Gauss-Seidel':
-                        linsol = subsys.linear_solver = LinearBlockGS()
-                    elif linsol_elem.find('method').text == 'Jacobi':
-                        linsol = subsys.linear_solver = LinearBlockJac()
-                    else:
-                        raise ValueError('Specified convergerType "{}" is not supported.'
-                                         .format(linsol_elem.find('method').text))
-                    linsol.options['maxiter'] = int(linsol_elem.find('maximumIterations').text)
-                    linsol.options['atol'] = float(linsol_elem.find('convergenceToleranceAbsolute').text)
-                    linsol.options['rtol'] = float(linsol_elem.find('convergenceToleranceRelative').text)
+                if '_Partition_' not in uid:
+                    conv_elem = get_element_by_uid(self.elem_arch_elems, uid)
                 else:
-                    subsys.linear_solver = DirectSolver()
-                    warnings.warn('Linear solver was not defined in CMDOWS file for converger {}. linear_solver set to'
-                                  ' default "DirectSolver()".'.format(str_to_valid_sys_name(uid)))
+                    conv_elem = None
+                # Define linear solver
+                if conv_elem is not None:
+                    linsol_elem = conv_elem.find('settings/linearSolver')
+                    if isinstance(linsol_elem, _Element):
+                        if linsol_elem.find('method').text == 'Gauss-Seidel':
+                            linsol = subsys.linear_solver = LinearBlockGS()
+                        elif linsol_elem.find('method').text == 'Jacobi':
+                            linsol = subsys.linear_solver = LinearBlockJac()
+                        else:
+                            raise ValueError('Specified convergerType "{}" is not supported.'
+                                             .format(linsol_elem.find('method').text))
+                        linsol.options['maxiter'] = int(linsol_elem.find('maximumIterations').text)
+                        linsol.options['atol'] = float(linsol_elem.find('convergenceToleranceAbsolute').text)
+                        linsol.options['rtol'] = float(linsol_elem.find('convergenceToleranceRelative').text)
+                    else:
+                        subsys.linear_solver = DirectSolver()
+                        warnings.warn('Linear solver was not defined in CMDOWS file for converger {}. linear_solver set'
+                                      ' to default "DirectSolver()".'.format(str_to_valid_sys_name(uid)))
+                else:
+                    subsys.linear_solver = LinearRunOnce()
 
                 # Define nonlinear solver
-                nonlinsol_elem = conv_elem.find('settings/nonlinearSolver')
-                if isinstance(nonlinsol_elem, _Element):
-                    if nonlinsol_elem.find('method').text == 'Gauss-Seidel':
-                        nonlinsol = subsys.nonlinear_solver = NonlinearBlockGS()
-                    elif nonlinsol_elem.find('method').text == 'Jacobi':
-                        nonlinsol = subsys.nonlinear_solver = NonlinearBlockJac()
+                if conv_elem is not None:
+                    nonlinsol_elem = conv_elem.find('settings/nonlinearSolver')
+                    if isinstance(nonlinsol_elem, _Element):
+                        if nonlinsol_elem.find('method').text == 'Gauss-Seidel':
+                            nonlinsol = subsys.nonlinear_solver = NonlinearBlockGS()
+                        elif nonlinsol_elem.find('method').text == 'Jacobi':
+                            nonlinsol = subsys.nonlinear_solver = NonlinearBlockJac()
+                        else:
+                            raise ValueError('Specified convergerType "{}" is not supported.'
+                                             .format(nonlinsol_elem.find('method').text))
+                        nonlinsol.options['maxiter'] = int(nonlinsol_elem.find('maximumIterations').text)
+                        nonlinsol.options['atol'] = float(nonlinsol_elem.find('convergenceToleranceAbsolute').text)
+                        nonlinsol.options['rtol'] = float(nonlinsol_elem.find('convergenceToleranceRelative').text)
                     else:
-                        raise ValueError('Specified convergerType "{}" is not supported.'
-                                         .format(nonlinsol_elem.find('method').text))
-                    nonlinsol.options['maxiter'] = int(nonlinsol_elem.find('maximumIterations').text)
-                    nonlinsol.options['atol'] = float(nonlinsol_elem.find('convergenceToleranceAbsolute').text)
-                    nonlinsol.options['rtol'] = float(nonlinsol_elem.find('convergenceToleranceRelative').text)
+                        subsys.nonlinear_solver = NonlinearRunOnce()
+                        warnings.warn('Nonlinear solver was not defined in CMDOWS file for converger {}. '
+                                      'nonlinear_solver set to default "NonlinearRunOnce()".'
+                                      .format(str_to_valid_sys_name(uid)))
                 else:
                     subsys.nonlinear_solver = NonlinearRunOnce()
-                    warnings.warn('Nonlinear solver was not defined in CMDOWS file for converger {}. nonlinear_solver'
-                                  ' set to default "NonlinearRunOnce()".'.format(str_to_valid_sys_name(uid)))
             elif isinstance(entry, str):  # if entry specifies an executable block
                 if root:
                     raise AssertionError('Code was not expected to get here for root == True.')
@@ -661,33 +838,14 @@ class LEGOModel(CMDOWSObject, Group):
         else:
             return coupled_group
 
-    # TODO: implement this property in phase 3 (required for distributed architectures such as BLISS-2000 and CO)
-    @cached_property
-    def subsystem_optimization_groups(self):
-        # type: () -> Optional[list]
-        """:obj:`list`, optional: list containing groups of suboptimizations used in distributed architectures.
-
-        If not subsystem optimizations are required based on the CMDOWS file then this property is `None`.
-        """
-        if self.subsystem_optimizations:
-            return None
-            # Add inputs (standardized?)
-            # Add output
-            # Declare partials
-            # Set subproblem
-            # Define copies in params subsystem
-            # Define design variables
-            # Define components
-            # Connect everything together (through promotion?)
-            # Set subproblem optimizer
-            # Add design variables, objective, constraints
-            # Setup and final setup
-
     @cached_property
     def system_order(self):
         # type: () -> List[str]
         """:obj:`list` of :obj:`str`: List system names in the order specified in the CMDOWS file."""
         _system_order = ['coordinator']
+        for name in self.model_super_drivers:
+            _system_order.append(str_to_valid_sys_name(name))
+
         coupled_group_set = False
         n = 0
         for block in self.block_order:
@@ -697,12 +855,12 @@ class LEGOModel(CMDOWSObject, Group):
                     for entry in self.coupled_hierarchy:
                         _system_order.append(str_to_valid_sys_name(entry.keys()[0]))
                     coupled_group_set = True
-            elif block in self.discipline_components or block in self.mathematical_functions_groups:
+            elif block in self.model_exec_blocks or self.SUBDRIVER_PREFIX + block in self.model_exec_blocks:
                 n += 1
                 _system_order.append(str_to_valid_sys_name(block))
 
-        if n < len(self.discipline_components) + len(self.mathematical_functions_groups):
-            raise InvalidCMDOWSFileError('executableBlocksOrder is incomplete')
+        if len(self.discipline_components) + len(self.mathematical_functions_groups) < n:
+            raise InvalidCMDOWSFileError('something is wrong with the executableBlocksOrder')
 
         return _system_order
 
@@ -720,11 +878,23 @@ class LEGOModel(CMDOWSObject, Group):
             coordinator.add_output(name, value['initial'])
 
         # Add system constants
-        for name, shape in self.system_inputs.items():
-            if name not in self.design_vars.keys():
-                coordinator.add_output(name, shape=shape)
+        for name, shape in self.model_constants.items():
+            coordinator.add_output(name, shape=shape)
 
         return coordinator
+
+    def configure_super_driver(self, name):
+        # type: () -> IndepVarComp
+        """:obj:`IndepVarComp`: An `IndepVarComp` representing a super driver in a subdriver system."""
+        super_driver = IndepVarComp()
+
+        # Add superdriver outputs
+        for value in self.elem_cmdows.xpath(
+                r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/toParameterUID/text()'.format(name)):
+            if 'architectureNodes/finalDesignVariables' not in value and value in self.model_required_inputs:
+                name = xpath_to_param(value)
+                super_driver.add_output(xpath_to_param(value), self.variable_sizes[name])
+        return super_driver
 
     def setup(self):
         # type: () -> None
@@ -732,9 +902,13 @@ class LEGOModel(CMDOWSObject, Group):
         # Add the coordinator
         self.add_subsystem('coordinator', self.coordinator, ['*'])
 
+        # Add superdrivers as IndepVarComps
+        for name in self.model_super_drivers:
+            self.add_subsystem(str_to_valid_sys_name(name), self.configure_super_driver(name), ['*'])
+
         # Add all pre-coupling and post-coupling components
         for name, component in self.discipline_components.items():
-            if name not in self.coupled_blocks:
+            if name not in self.coupled_blocks and name in self.model_exec_blocks:
                 promotes = ['*']
                 # Change input variable names if they are provided as copies of coupling variables
                 for i in component.inputs_from_xml.keys():
@@ -742,15 +916,34 @@ class LEGOModel(CMDOWSObject, Group):
                         if isinstance(self.coupling_vars[i], dict):
                             if 'copy' in self.coupling_vars[i]:
                                 promotes.append((i, self.coupling_vars[i]['copy']))
+                    elif i in self.des_var_copies:
+                        promotes.append((i, self.des_var_copies[i]))
+                    elif i in self.model_super_inputs_inv:
+                        mapped_var = self.model_super_inputs_inv[i]
+                        if mapped_var in self.model_super_inputs:
+                            if name in self.model_super_inputs[mapped_var]['targets']:
+                                promotes.append((i, mapped_var))
                 self.add_subsystem(str_to_valid_sys_name(name), component, promotes)
         for name, component in self.mathematical_functions_groups.items():
-            if name not in self.coupled_blocks:
-                # TODO: Adjust promotion of variables for copies?
+            if name not in self.coupled_blocks and name in self.model_exec_blocks:
                 self.add_subsystem(str_to_valid_sys_name(name), component, ['*'])
 
         # Add the coupled groups
         if self.coupled_hierarchy:
             self._configure_coupled_groups(self.coupled_hierarchy, True)
+
+        # Add the subdriver groups
+        for name in self.model_sub_drivers:
+            from openlego.core.subdriver_component import SubDriverComponent
+            split_file_name = os.path.splitext(self.base_xml_file)
+            base_xml_file = split_file_name[0] + '_' + name + split_file_name[1]
+            self.add_subsystem(str_to_valid_sys_name(name),
+                               SubDriverComponent(cmdows_path=self.cmdows_path,
+                                                  driver_uid=name,
+                                                  kb_path=self.kb_path,
+                                                  data_folder=self.data_folder,
+                                                  base_xml_file=base_xml_file,
+                                                  show_model=False), promotes=['*'])
 
         # Put the blocks in the correct order
         self.set_order(list(self.system_order))
@@ -784,3 +977,15 @@ class LEGOModel(CMDOWSObject, Group):
                 self._outputs[name] = value
             elif name in self._inputs:
                 self._inputs[name] = value
+            if name in self.mapped_parameters_inv:
+                for mapping in self.mapped_parameters_inv[name]:
+                    if mapping in self._outputs:
+                        self._outputs[mapping] = value
+                    try:
+                        if mapping in self._inputs:
+                            self._inputs[mapping] = value
+                    except RuntimeError as e:
+                        if 'The promoted name' in e[0] and 'is invalid' in e[0]:
+                            warnings.warn('Could not automatically set this invalid promoted name from the XML: {}.'.format(mapping))
+                        else:
+                            raise RuntimeError(e)

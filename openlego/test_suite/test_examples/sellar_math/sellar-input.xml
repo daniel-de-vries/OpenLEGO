@@ -8,14 +8,8 @@
         <z1>1.0</z1>
         <z2>5.0</z2>
     </geometry>
-    <architectureNodes>
-        <couplingCopyVariables>
-            <data_schemaCopy>
-                <analyses>
-                    <y1>5.0</y1>
-                    <y2>5.0</y2>
-                </analyses>
-            </data_schemaCopy>
-        </couplingCopyVariables>
-    </architectureNodes>
+    <analyses>
+        <y1>2.0</y1>
+        <y2>2.0</y2>
+    </analyses>
 </dataSchema>

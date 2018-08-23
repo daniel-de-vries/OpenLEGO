@@ -58,10 +58,10 @@ setup(
         'openlego.test_suite.test_examples'
     ],
     install_requires=[
-        'openmdao',
+        'openmdao>=2.4.0',
         'lxml',
         'numpy',
-        'ssbj-kadmos',
+        'ssbjkadmos',
         'cached-property'
     ],
     include_package_data=True,

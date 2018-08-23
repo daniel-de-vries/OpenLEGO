@@ -3,14 +3,14 @@
   <header>
     <creator>Imco van Gent</creator>
     <description>Mdao CMDOWS file of the well-known Sellar problem</description>
-    <timestamp>2018-08-03T12:43:38.877784</timestamp>
+    <timestamp>2018-08-21T09:50:51.226421</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2018-08-03T12:43:38.877784</timestamp>
+        <timestamp>2018-08-21T09:50:51.226421</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -756,13 +756,6 @@
             </loopElement>
           </loopElements>
         </loopNesting>
-        <executableBlocksOrder>
-          <executableBlock position="1">D2</executableBlock>
-          <executableBlock position="2">D1</executableBlock>
-          <executableBlock position="3">G2</executableBlock>
-          <executableBlock position="4">G1</executableBlock>
-          <executableBlock position="5">F</executableBlock>
-        </executableBlocksOrder>
       </metadata>
     </processGraph>
   </workflow>
@@ -870,8 +863,8 @@
             <algorithm>SLSQP</algorithm>
             <maximumIterations>1000</maximumIterations>
             <maximumFunctionEvaluations>1000</maximumFunctionEvaluations>
-            <convergenceTolerance>0.0001</convergenceTolerance>
-            <constraintTolerance>0.0001</constraintTolerance>
+            <convergenceTolerance>1e-06</convergenceTolerance>
+            <constraintTolerance>1e-06</constraintTolerance>
             <applyScaling>true</applyScaling>
           </settings>
           <designVariables>

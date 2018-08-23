@@ -3,14 +3,14 @@
   <header>
     <creator>Imco van Gent</creator>
     <description>Mdao CMDOWS file of the well-known Sellar problem</description>
-    <timestamp>2018-08-06T10:09:18.689152</timestamp>
+    <timestamp>2018-08-20T15:17:11.787860</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2018-08-06T10:09:18.689152</timestamp>
+        <timestamp>2018-08-20T15:17:11.787860</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -47,24 +47,6 @@
   </header>
   <executableBlocks>
     <mathematicalFunctions>
-      <mathematicalFunction uID="A">
-        <label>A</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/settings/a</parameterUID>
-            <equationLabel>a</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/settings/c</parameterUID>
-            <equations uID="A_equation">
-              <equation language="Python">a</equation>
-            </equations>
-          </output>
-        </outputs>
-      </mathematicalFunction>
       <mathematicalFunction uID="F1">
         <label>F1</label>
         <functionType>regular</functionType>
@@ -91,6 +73,32 @@
             <parameterUID>/dataSchema/analyses/f</parameterUID>
             <equations uID="F1_equation">
               <equation language="Python">x1**2+z2+y1+exp(-y2)</equation>
+            </equations>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="D2">
+        <label>D2</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</parameterUID>
+            <equationLabel>y1</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/geometry/z1</parameterUID>
+            <equationLabel>z1</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/geometry/z2</parameterUID>
+            <equationLabel>z2</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/analyses/y2</parameterUID>
+            <equations uID="D2_equation">
+              <equation language="Python">abs(y1)**.5 + z1 + z2</equation>
             </equations>
           </output>
         </outputs>
@@ -131,36 +139,6 @@
           </output>
         </outputs>
       </mathematicalFunction>
-      <mathematicalFunction uID="D2">
-        <label>D2</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</parameterUID>
-            <equationLabel>y1</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/geometry/z1</parameterUID>
-            <equationLabel>z1</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/settings/c</parameterUID>
-            <equationLabel>c</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/geometry/z2</parameterUID>
-            <equationLabel>z2</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/analyses/y2</parameterUID>
-            <equations uID="D2_equation">
-              <equation language="Python">abs(y1)**.5 + z1 + z2</equation>
-            </equations>
-          </output>
-        </outputs>
-      </mathematicalFunction>
       <mathematicalFunction uID="D1">
         <label>D1</label>
         <functionType>regular</functionType>
@@ -186,10 +164,6 @@
           <input>
             <parameterUID>/dataSchema/analyses/y2</parameterUID>
             <equationLabel>y2</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/settings/c</parameterUID>
-            <equationLabel>c</equationLabel>
           </input>
           <input>
             <parameterUID>/dataSchema/geometry/z2</parameterUID>
@@ -220,24 +194,16 @@
       <label>f</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/settings/a">
-      <label>a</label>
-      <instanceID>1</instanceID>
-    </parameter>
     <parameter uID="/dataSchema/analyses/y1">
       <label>y1</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/settings/c">
-      <label>c</label>
+    <parameter uID="/dataSchema/analyses/y2">
+      <label>y2</label>
       <instanceID>1</instanceID>
     </parameter>
     <parameter uID="/dataSchema/geometry/z2">
       <label>z2</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/analyses/y2">
-      <label>y2</label>
       <instanceID>1</instanceID>
     </parameter>
     <parameter uID="/dataSchema/geometry/z1">
@@ -254,12 +220,11 @@
       <mdaoArchitecture>unconverged-MDA</mdaoArchitecture>
       <convergerType>Gauss-Seidel</convergerType>
       <executableBlocksOrder>
-        <executableBlock position="1">A</executableBlock>
-        <executableBlock position="2">D2</executableBlock>
-        <executableBlock position="3">D1</executableBlock>
-        <executableBlock position="4">G1</executableBlock>
-        <executableBlock position="5">G2</executableBlock>
-        <executableBlock position="6">F1</executableBlock>
+        <executableBlock position="1">D2</executableBlock>
+        <executableBlock position="2">D1</executableBlock>
+        <executableBlock position="3">G1</executableBlock>
+        <executableBlock position="4">G2</executableBlock>
+        <executableBlock position="5">F1</executableBlock>
       </executableBlocksOrder>
       <allowUnconvergedCouplings>true</allowUnconvergedCouplings>
     </problemFormulation>
@@ -284,9 +249,6 @@
         </stateVariables>
       </parameters>
       <executableBlocks>
-        <preCouplingBlocks>
-          <preCouplingBlock>A</preCouplingBlock>
-        </preCouplingBlocks>
         <coupledBlocks>
           <coupledBlock>D2</coupledBlock>
           <coupledBlock>D1</coupledBlock>
@@ -304,10 +266,6 @@
     <dataGraph>
       <name>XDSM - unconverged-MDA-GS</name>
       <edges>
-        <edge>
-          <fromExecutableBlockUID>A</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/settings/c</toParameterUID>
-        </edge>
         <edge>
           <fromExecutableBlockUID>F1</fromExecutableBlockUID>
           <toParameterUID>/dataSchema/analyses/f</toParameterUID>
@@ -350,15 +308,11 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/geometry/z1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
           <toParameterUID>/dataSchema/geometry/x1</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/settings/a</toParameterUID>
+          <toParameterUID>/dataSchema/geometry/z1</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
@@ -367,30 +321,6 @@
         <edge>
           <fromParameterUID>/dataSchema/analyses/f</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/settings/a</fromParameterUID>
-          <toExecutableBlockUID>A</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/settings/c</fromParameterUID>
-          <toExecutableBlockUID>D2</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/settings/c</fromParameterUID>
-          <toExecutableBlockUID>D1</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
-          <toExecutableBlockUID>F1</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
-          <toExecutableBlockUID>D2</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
-          <toExecutableBlockUID>D1</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
@@ -406,6 +336,18 @@
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>D1</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
+          <toExecutableBlockUID>F1</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
+          <toExecutableBlockUID>D2</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
           <toExecutableBlockUID>D1</toExecutableBlockUID>
         </edge>
         <edge>
@@ -438,87 +380,77 @@
       <name>mpg Sellar problem</name>
       <edges>
         <edge>
-          <fromExecutableBlockUID>A</fromExecutableBlockUID>
-          <toExecutableBlockUID>D2</toExecutableBlockUID>
-          <processStepNumber>2</processStepNumber>
-        </edge>
-        <edge>
           <fromExecutableBlockUID>F1</fromExecutableBlockUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-          <processStepNumber>5</processStepNumber>
+          <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>G2</fromExecutableBlockUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-          <processStepNumber>5</processStepNumber>
+          <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>G1</fromExecutableBlockUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-          <processStepNumber>5</processStepNumber>
+          <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toExecutableBlockUID>A</toExecutableBlockUID>
+          <toExecutableBlockUID>D2</toExecutableBlockUID>
           <processStepNumber>1</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>D2</fromExecutableBlockUID>
           <toExecutableBlockUID>G2</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>D2</fromExecutableBlockUID>
           <toExecutableBlockUID>D1</toExecutableBlockUID>
-          <processStepNumber>3</processStepNumber>
+          <processStepNumber>2</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>D1</fromExecutableBlockUID>
           <toExecutableBlockUID>F1</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>D1</fromExecutableBlockUID>
           <toExecutableBlockUID>G1</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
         </edge>
       </edges>
       <nodes>
         <node>
-          <referenceUID>A</referenceUID>
-          <processStepNumber>1</processStepNumber>
-          <diagonalPosition>1</diagonalPosition>
-        </node>
-        <node>
           <referenceUID>F1</referenceUID>
-          <processStepNumber>4</processStepNumber>
-          <diagonalPosition>6</diagonalPosition>
-        </node>
-        <node>
-          <referenceUID>G2</referenceUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
           <diagonalPosition>5</diagonalPosition>
         </node>
         <node>
-          <referenceUID>G1</referenceUID>
-          <processStepNumber>4</processStepNumber>
+          <referenceUID>G2</referenceUID>
+          <processStepNumber>3</processStepNumber>
           <diagonalPosition>4</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>G1</referenceUID>
+          <processStepNumber>3</processStepNumber>
+          <diagonalPosition>3</diagonalPosition>
         </node>
         <node>
           <referenceUID>Coordinator</referenceUID>
           <processStepNumber>0</processStepNumber>
-          <convergerStepNumber>5</convergerStepNumber>
+          <convergerStepNumber>4</convergerStepNumber>
           <diagonalPosition>0</diagonalPosition>
         </node>
         <node>
           <referenceUID>D2</referenceUID>
-          <processStepNumber>2</processStepNumber>
-          <diagonalPosition>2</diagonalPosition>
+          <processStepNumber>1</processStepNumber>
+          <diagonalPosition>1</diagonalPosition>
         </node>
         <node>
           <referenceUID>D1</referenceUID>
-          <processStepNumber>3</processStepNumber>
-          <diagonalPosition>3</diagonalPosition>
+          <processStepNumber>2</processStepNumber>
+          <diagonalPosition>2</diagonalPosition>
         </node>
       </nodes>
       <metadata>
@@ -526,7 +458,6 @@
           <loopElements>
             <loopElement relatedUID="Coordinator">
               <functionElements>
-                <functionElement>A</functionElement>
                 <functionElement>D2</functionElement>
                 <functionElement>D1</functionElement>
                 <functionElement>F1</functionElement>
@@ -536,14 +467,6 @@
             </loopElement>
           </loopElements>
         </loopNesting>
-        <executableBlocksOrder>
-          <executableBlock position="1">A</executableBlock>
-          <executableBlock position="2">D2</executableBlock>
-          <executableBlock position="3">D1</executableBlock>
-          <executableBlock position="4">F1</executableBlock>
-          <executableBlock position="5">G2</executableBlock>
-          <executableBlock position="6">G1</executableBlock>
-        </executableBlocksOrder>
       </metadata>
     </processGraph>
   </workflow>
@@ -563,11 +486,6 @@
           <label>COOR</label>
         </coordinator>
       </coordinators>
-      <preCouplingAnalyses>
-        <preCouplingAnalysis>
-          <relatedExecutableBlockUID>A</relatedExecutableBlockUID>
-        </preCouplingAnalysis>
-      </preCouplingAnalyses>
       <postCouplingAnalyses>
         <postCouplingAnalysis>
           <relatedExecutableBlockUID>F1</relatedExecutableBlockUID>

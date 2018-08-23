@@ -24,14 +24,14 @@ import os
 
 from cached_property import cached_property
 from lxml.etree import _Element, _ElementTree
-from openmdao.api import Problem, ScipyOptimizeDriver, pyOptSparseDriver, DOEDriver, UniformGenerator, \
+from openmdao.api import Problem, ScipyOptimizeDriver, DOEDriver, UniformGenerator, \
     FullFactorialGenerator, BoxBehnkenGenerator, LatinHypercubeGenerator, ListGenerator, view_model, SqliteRecorder, \
     CaseReader
 from openmdao.core.driver import Driver
 from typing import Optional, Any, Union, Dict
 
+from openlego.api import LEGOModel
 from openlego.core.cmdows import CMDOWSObject
-from openlego.core.model import LEGOModel
 from openlego.utils.cmdows_utils import get_element_by_uid, get_opt_setting_safe, get_doe_setting_safe
 from openlego.utils.general_utils import print_optional, add_or_append_dict_entry
 
@@ -49,6 +49,7 @@ class LEGOProblem(CMDOWSObject, Problem):
     ----------
         cmdows_path
         kb_path
+        driver_uid
         case_reader_path
         model_view_path
         drivers
@@ -56,23 +57,17 @@ class LEGOProblem(CMDOWSObject, Problem):
         model
         driver
 
-        data_folder : str, optional
-            Path to the folder in which to store all data generated during the `Problem`'s execution.
-
-        base_xml_file : str, optional
-            Path to an XML file which should be kept up-to-date with the latest data describing the problem.
-
         output_case_string : str, optional
             A string indicating the naming for output files such as N2 views and recorders.
     """
 
-    def __init__(self, cmdows_path=None, kb_path='', data_folder=None, base_xml_file=None, output_case_str=None,
-                 **kwargs):
-        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
-        """Initialize a CMDOWS Problem from a given CMDOWS file and (optionally) knowledge base.
+    def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None, base_xml_file=None,
+                 output_case_str=None, **kwargs):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
+        """Initialize a CMDOWS Problem from a given CMDOWS file, knowledge base (optional) and driver UID (optional).
 
-        It is also possible to specify where (temporary) data should be stored, and if a base XML
-        file should be kept up-to-date.
+        It is also possible to specify where (temporary) data should be stored, and if a base XML file should be kept
+        up-to-date.
 
         Parameters
         ----------
@@ -81,6 +76,9 @@ class LEGOProblem(CMDOWSObject, Problem):
 
         kb_path : str, optional
             Path to the knowledge base.
+
+        driver_uid : str, optional
+            UID of the main driver under consideration.
 
         data_folder : str, optional
             Path to the data folder in which to store all files and output from the problem.
@@ -95,8 +93,8 @@ class LEGOProblem(CMDOWSObject, Problem):
             self.output_case_string = output_case_str
         else:
             self.output_case_string = os.path.splitext(os.path.basename(cmdows_path))[0] + '_' + \
-                                      datetime.datetime.now().isoformat()
-        super(LEGOProblem, self).__init__(cmdows_path, kb_path, data_folder, base_xml_file, **kwargs)
+                                      datetime.datetime.now().strftime("%Y%m%d_%H%M%S%f")[:-4]
+        super(LEGOProblem, self).__init__(cmdows_path, kb_path, driver_uid, data_folder, base_xml_file, **kwargs)
 
     def __setattr__(self, name, value):
         # type: (str, Any) -> None
@@ -157,13 +155,8 @@ class LEGOProblem(CMDOWSObject, Problem):
     def driver_type(self):
         # type: () -> Union[str, None]
         """:obj:`str`: Type of driver as string."""
-        if len(self.drivers['optimizers']) + len(self.drivers['does']) > 1:
-            raise AssertionError("Only one driver is allowed at the moment. {} drivers specified ({}) at the moment."
-                                 .format(len(self.drivers), self.drivers))
-        if self.drivers['optimizers']:
-            return 'optimizer'
-        elif self.drivers['does']:
-            return 'doe'
+        if self.driver_uid:
+            return self.loop_element_types[self.driver_uid]
         else:
             return None
 
@@ -171,8 +164,9 @@ class LEGOProblem(CMDOWSObject, Problem):
     def model(self):
         # type: () -> LEGOModel
         """:obj:`LEGOModel`: The LEGOModel that is automatically built from the CMDOWS file and knowledge base."""
-        return LEGOModel(self._cmdows_path,   # CMDOWS file
-                         self._kb_path,       # Knowledge base path
+        return LEGOModel(self.cmdows_path,   # CMDOWS file
+                         self.kb_path,       # Knowledge base path
+                         self.driver_uid,    # Driver UID
                          self.data_folder,    # Output directory
                          self.base_xml_file)  # Output file
 
@@ -191,101 +185,105 @@ class LEGOProblem(CMDOWSObject, Problem):
             ValueError
                 Value error are raised if unsupported settings are encountered.
         """
-        if self.driver_type:
-            if self.driver_type == 'optimizer':
-                # Find optimizer element in CMDOWS file
-                opt_uid = self.drivers['optimizers'][0]
-                opt_elem = get_element_by_uid(self.elem_cmdows, opt_uid)
-                # Load settings from CMDOWS file
-                opt_package = get_opt_setting_safe(opt_elem, 'package', 'SciPy')
-                opt_algo = get_opt_setting_safe(opt_elem, 'algorithm', 'SLSQP')
-                opt_maxiter = get_opt_setting_safe(opt_elem, 'maximumIterations', 50, expected_type='int')
-                opt_convtol = get_opt_setting_safe(opt_elem, 'convergenceTolerance', 1e-6, expected_type='float')
+        if self.driver_type == 'optimizer':
+            # Find optimizer element in CMDOWS file
+            opt_uid = self.driver_uid
+            opt_elem = get_element_by_uid(self.elem_cmdows, opt_uid)
+            # Load settings from CMDOWS file
+            opt_package = get_opt_setting_safe(opt_elem, 'package', 'SciPy')
+            opt_algo = get_opt_setting_safe(opt_elem, 'algorithm', 'SLSQP')
+            opt_maxiter = get_opt_setting_safe(opt_elem, 'maximumIterations', 50, expected_type='int')
+            opt_convtol = get_opt_setting_safe(opt_elem, 'convergenceTolerance', 1e-6, expected_type='float')
 
-                # Apply settings to the driver
-                # driver
-                if opt_package == 'SciPy':
-                    driver = ScipyOptimizeDriver()
-                elif opt_package == 'pyOptSparse':
-                    driver = pyOptSparseDriver()
-                else:
-                    raise ValueError('Unsupported package {} encountered in CMDOWS file for optimizer "{}".'
-                                     .format(opt_package, opt_uid))
-
-                # optimization algorithm
-                if opt_algo == 'SLSQP':
-                    driver.options['optimizer'] = 'SLSQP'
-                else:
-                    raise ValueError('Unsupported algorithm {} encountered in CMDOWS file for optimizer "{}".'
-                                     .format(opt_algo, opt_uid))
-
-                # maximum iterations and tolerance
-                if isinstance(driver, ScipyOptimizeDriver):
-                    driver.options['maxiter'] = opt_maxiter
-                    driver.options['tol'] = opt_convtol
-                elif isinstance(driver, pyOptSparseDriver):
-                    driver.opt_settings['MAXIT'] = opt_maxiter
-                    driver.opt_settings['ACC'] = opt_convtol
-
-                # Set default display and output settings
-                if isinstance(driver, ScipyOptimizeDriver):
-                    driver.options['disp'] = True  # Print the result
-                return driver
-            elif self.driver_type == 'doe':
-                # Find DOE element in CMDOWS file
-                doe_uid = self.drivers['does'][0]
-                doe_elem = get_element_by_uid(self.elem_cmdows, doe_uid)
-                # Load settings from CMDOWS file
-                doe_method = get_doe_setting_safe(doe_elem, 'method', 'Uniform design')
-                doe_runs = get_doe_setting_safe(doe_elem, 'runs', 5, expected_type='int', doe_method=doe_method,
-                                                required_for_doe_methods=['Latin hypercube design', 'Uniform design',
-                                                                          'Monte Carlo design'])
-                doe_center_runs = get_doe_setting_safe(doe_elem, 'centerRuns', 2, expected_type='int',
-                                                       doe_method=doe_method,
-                                                       required_for_doe_methods=['Box-Behnken design'])
-                doe_seed = get_doe_setting_safe(doe_elem, 'seed', 0, expected_type='int', doe_method=doe_method,
-                                                required_for_doe_methods=['Latin hypercube design', 'Uniform design',
-                                                                          'Monte Carlo design'])
-                doe_levels = get_doe_setting_safe(doe_elem, 'levels', 2, expected_type='int', doe_method=doe_method,
-                                                  required_for_doe_methods=['Full factorial design'])
-
-                # table
-                doe_data = []
-                if isinstance(doe_elem.find('settings/table'), _Element):
-                    doe_table = doe_elem.find('settings/table')
-                    doe_table_rows = [row for row in doe_table.iterchildren()]
-                    n_samples = len([exp for exp in doe_table_rows[0].iterchildren()])
-                    for idx in range(n_samples):
-                        data_sample = []
-                        for row_elem in doe_table_rows:
-                            value = float(row_elem.find('tableElement[@experimentID="{}"]'.format(idx)).text)
-                            data_sample.append([row_elem.attrib['relatedParameterUID'], value])
-                        doe_data.append(data_sample)
-                else:
-                    if doe_method in ['Custom design table']:
-                        raise ValueError('Table element with data for custom design table missing in CMDOWS file.')
-
-                # Apply settings to the driver
-                # define driver
-                driver = DOEDriver()
-
-                # define generator
-                if doe_method in ['Uniform design', 'Monte Carlo design']:
-                    driver.options['generator'] = UniformGenerator(num_samples=doe_runs, seed=doe_seed)
-                elif doe_method == 'Full factorial design':
-                    driver.options['generator'] = FullFactorialGenerator(levels=doe_levels)
-                elif doe_method == 'Box-Behnken design':
-                    driver.options['generator'] = BoxBehnkenGenerator(center=doe_center_runs)
-                elif doe_method == 'Latin hypercube design':
-                    driver.options['generator'] = LatinHypercubeGenerator(samples=doe_runs, seed=doe_seed)
-                elif doe_method == 'Custom design table':
-                    driver.options['generator'] = ListGenerator(data=doe_data)
-                else:
-                    raise ValueError('Could not match the doe_method {} with supported methods from OpenMDAO.'
-                                     .format(doe_method))
-                return driver
+            # Apply settings to the driver
+            # driver
+            if opt_package == 'SciPy':
+                driver = ScipyOptimizeDriver()
+            elif opt_package == 'pyOptSparse':
+                try:
+                    from openmdao.api import pyOptSparseDriver
+                except ImportError:
+                    raise ImportError("Cannot import name pyOptSparseDriver. This probably means that this package has "
+                                      "not been installed to your Python packages. Note that it needs to be installed"
+                                      " to your Python manually (no PyPIdistribution available). pyOptSparse can be "
+                                      "downloaded here: https://github.com/mdolab/pyoptsparse")
+                driver = pyOptSparseDriver()
             else:
-                raise ValueError('Driver was found, but no optimizer or doe was found somehow.')
+                raise ValueError('Unsupported package {} encountered in CMDOWS file for optimizer "{}".'
+                                 .format(opt_package, opt_uid))
+
+            # optimization algorithm
+            if opt_algo == 'SLSQP':
+                driver.options['optimizer'] = 'SLSQP'
+            else:
+                raise ValueError('Unsupported algorithm {} encountered in CMDOWS file for optimizer "{}".'
+                                 .format(opt_algo, opt_uid))
+
+            # maximum iterations and tolerance
+            if isinstance(driver, ScipyOptimizeDriver):
+                driver.options['maxiter'] = opt_maxiter
+                driver.options['tol'] = opt_convtol
+            elif isinstance(driver, pyOptSparseDriver):
+                driver.opt_settings['MAXIT'] = opt_maxiter
+                driver.opt_settings['ACC'] = opt_convtol
+
+            # Set default display and output settings
+            if isinstance(driver, ScipyOptimizeDriver):
+                driver.options['disp'] = True  # Print the result
+            return driver
+        elif self.driver_type == 'doe':
+            # Find DOE element in CMDOWS file
+            doe_uid = self.driver_uid
+            doe_elem = get_element_by_uid(self.elem_cmdows, doe_uid)
+            # Load settings from CMDOWS file
+            doe_method = get_doe_setting_safe(doe_elem, 'method', 'Uniform design')
+            doe_runs = get_doe_setting_safe(doe_elem, 'runs', 5, expected_type='int', doe_method=doe_method,
+                                            required_for_doe_methods=['Latin hypercube design', 'Uniform design',
+                                                                      'Monte Carlo design'])
+            doe_center_runs = get_doe_setting_safe(doe_elem, 'centerRuns', 2, expected_type='int',
+                                                   doe_method=doe_method,
+                                                   required_for_doe_methods=['Box-Behnken design'])
+            doe_seed = get_doe_setting_safe(doe_elem, 'seed', 0, expected_type='int', doe_method=doe_method,
+                                            required_for_doe_methods=['Latin hypercube design', 'Uniform design',
+                                                                      'Monte Carlo design'])
+            doe_levels = get_doe_setting_safe(doe_elem, 'levels', 2, expected_type='int', doe_method=doe_method,
+                                              required_for_doe_methods=['Full factorial design'])
+
+            # table
+            doe_data = []
+            if isinstance(doe_elem.find('settings/table'), _Element):
+                doe_table = doe_elem.find('settings/table')
+                doe_table_rows = [row for row in doe_table.iterchildren()]
+                n_samples = len([exp for exp in doe_table_rows[0].iterchildren()])
+                for idx in range(n_samples):
+                    data_sample = []
+                    for row_elem in doe_table_rows:
+                        value = float(row_elem.find('tableElement[@experimentID="{}"]'.format(idx)).text)
+                        data_sample.append([row_elem.attrib['relatedParameterUID'], value])
+                    doe_data.append(data_sample)
+            else:
+                if doe_method in ['Custom design table']:
+                    raise ValueError('Table element with data for custom design table missing in CMDOWS file.')
+
+            # Apply settings to the driver
+            # define driver
+            driver = DOEDriver()
+
+            # define generator
+            if doe_method in ['Uniform design', 'Monte Carlo design']:
+                driver.options['generator'] = UniformGenerator(num_samples=doe_runs, seed=doe_seed)
+            elif doe_method == 'Full factorial design':
+                driver.options['generator'] = FullFactorialGenerator(levels=doe_levels)
+            elif doe_method == 'Box-Behnken design':
+                driver.options['generator'] = BoxBehnkenGenerator(center=doe_center_runs)
+            elif doe_method == 'Latin hypercube design':
+                driver.options['generator'] = LatinHypercubeGenerator(samples=doe_runs, seed=doe_seed)
+            elif doe_method == 'Custom design table':
+                driver.options['generator'] = ListGenerator(data=doe_data)
+            else:
+                raise ValueError('Could not match the doe_method {} with supported methods from OpenMDAO.'
+                                 .format(doe_method))
+            return driver
         else:
             return Driver()
 
@@ -359,6 +357,10 @@ class LEGOProblem(CMDOWSObject, Problem):
         cases = CaseReader(self.case_reader_path).driver_cases
         num_cases = cases.num_cases
 
+        if num_cases == 0:
+            raise AssertionError('No cases were recorded and therefore no results can be collected. Note that '
+                                 'collect_results only works after the driver has been run.')
+
         # Change cases_to_print to a list of integers with case numbers
         if isinstance(cases_to_collect, str):
             if cases_to_collect == 'all':
@@ -386,9 +388,19 @@ class LEGOProblem(CMDOWSObject, Problem):
             recorded_objectives = case.get_objectives()
             recorded__desvars = case.get_desvars()
             recorded_constraints = case.get_constraints()
-            var_objectives = sorted(list(recorded_objectives.keys))
-            var_desvars = sorted(list(recorded__desvars.keys))
-            var_constraints = sorted(list(recorded_constraints.keys))
+            # TODO: Temporary fix due to issue with OpenMDAO 2.4.0, remove with new release of OpenMDAO
+            try:
+                var_objectives = sorted(list(recorded_objectives.keys()))
+            except:
+                var_objectives = sorted(list(recorded_objectives.keys))
+            try:
+                var_desvars = sorted(list(recorded__desvars.keys()))
+            except:
+                var_desvars = sorted(list(recorded__desvars.keys))
+            try:
+                var_constraints = sorted(list(recorded_constraints.keys()))
+            except:
+                var_constraints = sorted(list(recorded_constraints.keys))
             var_does = sorted([elem.text for elem in self.elem_arch_elems
                               .findall('parameters/doeOutputSampleLists/doeOutputSampleList/relatedParameterUID')])
             var_convs = sorted([elem.text for elem in self.elem_problem_def
@@ -418,7 +430,7 @@ class LEGOProblem(CMDOWSObject, Problem):
                 for var_constraint in var_constraints:
                     value = recorded_constraints[var_constraint]
                     print_optional('    {}: {}'.format(var_constraint, value), print_in_log)
-                    results = add_or_append_dict_entry(results, 'desvars', var_constraint, value)
+                    results = add_or_append_dict_entry(results, 'constraints', var_constraint, value)
 
             # Print DOE quantities of interest
             if var_does:

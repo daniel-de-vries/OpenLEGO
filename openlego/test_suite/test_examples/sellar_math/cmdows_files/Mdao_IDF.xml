@@ -3,14 +3,14 @@
   <header>
     <creator>Imco van Gent</creator>
     <description>Mdao CMDOWS file of the well-known Sellar problem</description>
-    <timestamp>2018-08-06T10:09:18.689152</timestamp>
+    <timestamp>2018-08-20T15:36:22.849944</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2018-08-06T10:09:18.689152</timestamp>
+        <timestamp>2018-08-20T15:36:22.849944</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -47,24 +47,6 @@
   </header>
   <executableBlocks>
     <mathematicalFunctions>
-      <mathematicalFunction uID="A">
-        <label>A</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/settings/a</parameterUID>
-            <equationLabel>a</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/settings/c</parameterUID>
-            <equations uID="A_equation">
-              <equation language="Python">a</equation>
-            </equations>
-          </output>
-        </outputs>
-      </mathematicalFunction>
       <mathematicalFunction uID="F1">
         <label>F1</label>
         <functionType>regular</functionType>
@@ -192,10 +174,6 @@
             <equationLabel>z1</equationLabel>
           </input>
           <input>
-            <parameterUID>/dataSchema/settings/c</parameterUID>
-            <equationLabel>c</equationLabel>
-          </input>
-          <input>
             <parameterUID>/dataSchema/geometry/z2</parameterUID>
             <equationLabel>z2</equationLabel>
           </input>
@@ -222,8 +200,8 @@
             <equationLabel>x1</equationLabel>
           </input>
           <input>
-            <parameterUID>/dataSchema/geometry/z2</parameterUID>
-            <equationLabel>z2</equationLabel>
+            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2</parameterUID>
+            <equationLabel>y2</equationLabel>
           </input>
           <input>
             <parameterUID>/dataSchema/geometry/z1</parameterUID>
@@ -240,12 +218,8 @@
             </validRanges>
           </input>
           <input>
-            <parameterUID>/dataSchema/settings/c</parameterUID>
-            <equationLabel>c</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2</parameterUID>
-            <equationLabel>y2</equationLabel>
+            <parameterUID>/dataSchema/geometry/z2</parameterUID>
+            <equationLabel>z2</equationLabel>
           </input>
         </inputs>
         <outputs>
@@ -272,10 +246,6 @@
       <label>g2</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/settings/a">
-      <label>a</label>
-      <instanceID>1</instanceID>
-    </parameter>
     <parameter uID="/dataSchema/analyses/f">
       <label>f</label>
       <instanceID>1</instanceID>
@@ -292,10 +262,6 @@
       <label>y2</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/settings/c">
-      <label>c</label>
-      <instanceID>1</instanceID>
-    </parameter>
     <parameter uID="/dataSchema/analyses/y1">
       <label>y1</label>
       <instanceID>1</instanceID>
@@ -309,12 +275,11 @@
     <problemFormulation>
       <mdaoArchitecture>IDF</mdaoArchitecture>
       <executableBlocksOrder>
-        <executableBlock position="1">A</executableBlock>
-        <executableBlock position="2">D2</executableBlock>
-        <executableBlock position="3">D1</executableBlock>
-        <executableBlock position="4">G1</executableBlock>
-        <executableBlock position="5">G2</executableBlock>
-        <executableBlock position="6">F1</executableBlock>
+        <executableBlock position="1">D2</executableBlock>
+        <executableBlock position="2">D1</executableBlock>
+        <executableBlock position="3">G1</executableBlock>
+        <executableBlock position="4">G2</executableBlock>
+        <executableBlock position="5">F1</executableBlock>
       </executableBlocksOrder>
       <allowUnconvergedCouplings>false</allowUnconvergedCouplings>
     </problemFormulation>
@@ -346,8 +311,8 @@
             <nominalValue>0.0</nominalValue>
             <validRanges>
               <limitRange>
-                <minimum>-100.0</minimum>
-                <maximum>100.0</maximum>
+                <minimum>-10.0</minimum>
+                <maximum>10.0</maximum>
               </limitRange>
             </validRanges>
           </designVariable>
@@ -356,8 +321,8 @@
             <nominalValue>0.0</nominalValue>
             <validRanges>
               <limitRange>
-                <minimum>-100.0</minimum>
-                <maximum>100.0</maximum>
+                <minimum>-10.0</minimum>
+                <maximum>10.0</maximum>
               </limitRange>
             </validRanges>
           </designVariable>
@@ -405,9 +370,6 @@
         </constraintVariables>
       </parameters>
       <executableBlocks>
-        <preCouplingBlocks>
-          <preCouplingBlock>A</preCouplingBlock>
-        </preCouplingBlocks>
         <coupledBlocks>
           <coupledBlock>D2</coupledBlock>
           <coupledBlock>D1</coupledBlock>
@@ -539,8 +501,12 @@
           <toExecutableBlockUID>D1</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/settings/a</fromParameterUID>
-          <toExecutableBlockUID>A</toExecutableBlockUID>
+          <fromExecutableBlockUID>Gc</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Gc</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</toParameterUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/geometry/x1</fromParameterUID>
@@ -553,10 +519,6 @@
         <edge>
           <fromParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/geometry/z2</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>A</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/settings/c</toParameterUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/f</fromParameterUID>
@@ -595,18 +557,6 @@
           <toParameterUID>/dataSchema/analyses/f</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
-          <toExecutableBlockUID>F1</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
-          <toExecutableBlockUID>Gc</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
-          <toExecutableBlockUID>G2</toExecutableBlockUID>
-        </edge>
-        <edge>
           <fromParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/geometry/z1</fromParameterUID>
           <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
         </edge>
@@ -628,27 +578,19 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/settings/a</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
           <toParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/geometry/x1</toParameterUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Gc</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</toParameterUID>
+          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>F1</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Gc</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</toParameterUID>
+          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>Gc</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/settings/c</fromParameterUID>
-          <toExecutableBlockUID>D2</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/settings/c</fromParameterUID>
-          <toExecutableBlockUID>D1</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>G2</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/analyses/y1</fromParameterUID>
@@ -692,128 +634,118 @@
       <name>mpg Sellar problem</name>
       <edges>
         <edge>
-          <fromExecutableBlockUID>A</fromExecutableBlockUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-          <processStepNumber>2</processStepNumber>
-        </edge>
-        <edge>
           <fromExecutableBlockUID>F1</fromExecutableBlockUID>
           <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-          <processStepNumber>5</processStepNumber>
+          <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-          <processStepNumber>6</processStepNumber>
+          <processStepNumber>5</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
           <toExecutableBlockUID>D2</toExecutableBlockUID>
-          <processStepNumber>3</processStepNumber>
+          <processStepNumber>2</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
           <toExecutableBlockUID>D1</toExecutableBlockUID>
-          <processStepNumber>3</processStepNumber>
+          <processStepNumber>2</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>G2</fromExecutableBlockUID>
           <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-          <processStepNumber>5</processStepNumber>
+          <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>G1</fromExecutableBlockUID>
           <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-          <processStepNumber>5</processStepNumber>
+          <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toExecutableBlockUID>A</toExecutableBlockUID>
+          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
           <processStepNumber>1</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Gc</fromExecutableBlockUID>
           <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-          <processStepNumber>5</processStepNumber>
+          <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>D2</fromExecutableBlockUID>
           <toExecutableBlockUID>F1</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>D2</fromExecutableBlockUID>
           <toExecutableBlockUID>Gc</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>D2</fromExecutableBlockUID>
           <toExecutableBlockUID>G2</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>D1</fromExecutableBlockUID>
           <toExecutableBlockUID>F1</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>D1</fromExecutableBlockUID>
           <toExecutableBlockUID>Gc</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>D1</fromExecutableBlockUID>
           <toExecutableBlockUID>G1</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
         </edge>
       </edges>
       <nodes>
         <node>
-          <referenceUID>A</referenceUID>
-          <processStepNumber>1</processStepNumber>
-          <diagonalPosition>1</diagonalPosition>
-        </node>
-        <node>
           <referenceUID>F1</referenceUID>
-          <processStepNumber>4</processStepNumber>
-          <diagonalPosition>7</diagonalPosition>
-        </node>
-        <node>
-          <referenceUID>Optimizer</referenceUID>
-          <processStepNumber>2</processStepNumber>
-          <convergerStepNumber>5</convergerStepNumber>
-          <diagonalPosition>2</diagonalPosition>
-        </node>
-        <node>
-          <referenceUID>G2</referenceUID>
-          <processStepNumber>4</processStepNumber>
+          <processStepNumber>3</processStepNumber>
           <diagonalPosition>6</diagonalPosition>
         </node>
         <node>
-          <referenceUID>G1</referenceUID>
-          <processStepNumber>4</processStepNumber>
+          <referenceUID>Optimizer</referenceUID>
+          <processStepNumber>1</processStepNumber>
+          <convergerStepNumber>4</convergerStepNumber>
+          <diagonalPosition>1</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>G2</referenceUID>
+          <processStepNumber>3</processStepNumber>
           <diagonalPosition>5</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>G1</referenceUID>
+          <processStepNumber>3</processStepNumber>
+          <diagonalPosition>4</diagonalPosition>
         </node>
         <node>
           <referenceUID>Coordinator</referenceUID>
           <processStepNumber>0</processStepNumber>
-          <convergerStepNumber>6</convergerStepNumber>
+          <convergerStepNumber>5</convergerStepNumber>
           <diagonalPosition>0</diagonalPosition>
         </node>
         <node>
           <referenceUID>Gc</referenceUID>
-          <processStepNumber>4</processStepNumber>
-          <diagonalPosition>8</diagonalPosition>
+          <processStepNumber>3</processStepNumber>
+          <diagonalPosition>7</diagonalPosition>
         </node>
         <node>
           <referenceUID>D2</referenceUID>
-          <processStepNumber>3</processStepNumber>
-          <diagonalPosition>3</diagonalPosition>
+          <processStepNumber>2</processStepNumber>
+          <diagonalPosition>2</diagonalPosition>
         </node>
         <node>
           <referenceUID>D1</referenceUID>
-          <processStepNumber>3</processStepNumber>
-          <diagonalPosition>4</diagonalPosition>
+          <processStepNumber>2</processStepNumber>
+          <diagonalPosition>3</diagonalPosition>
         </node>
       </nodes>
       <metadata>
@@ -832,21 +764,9 @@
                   </functionElements>
                 </loopElement>
               </loopElements>
-              <functionElements>
-                <functionElement>A</functionElement>
-              </functionElements>
             </loopElement>
           </loopElements>
         </loopNesting>
-        <executableBlocksOrder>
-          <executableBlock position="1">A</executableBlock>
-          <executableBlock position="2">D2</executableBlock>
-          <executableBlock position="3">D1</executableBlock>
-          <executableBlock position="4">F1</executableBlock>
-          <executableBlock position="5">G2</executableBlock>
-          <executableBlock position="6">G1</executableBlock>
-          <executableBlock position="7">Gc</executableBlock>
-        </executableBlocksOrder>
       </metadata>
     </processGraph>
   </workflow>
@@ -966,8 +886,8 @@
             <algorithm>SLSQP</algorithm>
             <maximumIterations>1000</maximumIterations>
             <maximumFunctionEvaluations>1000</maximumFunctionEvaluations>
-            <convergenceTolerance>0.0001</convergenceTolerance>
-            <constraintTolerance>0.0001</constraintTolerance>
+            <convergenceTolerance>1e-06</convergenceTolerance>
+            <constraintTolerance>1e-06</constraintTolerance>
             <applyScaling>true</applyScaling>
           </settings>
           <designVariables>
@@ -999,14 +919,15 @@
             <constraintVariable>
               <constraintVariableUID>__conVar__/dataSchema/analyses/g2</constraintVariableUID>
             </constraintVariable>
+            <constraintVariable>
+              <constraintVariableUID>__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</constraintVariableUID>
+            </constraintVariable>
+            <constraintVariable>
+              <constraintVariableUID>__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</constraintVariableUID>
+            </constraintVariable>
           </constraintVariables>
         </optimizer>
       </optimizers>
-      <preIteratorAnalyses>
-        <preIteratorAnalysis>
-          <relatedExecutableBlockUID>A</relatedExecutableBlockUID>
-        </preIteratorAnalysis>
-      </preIteratorAnalyses>
       <postCouplingAnalyses>
         <postCouplingAnalysis>
           <relatedExecutableBlockUID>G2</relatedExecutableBlockUID>
@@ -1015,10 +936,10 @@
           <relatedExecutableBlockUID>G1</relatedExecutableBlockUID>
         </postCouplingAnalysis>
         <postCouplingAnalysis>
-          <relatedExecutableBlockUID>F1</relatedExecutableBlockUID>
+          <relatedExecutableBlockUID>Gc</relatedExecutableBlockUID>
         </postCouplingAnalysis>
         <postCouplingAnalysis>
-          <relatedExecutableBlockUID>Gc</relatedExecutableBlockUID>
+          <relatedExecutableBlockUID>F1</relatedExecutableBlockUID>
         </postCouplingAnalysis>
         <postCouplingAnalysis>
           <relatedExecutableBlockUID>D2</relatedExecutableBlockUID>

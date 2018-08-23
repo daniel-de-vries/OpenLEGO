@@ -27,7 +27,7 @@ from typing import Tuple, Union, Any, List
 from openlego.utils.general_utils import change_object_type
 
 
-def get_related_parameter_uid(elem_param, full_xml):
+def get_related_parameter_uid(elem_or_uid_param, full_xml):
     # type: (_Element, _Element) -> Tuple[str, str]
     """Function to retrieve the UID of the related parameter. This UID refers to the original local in the XML file of
      the parameter and is used when a parameter is found in a CMDOWS file which is an architecture type or a higher
@@ -35,8 +35,8 @@ def get_related_parameter_uid(elem_param, full_xml):
 
     Parameters
     ----------
-        elem_param : _Element
-            Element of the parameter to be mapped.
+        elem_or_uid_param : _Element or str
+            Element of the parameter to be mapped or string with UID.
         full_xml : _Element
             Element of the full XML file in which the related parameter UID should be found.
 
@@ -47,7 +47,14 @@ def get_related_parameter_uid(elem_param, full_xml):
         mapped : str
             The found related parameter UID.
     """
-    param = elem_param.attrib['uID']
+    if isinstance(elem_or_uid_param, _Element):
+        param = elem_or_uid_param.attrib['uID']
+        elem_param = elem_or_uid_param
+    elif isinstance(elem_or_uid_param, str):
+        param = elem_or_uid_param
+        elem_param = get_element_by_uid(full_xml, param)
+    else:
+        raise IOError('elem_or_uid_param input is not of the right type.')
     if isinstance(elem_param.find('relatedParameterUID'), _Element):
         mapped = elem_param.find('relatedParameterUID').text
     elif isinstance(elem_param.find('relatedInstanceUID'), _Element):

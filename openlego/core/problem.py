@@ -49,6 +49,7 @@ class LEGOProblem(CMDOWSObject, Problem):
     ----------
         cmdows_path
         kb_path
+        driver_uid
         case_reader_path
         model_view_path
         drivers
@@ -56,23 +57,17 @@ class LEGOProblem(CMDOWSObject, Problem):
         model
         driver
 
-        data_folder : str, optional
-            Path to the folder in which to store all data generated during the `Problem`'s execution.
-
-        base_xml_file : str, optional
-            Path to an XML file which should be kept up-to-date with the latest data describing the problem.
-
         output_case_string : str, optional
             A string indicating the naming for output files such as N2 views and recorders.
     """
 
-    def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None, base_xml_file=None, output_case_str=None,
-                 **kwargs):
-        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
-        """Initialize a CMDOWS Problem from a given CMDOWS file and (optionally) knowledge base.
+    def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None, base_xml_file=None,
+                 output_case_str=None, **kwargs):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
+        """Initialize a CMDOWS Problem from a given CMDOWS file, knowledge base (optional) and driver UID (optional).
 
-        It is also possible to specify where (temporary) data should be stored, and if a base XML
-        file should be kept up-to-date.
+        It is also possible to specify where (temporary) data should be stored, and if a base XML file should be kept
+        up-to-date.
 
         Parameters
         ----------
@@ -81,6 +76,9 @@ class LEGOProblem(CMDOWSObject, Problem):
 
         kb_path : str, optional
             Path to the knowledge base.
+
+        driver_uid : str, optional
+            UID of the main driver under consideration.
 
         data_folder : str, optional
             Path to the data folder in which to store all files and output from the problem.

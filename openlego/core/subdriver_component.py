@@ -27,10 +27,16 @@ class SubDriverComponent(ExplicitComponent):
 
     Attributes
     ----------
-    TODO: Add attributes and complete class description
+        driver_uid
+        cmdows_path
+        kb_path
+        data_folder
+        base_xml_file
+        show_model
     """
 
     def initialize(self):
+        """Initialization of the object with the declaration of settings."""
         self.options.declare('driver_uid')
         self.options.declare('cmdows_path')
         self.options.declare('kb_path')
@@ -39,6 +45,8 @@ class SubDriverComponent(ExplicitComponent):
         self.options.declare('show_model', default=False)
 
     def setup(self):
+        """Setup of the explicit component object with a nested LEGOProblem as subdriver."""
+
         # Set subproblem
         from openlego.core.problem import LEGOProblem
         p = self.prob = LEGOProblem(cmdows_path=self.options['cmdows_path'],
@@ -46,7 +54,7 @@ class SubDriverComponent(ExplicitComponent):
                                     data_folder=self.options['data_folder'],  # Output directory
                                     base_xml_file=self.options['base_xml_file'],
                                     driver_uid=self.options['driver_uid'])
-        #p.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
+        #  p.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
 
         # Add inputs
         for input_name, shape in p.model.model_constants.items():
@@ -66,11 +74,18 @@ class SubDriverComponent(ExplicitComponent):
         p.setup()
         p.final_setup()
 
-        # View model?
+        # Store (and view?) model
         if self.options['show_model']:
             p.store_model_view(open_in_browser=self.options['show_model'])
 
     def compute(self, inputs, outputs):
+        """Computation performed by the component.
+
+        Parameters
+        ----------
+        inputs : all inputs coming from outside the component in the group
+        outputs : all outputs provided outside the component in the group"""
+
         # Define problem of subdriver
         p = self.prob
 

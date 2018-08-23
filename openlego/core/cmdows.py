@@ -23,7 +23,7 @@ import os
 
 from lxml import etree
 from lxml.etree import _Element
-from typing import Any, Optional, Dict, Set, List, Union
+from typing import Dict, List, Union
 
 from openlego.utils.cmdows_utils import get_loop_nesting_obj, get_element_by_uid
 from typing import Any, Optional
@@ -57,9 +57,13 @@ class CMDOWSObject(object):
             Path to an XML file which should be kept up-to-date with the latest data describing the problem.
     """
 
+    SUPERDRIVER_PREFIX = '__SuperDriverComponent__'
+    SUBDRIVER_PREFIX = '__SubDriverComponent__'
+    SUPERCOMP_PREFIX = '__SuperComponent__'
+
     def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None, base_xml_file=None, **kwargs):
         # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
-        """Initialize a CMDOWS dependent class from a given CMDOWS file and knowledge base.
+        """Initialize a CMDOWS dependent class from a given CMDOWS file, knowledge base and driver UID.
 
         It is also possible to specify where (temporary) data should be stored, and if a base XML
         file should be kept up-to-data.
@@ -71,6 +75,9 @@ class CMDOWSObject(object):
 
             kb_path : str, optional
                 Path to the knowledge base.
+
+            driver_uid : str, optional
+                UID of the main driver under consideration.
 
             data_folder : str, optional
                 Path to the data folder in which to store all files and output from the problem.
@@ -109,7 +116,7 @@ class CMDOWSObject(object):
                 The value of the requested attribute.
         """
         if name != '__class__' and name != '__dict__':
-            if name in [_name for _name, value in self.__class__.__dict__.items() if isinstance(value, cached_property)]:
+            if name in [_name for _name, val in self.__class__.__dict__.items() if isinstance(val, cached_property)]:
                 self.__integrity_check()
         return super(CMDOWSObject, self).__getattribute__(name)
 
@@ -142,7 +149,8 @@ class CMDOWSObject(object):
         if self._cmdows_path is None:
             raise ValueError('No CMDOWS file specified!')
 
-    def __data_folder_check(self, folder_string):
+    @staticmethod
+    def __data_folder_check(folder_string):
         # type: () -> None
         """Ensure that the data folder for output files exists or else create it."""
         if folder_string:
@@ -152,10 +160,10 @@ class CMDOWSObject(object):
     def __check_for_super_driver(self):
         # type: () -> List[str]
         """:obj:`List[str]`: List with the super drivers in the CMDOWS file."""
-        return self._get_super_drivers(self.full_loop_nesting_list)
+        return self._get_super_drivers(self.full_loop_nesting)
 
     def _get_super_drivers(self, loop_nesting_obj):
-        # type: (Dict[str, dict]) -> List[str]
+        # type: (List[str, dict]) -> List[str]
         """:obj:`List[str]`: List with the super drivers in the CMDOWS file."""
         super_drivers = []
         for item in loop_nesting_obj:
@@ -171,16 +179,16 @@ class CMDOWSObject(object):
     def super_drivers(self):
         # type: () -> List[str]
         """:obj:`List[str]`: List with the superdrivers in the CMDOWS file."""
-        return self._get_super_drivers(self.full_loop_nesting_list)
+        return self._get_super_drivers(self.full_loop_nesting)
 
     @cached_property
     def sub_drivers(self):
         # type: () -> List[str]
         """:obj:`List[str]`: List with the subdrivers in the CMDOWS file."""
-        return self._get_sub_drivers(self.full_loop_nesting_list)
+        return self._get_sub_drivers(self.full_loop_nesting)
 
     def _get_sub_drivers(self, loop_nesting_obj, super_driver_encountered=False):
-        # type: (List[dict, str], bool) -> List[str]
+        # type: (List[str, dict], bool) -> List[str]
         """Function to determine the subdrivers in a CMDOWS file.
         
         Parameters
@@ -326,19 +334,19 @@ class CMDOWSObject(object):
             return None
 
     @cached_property
-    def full_loop_nesting_list(self):
+    def full_loop_nesting(self):
         # type: () -> List[str, dict]
         """:obj:`dict`: Dictionary of the loopNesting XML element."""
         return get_loop_nesting_obj(self.elem_loop_nesting)
 
     @cached_property
-    def filtered_loop_nesting_list(self):
+    def filtered_loop_nesting(self):
         # type: () -> List[str, dict]
         """:obj:`List[str, dict]`: Filtered loop nesting object.
         """
-        return self.filter_loop_nesting_list(self.full_loop_nesting_list)
+        return self.filter_loop_nesting(self.full_loop_nesting)
 
-    def filter_loop_nesting_list(self, loop_nesting_list, sub_driver_found=False):
+    def filter_loop_nesting(self, loop_nesting_list, sub_driver_found=False):
         # type: (List[str, dict]) -> List[str, dict]
         """This method filters the loop nesting to only return a loop nesting object with entries that are relevant for
         the driver under consideration.
@@ -367,28 +375,27 @@ class CMDOWSObject(object):
                 if self.loop_element_types[loop_elem_name] == 'converger' and add_all_blocks:
                     _filtered_loop_nesting_list.append(item)
                 elif self.loop_element_types[loop_elem_name] == 'coordinator':
-                    _filtered_loop_nesting_list.append({loop_elem_name:self.filter_loop_nesting_list(item[loop_elem_name])})
+                    _filtered_loop_nesting_list.append({loop_elem_name: self.filter_loop_nesting(item[loop_elem_name])})
                 elif self.loop_element_types[loop_elem_name] in ['optimizer', 'doe']:
                     if loop_elem_name == self._driver_uid:
                         if driver_uid_is_sub_driver:
                             _filtered_loop_nesting_list.append(
-                                                    {loop_elem_name: self.filter_loop_nesting_list(item[loop_elem_name],
-                                                                                                   sub_driver_found=True)})
+                                                    {loop_elem_name: self.filter_loop_nesting(item[loop_elem_name],
+                                                                                              sub_driver_found=True)})
                         else:
                             _filtered_loop_nesting_list.append(
-                                                    {loop_elem_name: self.filter_loop_nesting_list(item[loop_elem_name],
-                                                                                                   sub_driver_found=False)})
+                                                    {loop_elem_name: self.filter_loop_nesting(item[loop_elem_name],
+                                                                                              sub_driver_found=False)})
                     else:
                         if driver_uid_is_sub_driver:
                             if loop_elem_name in self.sub_drivers:
                                 pass
                             else:
-                                _filtered_loop_nesting_list.append({'__SuperDriverComponent__' + loop_elem_name:
-                                                                        self.filter_loop_nesting_list(
-                                                                            item[loop_elem_name],
-                                                                            sub_driver_found=False)})
+                                _filtered_loop_nesting_list.append(
+                                    {self.SUPERDRIVER_PREFIX + loop_elem_name:
+                                         self.filter_loop_nesting(item[loop_elem_name], sub_driver_found=False)})
                         else:
-                            _filtered_loop_nesting_list.append('__SubDriverComponent__' + loop_elem_name)
+                            _filtered_loop_nesting_list.append(self.SUBDRIVER_PREFIX + loop_elem_name)
                 else:
                     raise AssertionError('Could not find element details for loop element {}.'.format(loop_elem_name))
             elif isinstance(item, str):
@@ -401,13 +408,13 @@ class CMDOWSObject(object):
         return _filtered_loop_nesting_list
 
     @cached_property
-    def model_executable_blocks(self):
+    def model_exec_blocks(self):
         # type: () -> List[str]
         """:obj:`List[str]`: List of all the executable blocks in the model w.r.t. the driver UID."""
-        return self.collect_all_executable_blocks(self.filtered_loop_nesting_list)
+        return self.collect_all_executable_blocks(self.filtered_loop_nesting)
 
     def collect_all_executable_blocks(self, loop_nesting_list):
-        # type: (List[dict, str]) -> List[str]
+        # type: (List[str, dict]) -> List[str]
         """Method collects the executable blocks in the model. w.r.t. the driver UID under consideration.
 
         Parameters
@@ -433,10 +440,10 @@ class CMDOWSObject(object):
     def all_loop_elements(self):
         # type: () -> List[str]
         """:obj:`List[str]`: List with all loop elements w.r.t. the driver UID under consideration."""
-        return self.collect_all_loop_elements(self.filtered_loop_nesting_list)
+        return self.collect_all_loop_elements(self.filtered_loop_nesting)
 
     def collect_all_loop_elements(self, loop_nesting_list):
-        # type: (List[dict, str]) -> List[str]
+        # type: (List[str, dict]) -> List[str]
         """Method collects the loop elements from a loop nesting object.
 
         Parameters
@@ -512,7 +519,7 @@ class CMDOWSObject(object):
         _coupled_blocks = []
         for block in self.elem_arch_elems.iterfind(
                 'executableBlocks/coupledAnalyses/coupledAnalysis/relatedExecutableBlockUID'):
-            if block.text in self.model_executable_blocks:
+            if block.text in self.model_exec_blocks:
                 _coupled_blocks.append(block.text)
         return _coupled_blocks
 
@@ -548,12 +555,10 @@ class CMDOWSObject(object):
         return {'uids': _uids, 'step_numbers': _process_step_numbers, 'partition_ids': _partition_ids}
 
     @cached_property
-    def process_step_numbers(self):
-        # TODO: remove / replace this one with process_info ?!
+    def block_step_numbers(self):
+        # type: () -> Dict[int]
+        """:obj:`Dict[int]`: Dictionary with mapping between block UID (key) and process step number (value)."""
         _process_step_numbers = {}
-        for elem in self.elem_workflow.iterfind('processGraph/nodes/node'):
-            _process_step_numbers[elem.find('referenceUID').text] = int(elem.find('processStepNumber').text)
+        for i, uid in enumerate(self.process_info['uids']):
+            _process_step_numbers[uid] = self.process_info['step_numbers'][i]
         return _process_step_numbers
-
-
-# TODO: Collect keyword terms like __SubDriverComponent__, __SuperDriverComponent__, etc.

@@ -986,6 +986,7 @@ class LEGOModel(CMDOWSObject, Group):
                             self._inputs[mapping] = value
                     except RuntimeError as e:
                         if 'The promoted name' in e[0] and 'is invalid' in e[0]:
-                            warnings.warn('Could not automatically set this invalid promoted name from the XML: {}.'.format(mapping))
+                            warnings.warn('Could not automatically set this invalid promoted name from the XML: {}.'
+                                          .format(mapping))
                         else:
                             raise RuntimeError(e)

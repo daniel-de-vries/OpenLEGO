@@ -307,6 +307,7 @@ class LEGOProblem(CMDOWSObject, Problem):
         # type: () -> None
         """Method to initialize the problem by adding a recorder and doing the setup."""
         self.driver.add_recorder(SqliteRecorder(self.case_reader_path))
+        self.driver.recording_options['includes'] = ['*']
         if self._setup_status == 0:
             self.setup()
 

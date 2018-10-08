@@ -21,9 +21,12 @@ from __future__ import absolute_import, division, print_function
 
 import datetime
 import os
+import warnings
 
 from cached_property import cached_property
 from lxml.etree import _Element, _ElementTree
+
+from openlego.utils.xml_utils import xml_to_dict, xpath_to_param
 from openmdao.api import Problem, ScipyOptimizeDriver, DOEDriver, UniformGenerator, \
     FullFactorialGenerator, BoxBehnkenGenerator, LatinHypercubeGenerator, ListGenerator, view_model, SqliteRecorder, \
     CaseReader
@@ -304,6 +307,7 @@ class LEGOProblem(CMDOWSObject, Problem):
         # type: () -> None
         """Method to initialize the problem by adding a recorder and doing the setup."""
         self.driver.add_recorder(SqliteRecorder(self.case_reader_path))
+        self.driver.recording_options['includes'] = ['*']
         if self._setup_status == 0:
             self.setup()
 
@@ -317,8 +321,23 @@ class LEGOProblem(CMDOWSObject, Problem):
                 Path to an XML file or an instance of `etree._ElementTree` representing it.
                 """
         self.initialize()
-        self.run_model()
-        self.model.initialize_from_xml(xml)
+        for xpath, value in xml_to_dict(xml).items():
+            name = xpath_to_param(xpath)
+            if name in self.model._var_allprocs_prom2abs_list['input'] or \
+                    name in self.model._var_allprocs_prom2abs_list['output']:
+                self[name] = value
+            if name in self.model.mapped_parameters_inv:
+                for mapping in self.model.mapped_parameters_inv[name]:
+                    if mapping in self.model._var_allprocs_prom2abs_list['input'] or \
+                    mapping in self.model._var_allprocs_prom2abs_list['output']:
+                        try:
+                            self[mapping] = value
+                        except RuntimeError as e:
+                            if 'The promoted name' in e[0] and 'is invalid' in e[0]:
+                                warnings.warn('Could not automatically set this invalid promoted name from the XML: '
+                                              '{}.'.format(mapping))
+                            else:
+                                raise RuntimeError(e)
 
     def collect_results(self, cases_to_collect='default', print_in_log=True):
         # type: (Union[str, list]) -> Dict[dict]

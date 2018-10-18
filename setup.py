@@ -52,6 +52,7 @@ setup(
     packages=[
         'openlego',
         'openlego.core',
+        'openlego.partials',
         'openlego.utils',
         'openlego.docs',
         'openlego.test_suite',

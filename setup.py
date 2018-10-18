@@ -17,7 +17,7 @@ limitations under the License.
 
 This file contains the setup code for the OpenLEGO package.
 """
-from setuptools import setup
+from setuptools import find_packages, setup
 
 from openlego import __version__ as version
 
@@ -49,15 +49,8 @@ setup(
     author='Daniël de Vries',
     author_email='danieldevries6@gmail.com',
     license='Apache Software License',
-    packages=[
-        'openlego',
-        'openlego.core',
-        'openlego.partials',
-        'openlego.utils',
-        'openlego.docs',
-        'openlego.test_suite',
-        'openlego.test_suite.test_examples'
-    ],
+    packages=find_packages(),
+    package_data={'openlego.partials': ['partials.xsd']},
     install_requires=[
         'openmdao>=2.4.0',
         'lxml',

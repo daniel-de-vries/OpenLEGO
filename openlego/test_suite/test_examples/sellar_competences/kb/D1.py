@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Copyright 2018 D. de Vries
+Copyright 2017 D. de Vries
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,11 +23,19 @@ from lxml import etree
 
 from openlego.api import AbstractDiscipline
 from openlego.utils.xml_utils import xml_safe_create_element
-from openlego.test_suite.test_examples.sellar_competences.kb import root_tag, x_x1, x_z1, x_z2, x_y2, x_y1
+from OpenLEGO_dev_scripts.test_cases.sellar_competences.kb import root_tag, x_x1, x_z1, x_z2, x_y2, x_y1
 from openlego.partials.partials import Partials
 
 
 class D1(AbstractDiscipline):
+
+    @property
+    def creator(self):
+        return u'D. de Vries'
+
+    @property
+    def description(self):
+        return u'First discipline of the Sellar problem'
 
     @property
     def supplies_partials(self):

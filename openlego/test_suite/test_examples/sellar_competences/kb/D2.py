@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Copyright 2018 D. de Vries
+Copyright 2017 D. de Vries
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,15 +20,22 @@ This file contains the definition of the Sellar D2 discipline.
 from __future__ import absolute_import, division, print_function
 
 from lxml import etree
-from numpy import sign
 
 from openlego.api import AbstractDiscipline
 from openlego.utils.xml_utils import xml_safe_create_element
-from openlego.test_suite.test_examples.sellar_competences.kb import root_tag, x_y1, x_y2, x_z1, x_z2
+from OpenLEGO_dev_scripts.test_cases.sellar_competences.kb import root_tag, x_y1, x_y2, x_z1, x_z2
 from openlego.partials.partials import Partials
 
 
 class D2(AbstractDiscipline):
+
+    @property
+    def creator(self):
+        return u'D. de Vries'
+
+    @property
+    def description(self):
+        return u'Second discipline of the Sellar problem'
 
     @property
     def supplies_partials(self):
@@ -76,10 +83,7 @@ class D2(AbstractDiscipline):
         doc = etree.parse(in_file)
         y1 = float(doc.xpath(x_y1)[0].text)
 
-        if not y1:
-            dy2_dy1 = sign(y1) * 1e99
-        else:
-            dy2_dy1 = y1 / (2. * abs(y1)**(3./2.))
+        dy2_dy1 = .5 * float(((y1 > 0) - (y1 < 0))) / abs(y1)**.5
 
         partials = Partials()
         partials.declare_partials(x_y2, [x_y1, x_z1, x_z2], [dy2_dy1, 1., 1.])

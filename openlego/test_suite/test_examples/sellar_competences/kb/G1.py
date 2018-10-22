@@ -23,7 +23,7 @@ from lxml import etree
 
 from openlego.api import AbstractDiscipline
 from openlego.utils.xml_utils import xml_safe_create_element
-from OpenLEGO_dev_scripts.test_cases.sellar_competences.kb import root_tag, x_y1, x_g1
+from openlego.test_suite.test_examples.sellar_competences.kb import root_tag, x_y1, x_g1
 from openlego.partials.partials import Partials
 
 

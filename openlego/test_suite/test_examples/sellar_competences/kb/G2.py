@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Copyright 2018 D. de Vries
+Copyright 2017 D. de Vries
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,8 +30,16 @@ from openlego.partials.partials import Partials
 class G2(AbstractDiscipline):
 
     @property
+    def creator(self):
+        return u'D. de Vries'
+
+    @property
+    def description(self):
+        return u'First constraint function of the Sellar problem'
+
+    @property
     def supplies_partials(self):
-        return False
+        return True
 
     def generate_input_xml(self):
         root = etree.Element(root_tag)

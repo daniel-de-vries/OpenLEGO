@@ -50,7 +50,7 @@ def deploy():
 
 def clean():
     for discipline in list_disciplines:
-        for pf in ['-input.xml', '-output.xml']:
+        for pf in ['-input.xml', '-output.xml', '-partials.xml']:
             os.remove(os.path.join(dir_path, discipline + pf))
     os.remove(os.path.join(dir_path, 'SSBJ-base.xml'))
 

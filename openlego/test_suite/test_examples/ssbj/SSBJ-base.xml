@@ -93,4 +93,33 @@
             <value>0.</value>
         </LWT>
     </scaledData>
+    <scalers>
+        <aircraft>
+            <geometry>
+                <lambda>0.25</lambda>
+                <tc>0.05</tc>
+                <Lambda>55.0</Lambda>
+                <Sref>1000.0</Sref>
+                <AR>5.5</AR>
+                <section>1.0</section>
+                <Theta>1.02643602</Theta>
+            </geometry>
+            <other>
+                <L>50606.68120583</L>
+                <D>12193.80272019</D>
+                <fin>4.15019681</fin>
+                <SFC>1.10758464</SFC>
+            </other>
+            <weight>
+                <WE>6354.07017266</WE>
+                <WF>7306.20262124</WF>
+                <WT>50606.68120583</WT>
+            </weight>
+        </aircraft>
+        <reference>
+            <M>1.6</M>
+            <ESF>0.5027771</ESF>
+            <h>45000.0</h>
+        </reference>
+    </scalers>
 </dataSchema>

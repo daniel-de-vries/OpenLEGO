@@ -201,11 +201,11 @@ class XMLComponent(ExplicitComponent):
                 self.add_output(name, value, ref=ref)
 
         if self.partials_from_xml:
-            for src, partials in self.partials_from_xml.items():
-                if src is not None and partials is not None:
-                    self.declare_partials(src, partials.keys())
+            for of, wrt in self.partials_from_xml.items():
+                if of is not None and wrt is not None:
+                    self.declare_partials(xpath_to_param(of), [xpath_to_param(_wrt) for _wrt in wrt.keys()])
         else:
-            self.declare_partials('*', '*', method='fd')
+            self.declare_partials('*', '*', method='fd', step_calc='rel')
             # if self.outputs_from_xml and self.inputs_from_xml:
             #     for src in self.outputs_from_xml.keys():
             #         self.declare_partials(src, self.inputs_from_xml.keys(), method='fd')
@@ -313,11 +313,13 @@ class XMLComponent(ExplicitComponent):
 
         """
         _partials = Partials(file)
-        for src, partial in _partials.get_partials().items():
-            for tgt, val in partial.items():
-                if (src, tgt) in partials:
+        for of, wrts in _partials.get_partials().items():
+            for wrt, val in wrts.items():
+                of = xpath_to_param(of)
+                wrt = xpath_to_param(wrt)
+                if (of, wrt) in partials:
                     try:
-                        partials[src, tgt] = val
+                        partials[of, wrt] = val
                     except Exception as e:
                         print(e.message)
 

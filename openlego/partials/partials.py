@@ -94,7 +94,11 @@ class Partials(object):
 
                 for elem_wrt in elem_of[1:]:
                     wrt_uid = elem_wrt[0].text
-                    value = parse_string(elem_wrt[1].text)
+
+                    if len(elem_wrt) == 2:
+                        value = parse_string(elem_wrt[1].text)
+                    else:
+                        value = 0.
                     partials[of_uid].update({wrt_uid: value})
 
         return partials

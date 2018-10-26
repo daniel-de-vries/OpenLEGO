@@ -190,7 +190,15 @@ class XMLComponent(ExplicitComponent):
                 # raise NotImplementedError('pass-by-object variables are not yet supported by OpenMDAO 2.0')
                 pass
             else:
-                self.add_output(name, value)
+                # Use the value stored in the input.xml as a reference value
+                if isinstance(value, np.ndarray):
+                    ref = value.mean()
+                else:
+                    ref = value
+                if ref == 0.:
+                    ref = 1.
+
+                self.add_output(name, value, ref=ref)
 
         if self.partials_from_xml:
             for src, partials in self.partials_from_xml.items():

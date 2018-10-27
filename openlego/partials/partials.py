@@ -61,101 +61,99 @@ class Partials(object):
         """Root `_Element` of the partials XML file."""
         return self._tree.getroot()
 
-    def get_partials(self, src=None):
-        # type: (Optional[src]) -> dict
+    def get_partials(self, of=None):
+        # type: (Optional[str]) -> dict
         """Get a dictionary with the partials stored in the XML file.
 
         Parameters
         ----------
-            src : str, optional
-                Name of the source parameter to get the partials from
+            of : str, optional
+                Name of the parameter to get the partials of
 
         Returns
         -------
             dict
-                In the form partials['from_param_name']['to_param_name'] = sensitivity_value if no `src` is given, or
-                in the form partials['to_param_name'] = sensitivity_value if `src` is given.
+                In the form partials['from_param_name']['wrt_param_name'] = sensitivity_value if no `of` is given, or
+                in the form partials['wrt_param_name'] = sensitivity_value if `of` is given.
         """
         partials = dict()
 
-        if src is not None:
-            elem_param = self._tree.xpath('/partials/parameter[uid="{}"]'.format(src))
-            if len(elem_param):
-                for elem_partial in elem_param[1]:
-                    param = elem_partial[0].text
-                    value = parse_string(elem_partial[1].text)
-                    partials.update({param: value})
+        if of is not None:
+            elem_of = self._tree.xpath('/partials/of[@uid="{}"]'.format(of))
+            if len(elem_of):
+                for elem_wrt in elem_of:
+                    wrt_uid = elem_wrt.get('uid')
+                    value = parse_string(elem_wrt.text)
+                    partials.update({wrt_uid: value})
         else:
-            for elem_param in self._elem_root:
-                uid = elem_param[0].text
+            for elem_of in self._elem_root:
+                of_uid = elem_of[0].text
 
-                if uid not in partials:
-                    partials.update({uid: dict()})
+                if of_uid not in partials:
+                    partials.update({of_uid: dict()})
 
-                for elem_partial in elem_param[1]:
-                    param = elem_partial[0].text
-                    if len(elem_partial) > 1:
-                        value = parse_string(elem_partial[1].text)
+                for elem_wrt in elem_of[1:]:
+                    wrt_uid = elem_wrt[0].text
+
+                    if len(elem_wrt) == 2:
+                        value = parse_string(elem_wrt[1].text)
                     else:
                         value = 0.
-                    partials[uid].update({param: value})
+                    partials[of_uid].update({wrt_uid: value})
 
         return partials
 
-    def declare_partials(self, src, tgt, val=None):
+    def declare_partials(self, of, wrt, val=None):
         # type: (str, Union[str, List[str]], Optional[Any]) -> None
         """Declare a set of partials that is provided.
 
         Parameters
         ----------
-            src : str
-                Name of the source parameter.
+            of : str
+                Name of the parameter of which the derivative is to be taken.
 
-            tgt : str or Iterable[str]
-                Name(s) of target parameters.
+            wrt : str or Iterable[str]
+                Name(s) of parameters w.r.t. which the derivatives are to be taken.
 
             val : any, optional
                 Optional value(s) of partials.
 
         Notes
         -----
-            If `val` is given and `tgt` is a list, `val` should have the same length as `tgt`.
+            If `val` is given and `wrt` is a list, `val` should have the same length as `wrt`.
         """
-        if not isinstance(tgt, list):
-            tgt = [tgt]
+        if not isinstance(wrt, list):
+            wrt = [wrt]
             if val is not None:
                 val = [val]
+        else:
+            wrt = set(wrt)
 
         elem_root = self._elem_root
 
-        x_param = "/partials/parameter[uid='{}']".format(src)
-        elem_param = self._tree.xpath(x_param)
+        x_of = "/partials/of[uid='{}']".format(of)
+        elem_of = self._tree.xpath(x_of)
 
-        if not len(elem_param):
-            elem_param = etree.SubElement(elem_root, 'parameter')
-            elem_param_uid = etree.SubElement(elem_param, 'uid')
-            elem_param_uid.text = src
-
-            elem_partials = etree.SubElement(elem_param, 'partials')
+        if not len(elem_of):
+            elem_of = etree.SubElement(elem_root, 'of')
+            etree.SubElement(elem_of, 'uid').text = of
         else:
-            elem_partials = elem_param[0][1]
+            elem_of = elem_of[0]
 
-        for i, t in enumerate(tgt):
-            x_partial = '/'.join([x_param, "partials/partial[uid='{}']"]).format(t)
-            elem_partial = self._tree.xpath(x_partial)
+        for i, _wrt in enumerate(wrt):
+            x_wrt = x_of + "/wrt[uid='{}']".format(_wrt)
+            elem_wrt = self._tree.xpath(x_wrt)
 
-            if not len(elem_partial):
-                elem_partial = etree.SubElement(elem_partials, 'partial')
-                elem_param_uid = etree.SubElement(elem_partial, 'uid')
-                elem_param_uid.text = t
+            if not len(elem_wrt):
+                elem_wrt = etree.SubElement(elem_of, 'wrt')
+                etree.SubElement(elem_wrt, 'uid').text = _wrt
+                if val is not None:
+                    value_to_xml(etree.SubElement(elem_wrt, 'value'), val[i])
             else:
                 warnings.warn(
                     'Partial from {} to {} is defined more than once. Last occurrence take precedence.'
-                    .format(src, t))
-
-            if val is not None:
-                elem_value = etree.SubElement(elem_partial, 'value')
-                value_to_xml(elem_value, val[i])
+                        .format(of, _wrt))
+                value_to_xml(elem_wrt[0][1], val[i])
 
     def add_partials(self, partials):
         # type: (dict) -> None

@@ -4,55 +4,40 @@
         elementFormDefault="qualified"
 >
 
-    <!-- parameterType: an element with a parameterUID child element -->
-    <xs:complexType name="parameterType">
-        <xs:sequence>
-            <xs:element name="uid" type="xs:string">
-                <xs:annotation>
-                    <xs:documentation xml:lang="en">
-                        Unique identifier of the parameter this element refers to.
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="value" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        Value of the sensitivity of the current parameter to this variable.
-                    </xs:documentation>
-                </xs:annotation>
-                <xs:complexType>
-                    <xs:simpleContent>
-                        <xs:extension base="xs:string">
-                            <xs:attribute name="mapType" />
-                        </xs:extension>
-                    </xs:simpleContent>
-                </xs:complexType>
-            </xs:element>
-        </xs:sequence>
+
+    <!-- Definition of a value in the partials document, which could have a mapType attribute -->
+    <xs:complexType name="valueType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="mapType" />
+            </xs:extension>
+        </xs:simpleContent>
     </xs:complexType>
 
-    <!-- dependentParamType: an extended parameterType with a number of partialType children -->
-    <xs:complexType name="dependentParamType">
-        <xs:annotation>
-            <xs:documentation>
-                This element defines the sensitivities of a parameter.
-            </xs:documentation>
-        </xs:annotation>
+    <!-- Definition of an element with a sub-element named uid -->
+    <xs:complexType name="uidType">
+        <xs:sequence>
+            <xs:element name="uid" type="xs:string" />
+        </xs:sequence>
+    </xs:complexType>
+    
+    <!-- Definition of parameter w.r.t. which a sensitivity is defined -->
+    <xs:complexType name="wrtType">
         <xs:complexContent>
-            <xs:extension base="parameterType">
+            <xs:extension base="uidType">
                 <xs:sequence>
-                    <xs:element name="partials">
-                        <xs:annotation>
-                            <xs:documentation>
-                                A list of sensitivities of this parameter w.r.t. parameters it depends on.
-                            </xs:documentation>
-                        </xs:annotation>
-                        <xs:complexType>
-                            <xs:sequence>
-                                <xs:element name="partial" minOccurs="0" maxOccurs="unbounded" type="parameterType" />
-                            </xs:sequence>
-                        </xs:complexType>
-                    </xs:element>
+                    <xs:element name="value" type="valueType" minOccurs="0" />
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <!-- Definition of parameter of which sensitivities are defined -->
+    <xs:complexType name="ofType">
+        <xs:complexContent>
+            <xs:extension base="uidType">
+                <xs:sequence>
+                    <xs:element name="wrt" type="wrtType" minOccurs="0" maxOccurs="unbounded" />
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>
@@ -62,9 +47,18 @@
     <xs:element name="partials">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="parameter" minOccurs="0" maxOccurs="unbounded" type="dependentParamType" />
+                <xs:element name="of" type="ofType" minOccurs="0" maxOccurs="unbounded">
+                    <xs:key name="uniqueWrtPerOf">
+                        <xs:selector xpath="./wrt/uid" />
+                        <xs:field xpath="." />
+                    </xs:key>
+                </xs:element>
             </xs:sequence>
         </xs:complexType>
+        <xs:key name="uniqueOf">
+            <xs:selector xpath="./of/uid" />
+            <xs:field xpath="." />
+        </xs:key>
     </xs:element>
 
 </xs:schema>

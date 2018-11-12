@@ -144,7 +144,7 @@ class TestSsbj(unittest.TestCase):
         self.assertAlmostEqual(Cf, 1., 2)
         self.assertAlmostEqual(T, .2, 2)
         self.assertAlmostEqual(R, -.7855926, 2)
-        self.assertAlmostEqual(extra, 63609.5740869, 2)
+        self.assertAlmostEqual(extra, 63609.56, delta=1.)
 
     def assertion_unc_doe_gs(self, tc, h, M, AR, Lambda, Sref, lambda_, section, Cf, T, R, extra):
         self.assertAlmostEqual(tc, .09, 2)
@@ -158,7 +158,7 @@ class TestSsbj(unittest.TestCase):
         self.assertAlmostEqual(Cf, 1.25, 2)
         self.assertAlmostEqual(T, 1., 2)
         self.assertAlmostEqual(R, -1.15528254, 2)
-        self.assertAlmostEqual(extra, 149272.433123, 2)
+        self.assertAlmostEqual(extra, 149272.43, delta=1.)
 
     def assertion_unc_doe_j(self, tc, h, M, AR, Lambda, Sref, lambda_, section, Cf, T, R, extra):
         self.assertAlmostEqual(tc, .09, 2)
@@ -172,7 +172,7 @@ class TestSsbj(unittest.TestCase):
         self.assertAlmostEqual(Cf, 1.25, 2)
         self.assertAlmostEqual(T, 1., 2)
         self.assertAlmostEqual(R, -0.82379969, 2)
-        self.assertAlmostEqual(extra, 148199.575895, 2)
+        self.assertAlmostEqual(extra, 148199.57, delta=1.)
 
     def assertion_con_doe(self, tc, h, M, AR, Lambda, Sref, lambda_, section, Cf, T, R, extra):
         self.assertAlmostEqual(tc, .09, 2)
@@ -186,7 +186,7 @@ class TestSsbj(unittest.TestCase):
         self.assertAlmostEqual(Cf, 1.25, 2)
         self.assertAlmostEqual(T, 1., 2)
         self.assertAlmostEqual(R, -1.13518441, 2)
-        self.assertAlmostEqual(extra, 187900.003656, 2)
+        self.assertAlmostEqual(extra, 187899.83, delta=1.)
 
     def assertion_mdo(self, tc, h, M, AR, Lambda, Sref, lambda_, section, Cf, T, R, extra):
         self.assertAlmostEqual(tc, .06, 2)
@@ -200,7 +200,7 @@ class TestSsbj(unittest.TestCase):
         self.assertAlmostEqual(Cf, .75, 2)
         self.assertAlmostEqual(T, .15620845, 2)
         self.assertAlmostEqual(R, -7.40624897, 2)
-        self.assertAlmostEqual(extra, 44957.7059791, 2)
+        self.assertAlmostEqual(extra, 44957.70, delta=1.)
 
     def assertion_co(self, tc, h, M, AR, Lambda, Sref, lambda_, section, Cf, T, R, extra):
         self.assertAlmostEqual(tc, .05, 2)

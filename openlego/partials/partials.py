@@ -126,8 +126,6 @@ class Partials(object):
             wrt = [wrt]
             if val is not None:
                 val = [val]
-        else:
-            wrt = set(wrt)
 
         elem_root = self._elem_root
 

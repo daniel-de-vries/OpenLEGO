@@ -55,12 +55,17 @@ def list_disciplines():
     return [D1(), D2(), F(), G1(), G2()]
 
 
+def remove_if_exists(file_path):
+    if os.path.isfile(file_path):
+        os.remove(file_path)
+
+
 def clean():
     for discipline in list_disciplines():
-        os.remove(discipline.in_file)
-        os.remove(discipline.out_file)
-        os.remove(discipline.partials_file)
-    os.remove(base_file_path)
+        remove_if_exists(discipline.in_file)
+        remove_if_exists(discipline.out_file)
+        remove_if_exists(discipline.partials_file)
+    remove_if_exists(base_file_path)
 
 
 def deploy():

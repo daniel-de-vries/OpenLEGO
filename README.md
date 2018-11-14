@@ -38,4 +38,3 @@ of how OpenLEGO can be used.
 *OpenLEGO* was originally developed by [Daniël de Vries](www.daniel-de-vries.com) as part
 of his MSc thesis at the [TU Delft](https://www.tudelft.nl/). Feel free to post any feedback on the code, suggestions for new features, and general ideas.
 
-NOTE: OpenLEGO was not developed under the umbrella of the AGILE project and did not receive funding from it.

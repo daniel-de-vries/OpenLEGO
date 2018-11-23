@@ -51,15 +51,19 @@ def deploy():
 def clean():
     for discipline in list_disciplines:
         for pf in ['-input.xml', '-output.xml', '-partials.xml']:
-            os.remove(os.path.join(dir_path, discipline + pf))
-    os.remove(os.path.join(dir_path, 'SSBJ-base.xml'))
+            remove_if_exists(os.path.join(dir_path, discipline + pf))
+    remove_if_exists(os.path.join(dir_path, 'SSBJ-base.xml'))
 
     for file in os.listdir(dir_path):
         if '__test__' in file:
-            os.remove(os.path.join(dir_path, file))
+            remove_if_exists(os.path.join(dir_path, file))
         if '__run__' in file and '_output.xml' in file:
-            os.remove(os.path.join(dir_path, file))
+            remove_if_exists(os.path.join(dir_path, file))
 
+
+def remove_if_exists(file_path):
+    if os.path.isfile(file_path):
+        os.remove(file_path)
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:

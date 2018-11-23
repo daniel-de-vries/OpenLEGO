@@ -30,7 +30,7 @@ from cached_property import cached_property
 from lxml import etree
 from lxml.etree import _Element, _ElementTree
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
-    LinearRunOnce, ExecComp, NonlinearRunOnce, DirectSolver
+    LinearRunOnce, NonlinearRunOnce, DirectSolver
 from typing import Union, Optional, List, Any, Dict, Tuple
 
 from openlego.utils.general_utils import parse_cmdows_value, str_to_valid_sys_name, parse_string
@@ -39,6 +39,7 @@ from openlego.utils.cmdows_utils import get_element_by_uid, get_related_paramete
 from .abstract_discipline import AbstractDiscipline
 from .cmdows import CMDOWSObject, InvalidCMDOWSFileError
 from .discipline_component import DisciplineComponent
+from .exec_comp import ExecComp
 
 
 class LEGOModel(CMDOWSObject, Group):
@@ -293,8 +294,12 @@ class LEGOModel(CMDOWSObject, Group):
 
                                     if eq_label in eq_expr:
                                         promotes.append((eq_label, input_name))
+                                if isinstance(mathematical_function.find('sleepTime'), _Element):
+                                    sleep_time = float(mathematical_function.findtext('sleepTime'))
+                                else:
+                                    sleep_time = None
                                 group.add_subsystem(str_to_valid_sys_name(eq_uid),
-                                                    ExecComp(eq_output_label + ' = ' + eq_expr),
+                                                    ExecComp(eq_output_label + ' = ' + eq_expr, sleep_time=sleep_time),
                                                     promotes=promotes + [(eq_output_label, eq_output), ])
                 _mathematical_functions.update({uid: group})
 

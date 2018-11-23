@@ -17,6 +17,12 @@ limitations under the License.
 
 This file contains the definition the `SubDriverComponent` class.
 """
+import numpy as np
+
+from openlego.core.cmdows import InvalidCMDOWSFileError
+from openlego.utils.cmdows_utils import get_element_by_uid, get_doe_setting_safe
+from openlego.utils.general_utils import shorten_xpath
+from openlego.utils.xml_utils import xpath_to_param
 from openmdao.api import ExplicitComponent
 
 
@@ -42,10 +48,14 @@ class SubDriverComponent(ExplicitComponent):
         self.options.declare('kb_path')
         self.options.declare('data_folder')
         self.options.declare('base_xml_file')
-        self.options.declare('show_model', default=False)
+        self.options.declare('super_driver_type', default=None)
+        self.options.declare('show_model', default=True)
 
     def setup(self):
         """Setup of the explicit component object with a nested LEGOProblem as subdriver."""
+
+        # Load settings for superdriver case
+        super_driver_type = self.options['super_driver_type']
 
         # Set subproblem
         from openlego.core.problem import LEGOProblem
@@ -54,21 +64,21 @@ class SubDriverComponent(ExplicitComponent):
                                     data_folder=self.options['data_folder'],  # Output directory
                                     base_xml_file=self.options['base_xml_file'],
                                     driver_uid=self.options['driver_uid'])
-        #  p.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
+        #p.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
 
-        # Add inputs
+        # Add inputs/outputs
         for input_name, shape in p.model.model_constants.items():
             self.add_input(input_name, shape=shape)
 
         for input_name, attrbs in p.model.model_super_inputs.items():
             self.add_input(input_name, val=attrbs['val'])
 
-        # Add outputs
         for output_name, value in p.model.model_super_outputs.items():
             self.add_output(output_name, val=value)
 
         # Declare partials
-        self.declare_partials('*', '*', method='fd', step=1e-4, step_calc='abs')
+        if p.model.model_super_outputs and not super_driver_type:
+            self.declare_partials('*', '*', method='fd', step=1e-4, step_calc='abs')
 
         # Setup
         p.setup()
@@ -101,7 +111,7 @@ class SubDriverComponent(ExplicitComponent):
             p[des_var] = attrbs['initial']
 
         # Run the driver
-        print('Optimizing subdriver {}'.format(self.options['driver_uid']))
+        print('Running subdriver {}'.format(self.options['driver_uid']))
         p.run_driver()
 
         # Pull the value back up to the output array

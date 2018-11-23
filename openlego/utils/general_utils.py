@@ -347,3 +347,15 @@ def clean_dir_filtered(dr, filters):
             if fltr in f:
                 os.remove(f)
                 continue
+
+
+def shorten_xpath(xpath):
+    # TODO: Add docstring
+    check_strs = ['/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy',
+                  '/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy']
+    repl_strs = ['/dataSchema/doeInputSamples',
+                 '/dataSchema/doeOutputSamples']
+    for check_str, repl_str in zip(check_strs, repl_strs):
+        if check_str in xpath:
+            return xpath.replace(check_str, repl_str)
+    return xpath

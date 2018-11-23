@@ -25,7 +25,7 @@ from lxml import etree
 from lxml.etree import _Element
 from typing import Dict, List, Union
 
-from openlego.utils.cmdows_utils import get_loop_nesting_obj, get_element_by_uid
+from openlego.utils.cmdows_utils import get_loop_nesting_obj, get_element_by_uid, get_doe_setting_safe
 from typing import Any, Optional
 from cached_property import cached_property
 
@@ -90,6 +90,7 @@ class CMDOWSObject(object):
         self._driver_uid = driver_uid
         self.data_folder = data_folder
         self.base_xml_file = base_xml_file
+        self._super_driver_components = []
 
         super(CMDOWSObject, self).__init__()
 
@@ -98,8 +99,8 @@ class CMDOWSObject(object):
             if len(super_drivers) == 1:
                 self._driver_uid = super_drivers[0]
             elif len(super_drivers) > 1:
-                raise AssertionError('Multiple super drivers (found: {}) are not (yet) supported by OpenLEGO.'
-                                     .format(super_drivers))
+                self._driver_uid = None
+                self._super_driver_components = super_drivers
 
     def __getattribute__(self, name):
         # type: (str) -> Any
@@ -208,7 +209,7 @@ class CMDOWSObject(object):
             if isinstance(item, dict):
                 loop_elem_name = item.keys()[0]
                 if self.loop_element_types[loop_elem_name] in ['optimizer', 'doe'] and not super_driver_encountered:
-                    super_driver_encountered = True
+                    #super_driver_encountered = True  # TODO: Remove or fix for other
                     sub_drivers.extend(self._get_sub_drivers(item[item.keys()[0]], True))
                 elif self.loop_element_types[loop_elem_name] in ['optimizer', 'doe'] and super_driver_encountered:
                     sub_drivers.append(loop_elem_name)
@@ -396,6 +397,32 @@ class CMDOWSObject(object):
                                          self.filter_loop_nesting(item[loop_elem_name], sub_driver_found=False)})
                         else:
                             _filtered_loop_nesting_list.append(self.SUBDRIVER_PREFIX + loop_elem_name)
+                elif self.loop_element_types[loop_elem_name] == 'distributed_system_converger':
+                    # Find the right sublist of the multiple subworkflows handled by the converger
+                    wf_to_append = []
+                    driver_key = None
+                    for idx, subworkflow in enumerate(item[loop_elem_name]):
+                        if not driver_uid_is_sub_driver:
+                            if subworkflow.keys()[0] == self.driver_uid:
+                                wf_to_append = subworkflow[self.driver_uid]
+                                driver_key = self.driver_uid
+                                break
+                            elif subworkflow.keys()[0] in self._super_driver_components:
+                                driver_key = loop_elem_name
+                                wf_to_append.append(subworkflow.keys()[0])
+                        else:
+                            entry_to_check = subworkflow[subworkflow.keys()[0]][0]
+                            if isinstance(entry_to_check, dict) and entry_to_check.keys()[0] == self.driver_uid:
+                                wf_to_append = subworkflow[subworkflow.keys()[0]]
+                                driver_key = self.SUPERDRIVER_PREFIX + subworkflow.keys()[0]
+                                break
+                    if wf_to_append is None or driver_key is None:
+                        raise AssertionError('Could not match the right subworkflow for driver_uid: {}'
+                                             .format(self.driver_uid))
+                    if all(isinstance(elem, str) for elem in wf_to_append):
+                        _filtered_loop_nesting_list.append({driver_key: wf_to_append})
+                    else:
+                        _filtered_loop_nesting_list.append({driver_key: self.filter_loop_nesting(wf_to_append)})
                 else:
                     raise AssertionError('Could not find element details for loop element {}.'.format(loop_elem_name))
             elif isinstance(item, str):
@@ -413,7 +440,15 @@ class CMDOWSObject(object):
         """:obj:`List[str]`: List of all the executable blocks in the model w.r.t. the driver UID."""
         return self.collect_all_executable_blocks(self.filtered_loop_nesting)
 
-    def collect_all_executable_blocks(self, loop_nesting_list):
+    @cached_property
+    def model_nested_exec_blocks(self):
+        """:obj:`List[str]`: List of all the executable blocks that are nested inside  w.r.t. the superdriver UID."""
+        if self.driver_uid in self.super_drivers or self._super_driver_components:
+            return self.collect_all_executable_blocks(self.full_loop_nesting, nested_in=self.driver_uid)
+        else:
+            return []
+
+    def collect_all_executable_blocks(self, loop_nesting_list, nested_in=None):
         # type: (List[str, dict]) -> List[str]
         """Method collects the executable blocks in the model. w.r.t. the driver UID under consideration.
 
@@ -428,12 +463,19 @@ class CMDOWSObject(object):
             List with all relevant executable blocks
         """
         all_executable_blocks = []
+        break_loop = False
         for item in loop_nesting_list:
             if isinstance(item, dict):
                 loop_elem_name = item.keys()[0]
-                all_executable_blocks.extend(self.collect_all_executable_blocks(item[loop_elem_name]))
+                if nested_in is not None and loop_elem_name == nested_in:
+                    nested_in = None
+                    break_loop = True
+                all_executable_blocks.extend(self.collect_all_executable_blocks(item[loop_elem_name], nested_in=nested_in))
+                if break_loop:
+                    break
             elif isinstance(item, str):
-                all_executable_blocks.append(item)
+                if not nested_in:
+                    all_executable_blocks.append(item)
         return all_executable_blocks
 
     @cached_property
@@ -492,6 +534,30 @@ class CMDOWSObject(object):
         return False
 
     @cached_property
+    def doe_uids(self):
+        # TODO: Add doc
+        return [x for x in self.loop_element_types if self.loop_element_types[x] == 'doe']
+
+    @cached_property
+    def distributed_system_converger_uids(self):
+        # TODO: Add doc
+        return [x for x in self.loop_element_types if self.loop_element_types[x] == 'distributed_system_converger']
+
+    @cached_property
+    def doe_runs_dict(self):
+        # TODO: Add docstring
+        _doe_runs_dict = {}
+        for doe_uid in self.doe_uids:
+            doe_elem = get_element_by_uid(self.elem_cmdows, doe_uid)
+            # Load settings from CMDOWS file
+            doe_method = get_doe_setting_safe(doe_elem, 'method', 'Uniform design')
+            doe_runs = get_doe_setting_safe(doe_elem, 'runs', None, expected_type='int', doe_method=doe_method,
+                                            required_for_doe_methods=['Latin hypercube design', 'Uniform design',
+                                                                      'Monte Carlo design'])
+            _doe_runs_dict.update({doe_uid:doe_runs})
+        return _doe_runs_dict
+
+    @cached_property
     def block_order(self):
         # type: () -> List[str]
         """:obj:`List[str]`: The order of all the blocks based on the step_numbers provided in the CMDOWS file
@@ -536,6 +602,8 @@ class CMDOWSObject(object):
             _loopelement_details[elem.attrib['uID']] = 'optimizer'
         for elem in self.elem_arch_elems.iterfind('executableBlocks/does/doe'):
             _loopelement_details[elem.attrib['uID']] = 'doe'
+        for elem in self.elem_arch_elems.iterfind('executableBlocks/distributedSystemConvergers/distributedSystemConverger'):
+            _loopelement_details[elem.attrib['uID']] = 'distributed_system_converger'
         return _loopelement_details
 
     @cached_property
@@ -562,3 +630,13 @@ class CMDOWSObject(object):
         for i, uid in enumerate(self.process_info['uids']):
             _process_step_numbers[uid] = self.process_info['step_numbers'][i]
         return _process_step_numbers
+
+    @cached_property
+    def doe_sample_lists(self):
+        # TODO: add docstring
+        _doe_sample_lists = {'inputs':[], 'outputs':[]}
+        for elem in self.elem_arch_elems.iter('doeInputSampleList'):
+            _doe_sample_lists['inputs'].append(elem.attrib['uID'])
+        for elem in self.elem_arch_elems.iter('doeOutputSampleList'):
+            _doe_sample_lists['outputs'].append(elem.attrib['uID'])
+        return _doe_sample_lists

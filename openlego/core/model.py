@@ -273,6 +273,10 @@ class LEGOModel(CMDOWSObject, Group):
                                 raise AssertionError('Could not find equation UID.')
                         else:
                             eqs_elem = output.find('equations')
+                        if isinstance(mathematical_function.find('sleepTime'), _Element):
+                            sleep_time = float(mathematical_function.findtext('sleepTime'))
+                        else:
+                            sleep_time = None
                         for equation in eqs_elem.iter('equation'):
                             if equation.attrib['language'] == 'Python':
                                 eq_uid = equation.getparent().attrib['uID']
@@ -294,13 +298,12 @@ class LEGOModel(CMDOWSObject, Group):
 
                                     if eq_label in eq_expr:
                                         promotes.append((eq_label, input_name))
-                                if isinstance(mathematical_function.find('sleepTime'), _Element):
-                                    sleep_time = float(mathematical_function.findtext('sleepTime'))
-                                else:
-                                    sleep_time = None
                                 group.add_subsystem(str_to_valid_sys_name(eq_uid),
                                                     ExecComp(eq_output_label + ' = ' + eq_expr, sleep_time=sleep_time),
                                                     promotes=promotes + [(eq_output_label, eq_output), ])
+                                # sleep_time is set to None to only have simulated time for one equation of the
+                                # mathematical function in the CMDOWS file
+                                sleep_time=None
                 _mathematical_functions.update({uid: group})
 
         return _mathematical_functions

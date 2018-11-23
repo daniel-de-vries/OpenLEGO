@@ -25,6 +25,7 @@ import warnings
 
 from cached_property import cached_property
 from lxml.etree import _Element, _ElementTree
+from six import iteritems
 
 from openlego.utils.xml_utils import xml_to_dict, xpath_to_param
 from openmdao.api import Problem, ScipyOptimizeDriver, DOEDriver, UniformGenerator, \
@@ -323,21 +324,52 @@ class LEGOProblem(CMDOWSObject, Problem):
         self.initialize()
         for xpath, value in xml_to_dict(xml).items():
             name = xpath_to_param(xpath)
-            if name in self.model._var_allprocs_prom2abs_list['input'] or \
-                    name in self.model._var_allprocs_prom2abs_list['output']:
-                self[name] = value
+            prom2abs_list_inputs = self.model._var_allprocs_prom2abs_list['input']
+            prom2abs_list_outputs = self.model._var_allprocs_prom2abs_list['output']
+            if self.comm.size > 1:  # Small workaround for issue in OpenMDAO with mpirun
+                if name in prom2abs_list_inputs:
+                    for abs_name in prom2abs_list_inputs[name]:
+                        self[abs_name] = value
+                if name in prom2abs_list_outputs:
+                    for abs_name in prom2abs_list_outputs[name]:
+                        self[abs_name] = value
+            else:
+                if name in prom2abs_list_inputs or name in prom2abs_list_outputs:
+                   self[name] = value
             if name in self.model.mapped_parameters_inv:
                 for mapping in self.model.mapped_parameters_inv[name]:
-                    if mapping in self.model._var_allprocs_prom2abs_list['input'] or \
-                    mapping in self.model._var_allprocs_prom2abs_list['output']:
+                    if mapping in prom2abs_list_inputs or mapping in prom2abs_list_outputs:
                         try:
-                            self[mapping] = value
+                            if self.comm.size > 1:  # Small workaround for issue in OpenMDAO with mpirun
+                                abs_names = []
+                                if mapping in prom2abs_list_inputs:
+                                    abs_names.extend([abs_name for abs_name in prom2abs_list_inputs[mapping]])
+                                if mapping in prom2abs_list_outputs:
+                                    abs_names.extend([abs_name for abs_name in prom2abs_list_outputs[mapping]])
+                                for abs_name in abs_names:
+                                    self[abs_name] = value
+                            else:
+                                self[mapping] = value
                         except RuntimeError as e:
                             if 'The promoted name' in e[0] and 'is invalid' in e[0]:
                                 warnings.warn('Could not automatically set this invalid promoted name from the XML: '
                                               '{}.'.format(mapping))
                             else:
                                 raise RuntimeError(e)
+
+    def _set_initial_conditions(self):
+        """
+        Set all initial conditions that have been saved in cache after setup. Method is the same as in the OpenMDAO
+        implementation, but has a workaround for MPI's
+        """
+        for name, value in iteritems(self._initial_condition_cache):
+            try:
+                self[name] = value
+            except:
+                pass
+
+        # Clean up cache
+        self._initial_condition_cache = {}
 
     def collect_results(self, cases_to_collect='default', print_in_log=True):
         # type: (Union[str, list]) -> Dict[dict]

@@ -262,6 +262,12 @@ class LEGOModel(CMDOWSObject, Group):
                     if '/architectureNodes/final' not in output_name:
                         required_outputs.append(output_name)
 
+                # Get the sleeping time for the mathematical function
+                if isinstance(mathematical_function.find('sleepTime'), _Element):
+                    sleep_time = float(mathematical_function.findtext('sleepTime'))
+                else:
+                    sleep_time = None
+
                 # Then create mathematical subsystems for each output
                 for output in mathematical_function.iter('output'):
                     if output.find('parameterUID').text in required_outputs:
@@ -273,10 +279,6 @@ class LEGOModel(CMDOWSObject, Group):
                                 raise AssertionError('Could not find equation UID.')
                         else:
                             eqs_elem = output.find('equations')
-                        if isinstance(mathematical_function.find('sleepTime'), _Element):
-                            sleep_time = float(mathematical_function.findtext('sleepTime'))
-                        else:
-                            sleep_time = None
                         for equation in eqs_elem.iter('equation'):
                             if equation.attrib['language'] == 'Python':
                                 eq_uid = equation.getparent().attrib['uID']

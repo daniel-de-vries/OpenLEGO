@@ -23,7 +23,6 @@ class ExecComp(OpenmdaoExecComp):
         outputs : `Vector`
             `Vector` containing outputs.
         """
-        for expr in self._codes:
-            exec(expr, _expr_dict, _IODict(outputs, inputs))
+        OpenmdaoExecComp.compute(self, inputs, outputs)
         if self.sleep_time is not None:
             time.sleep(self.sleep_time)

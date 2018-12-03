@@ -365,7 +365,7 @@ class LEGOProblem(CMDOWSObject, Problem):
         for name, value in iteritems(self._initial_condition_cache):
             try:
                 self[name] = value
-            except:
+            except KeyError:
                 pass
 
         # Clean up cache

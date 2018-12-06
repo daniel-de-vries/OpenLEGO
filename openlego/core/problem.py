@@ -21,6 +21,7 @@ from __future__ import absolute_import, division, print_function
 
 import datetime
 import os
+import numpy as np
 import warnings
 
 from cached_property import cached_property
@@ -94,6 +95,9 @@ class LEGOProblem(CMDOWSObject, Problem):
         """
         if output_case_str:
             self.output_case_string = output_case_str
+        elif driver_uid:
+            self.output_case_string = os.path.splitext(os.path.basename(cmdows_path))[0] + '_' + \
+                                      driver_uid + '_' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S%f")[:-4]
         else:
             self.output_case_string = os.path.splitext(os.path.basename(cmdows_path))[0] + '_' + \
                                       datetime.datetime.now().strftime("%Y%m%d_%H%M%S%f")[:-4]
@@ -290,6 +294,22 @@ class LEGOProblem(CMDOWSObject, Problem):
         else:
             return Driver()
 
+    def clean_driver_after_failure(self):
+        # TODO: Update docstring
+        """Clean the driver of an OpenMDAO Probem() object. This is done if the driver (optimization) has failed
+           nd nan (not a number) values are stored in the inputs and outputs.
+
+            :param p: OpenMDAO problem object with a driver
+            :type p: Problem
+            """
+        # TODO: Check later whether this is the right approach? Add initial values?
+        for inp in self.model.list_inputs(out_stream=None):
+            if np.isnan(np.min(inp[1]['value'])):
+                self[inp[0]] = np.ones(len(inp[1]['value']))
+        for out in self.model.list_outputs(out_stream=None):
+            if np.isnan(np.min(out[1]['value'])):
+                self[out[0]] = np.ones(len(out[1]['value']))
+
     def store_model_view(self, open_in_browser=False):
         # type: (bool) -> None
         """Implementation of the view_model() function for storage and (optionally) viewing in the browser.
@@ -338,6 +358,29 @@ class LEGOProblem(CMDOWSObject, Problem):
                                               '{}.'.format(mapping))
                             else:
                                 raise RuntimeError(e)
+
+    def postprocess_experiments(self, vector, vector_name, failed_experiments=(None, None)):
+        # TODO: Add docstring
+        # Determine whether it concerns input or output sample lists
+        if vector_name in [xpath_to_param(xpath) for xpath in self.doe_sample_lists['inputs']]:
+            # Assert that the failed_experiments are known, or else throw an error
+            if failed_experiments[0] is None:
+                raise IOError('For DOE input sample lists the failed experiments need to be known before postprocessing.')
+            return np.delete(vector, list(failed_experiments[0])), failed_experiments
+        elif vector_name in [xpath_to_param(xpath) for xpath in self.doe_sample_lists['outputs']]:
+            # Determine the failed experiments in the vector
+            vector_failures = set(np.where(np.isnan(vector))[0])
+
+            # Add or compare failed experiments w.r.t. failed_experiments input
+            if failed_experiments[0] is None:
+                failed_experiments = (vector_failures, len(vector_failures) / len(vector))
+            else:
+                if not vector_failures == failed_experiments[0]:
+                    raise AssertionError('The failed experiments of {} are not consistent in the training data.'
+                                         .format(vector_name))
+            return np.array(filter(lambda x: not np.isnan(x), vector)), failed_experiments
+        else:
+            raise AssertionError('Could not determine the vector type for vector_name: {}.'.format(vector_name))
 
     def collect_results(self, cases_to_collect='default', print_in_log=True):
         # type: (Union[str, list]) -> Dict[dict]

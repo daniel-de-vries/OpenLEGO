@@ -213,11 +213,11 @@ class LEGOModel(CMDOWSObject, Group):
                 else:
                     raise InvalidCMDOWSFileError('Unsupported fitting method "{}" provided for surrogate model {}.'
                                                  .format(fitting_method, uid))
-                for el_pr_inp in surrogate_model.iterfind('prediction/inputs/input/parameterUID'):
-                    param = xpath_to_param(el_pr_inp.text)
+                for sm_pr_inp in self.sm_prediction_inputs[uid]:
+                    param = xpath_to_param(sm_pr_inp)
                     component.add_input(param, val=np.zeros(self.get_variable_size(param)))
-                for el_pr_out in surrogate_model.iterfind('prediction/outputs/output/parameterUID'):
-                    param = xpath_to_param(el_pr_out.text)
+                for sm_pr_out in self.sm_prediction_outputs[uid]:
+                    param = xpath_to_param(sm_pr_out)
                     component.add_output(param, val=np.zeros(self.get_variable_size(param)))
                 _sm_components.update({uid: component})
         return _sm_components
@@ -245,6 +245,32 @@ class LEGOModel(CMDOWSObject, Group):
             else:
                 mapped_params_inv[mapping].append(mapped_param)
         return mapped_params_inv
+
+    def find_mapped_parameter(self, given_param, available_params):
+        # TODO: Add docstring
+        if given_param in available_params:
+            return given_param
+        elif given_param in self.mapped_parameters:
+            mapped_param = self.mapped_parameters[given_param]
+            if mapped_param in available_params:
+                return mapped_param
+            else:
+                mapped_params_inv = self.mapped_parameters_inv[mapped_param]
+                if given_param in mapped_params_inv:
+                    mapped_params_inv.remove(given_param)
+                param_to_be_returned = None
+                for mapped_param_inv in mapped_params_inv:
+                    if mapped_param_inv in available_params:
+                        if param_to_be_returned is None:
+                            param_to_be_returned = mapped_param_inv
+                        else:
+                            raise AssertionError('Found multiple matches for the parameter {}.'.format(given_param))
+                if param_to_be_returned is None:
+                    raise AssertionError('Could not match the parameter {}.'.format(given_param))
+                else:
+                    return param_to_be_returned
+        else:
+            raise AssertionError('Could not match the parameter {} for some reason.'.format(given_param))
 
     @cached_property
     def mathematical_functions_inputs(self):
@@ -357,6 +383,8 @@ class LEGOModel(CMDOWSObject, Group):
         # TODO: Add docstring
         if param in self.variable_sizes:
             return self.variable_sizes[param]
+        elif param in self.doe_parameters:
+            return self.doe_parameters[param]['size']
         elif param in self.mapped_parameters:
             return self.variable_sizes[self.mapped_parameters[param]]
         else:
@@ -569,9 +597,10 @@ class LEGOModel(CMDOWSObject, Group):
         """:obj:List[str]`: List with all outputs that are provided in the model."""
         _model_all_outputs = []
         for ex_block in self.model_exec_blocks:
-            for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/'
-                                                r'toParameterUID/text()'.format(ex_block)):
-                _model_all_outputs.append(value)
+            _model_all_outputs.extend(self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID'
+                                                             r'="{}"]/toParameterUID/text()'.format(ex_block)))
+        _model_all_outputs.extend(self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/'
+                                                         r'toParameterUID/text()'.format(self.driver_uid)))
         return _model_all_outputs
 
     @cached_property
@@ -590,10 +619,12 @@ class LEGOModel(CMDOWSObject, Group):
                             targets = [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID'
                                                                          r'="{}"]/toExecutableBlockUID/text()'
                                                                          .format(value)) if x in self.model_exec_blocks]
-                            _model_super_inputs.update({name: {'val': self.get_variable_size(name), 'targets': targets}})
+                            _model_super_inputs.update({name: {'shape': self.get_variable_size(name), 'targets': targets}})
         else:
             sources = []
-            for super_component in self.distributed_system_converger_uids:
+            other_superdrivers = copy.deepcopy(self.super_drivers)
+            other_superdrivers.remove(self.driver_uid)
+            for super_component in self.distributed_system_converger_uids + other_superdrivers:
                 for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/'
                                                     r'toParameterUID/text()'.format(super_component)):
                     if value in self.model_required_inputs:
@@ -603,10 +634,10 @@ class LEGOModel(CMDOWSObject, Group):
                             targets = [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID'
                                                                          r'="{}"]/toExecutableBlockUID/text()'
                                                                          .format(value)) if x in self.model_exec_blocks]
-                            _model_super_inputs.update({shorten_xpath(name): {'val': self.get_variable_size(name), 'targets': targets}})
+                            _model_super_inputs.update({shorten_xpath(name): {'shape': self.get_variable_size(name), 'targets': targets}})
             for source in sources:
-                name = xpath_to_param(shorten_xpath(source))  # TODO: Add shorten xpath to xpath_to_param ?
-                _model_super_inputs.update({name: {'val': self.get_variable_size(source),
+                name = xpath_to_param(shorten_xpath(source))  # TODO: Add shorten xpath to xpath_to_param or remove completely?
+                _model_super_inputs.update({name: {'shape': self.get_variable_size(source),
                                                    'targets': [self.driver_uid]}})
         return _model_super_inputs
 
@@ -644,7 +675,7 @@ class LEGOModel(CMDOWSObject, Group):
             for output in self.model_all_outputs:
                 for ex_block in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID="{}"]/'
                                                        r'toExecutableBlockUID/text()'.format(output)):
-                    if ex_block not in self.model_exec_blocks and ex_block not in self.all_loop_elements:
+                    if ex_block not in self.model_exec_blocks and ex_block not in self.coordinators:
                         if output in self.mapped_parameters:
                             output = self.mapped_parameters[output]
                         name = xpath_to_param(output)
@@ -653,23 +684,15 @@ class LEGOModel(CMDOWSObject, Group):
         else:
             driver_type = self.loop_element_types[self.driver_uid]
             if driver_type == 'doe':
-                doe_inputs = [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[toExecutableBlockUID'
-                                                                r'="{}"]/fromParameterUID/text()'
-                                                                .format(self.driver_uid))
-                              if x in self.doe_sample_lists['inputs']]
-                doe_outputs = [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]'
-                                                                 r'/toParameterUID/text()'.format(self.driver_uid))
-                               if x in self.doe_sample_lists['outputs']]
-                outputs = doe_inputs + doe_outputs
+                outputs = self.doe_samples[self.driver_uid]['inputs'] + self.doe_samples[self.driver_uid]['outputs']
             elif driver_type == 'optimizer':
                 outputs = self.design_vars.keys()
                 outputs.append(self.objective)
             else:
-                outputs = []  # TODO: Add optimizer condition as well
+                outputs = []
             for output in outputs:
                 _model_super_outputs.update({xpath_to_param(shorten_xpath(output)):
-                                                 np.zeros(self.doe_runs_dict[self.driver_uid]) if driver_type == 'doe'
-                                                 else self.get_variable_size(output)})
+                                             self.get_variable_size(output)})
         return _model_super_outputs
 
     @cached_property

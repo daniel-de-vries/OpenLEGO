@@ -17,13 +17,13 @@ limitations under the License.
 
 This file contains the definition the `SubDriverComponent` class.
 """
-import numpy as np
+import warnings
 
-from openlego.core.cmdows import InvalidCMDOWSFileError
-from openlego.utils.cmdows_utils import get_element_by_uid, get_doe_setting_safe
-from openlego.utils.general_utils import shorten_xpath
-from openlego.utils.xml_utils import xpath_to_param
-from openmdao.api import ExplicitComponent
+import numpy as np
+from openmdao.api import ExplicitComponent, CaseReader
+
+from openlego.utils.general_utils import str_to_valid_sys_name, warn_about_failed_experiments, \
+    denormalize_vector
 
 
 class SubDriverComponent(ExplicitComponent):
@@ -49,7 +49,8 @@ class SubDriverComponent(ExplicitComponent):
         self.options.declare('data_folder')
         self.options.declare('base_xml_file')
         self.options.declare('super_driver_type', default=None)
-        self.options.declare('show_model', default=True)
+        self.options.declare('create_model_view', default=True)
+        self.options.declare('open_model_view', default=False)
 
     def setup(self):
         """Setup of the explicit component object with a nested LEGOProblem as subdriver."""
@@ -64,29 +65,30 @@ class SubDriverComponent(ExplicitComponent):
                                     data_folder=self.options['data_folder'],  # Output directory
                                     base_xml_file=self.options['base_xml_file'],
                                     driver_uid=self.options['driver_uid'])
-        #p.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
+        if p.driver_uid == 'Sys-Optimizer':  # TODO: used for testing purposes, remove later!
+            p.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
 
         # Add inputs/outputs
         for input_name, shape in p.model.model_constants.items():
             self.add_input(input_name, shape=shape)
 
         for input_name, attrbs in p.model.model_super_inputs.items():
-            self.add_input(input_name, val=attrbs['val'])
+            self.add_input(input_name, shape=attrbs['shape'])
 
-        for output_name, value in p.model.model_super_outputs.items():
-            self.add_output(output_name, val=value)
+        for output_name, shape in p.model.model_super_outputs.items():
+            self.add_output(output_name, shape=shape)
 
         # Declare partials
         if p.model.model_super_outputs and not super_driver_type:
             self.declare_partials('*', '*', method='fd', step=1e-4, step_calc='abs')
 
         # Setup
-        p.setup()
+        p.initialize()
         p.final_setup()
 
         # Store (and view?) model
-        if self.options['show_model']:
-            p.store_model_view(open_in_browser=self.options['show_model'])
+        if self.options['create_model_view'] or self.options['open_model_view']:
+            p.store_model_view(open_in_browser=self.options['open_model_view'])
 
     def compute(self, inputs, outputs):
         """Computation performed by the component.
@@ -98,16 +100,32 @@ class SubDriverComponent(ExplicitComponent):
 
         # Define problem of subdriver
         p = self.prob
+        m = p.model
 
         # Push global inputs down
-        for input_name in p.model.model_constants:
+        for input_name in m.model_constants:
             p[input_name] = inputs[input_name]
 
-        for input_name in p.model.model_super_inputs:
-            p[input_name] = inputs[input_name]
+        failed_experiments = {}
+        sorted_model_super_inputs = sorted(m.model_super_inputs.keys(), reverse=True)  # sort to have outputs first
+        for input_name in sorted_model_super_inputs:
+            if input_name in m.sm_of_training_params.keys():  # Add these inputs as training data for SM
+                sm_uid = m.sm_of_training_params[input_name]
+                pred_param = m.find_mapped_parameter(input_name,
+                                                     m.sm_prediction_inputs[sm_uid] | m.sm_prediction_outputs[sm_uid])
+                sm_comp = getattr(m, str_to_valid_sys_name(sm_uid))
+                if sm_uid not in failed_experiments.keys():
+                    failed_experiments[sm_uid] = (None, None)
+                sm_comp.options['train:'+pred_param], failed_experiments[sm_uid]\
+                    = p.postprocess_experiments(inputs[input_name], input_name, failed_experiments[sm_uid])
+            else:
+                p[input_name] = inputs[input_name]
+
+        # Provide message on failed experiments
+        warn_about_failed_experiments(failed_experiments)
 
         # Set initial values of design variables back to original ones (to avoid using values of last run)
-        for des_var, attrbs in p.model.design_vars.items():
+        for des_var, attrbs in m.design_vars.items():
             p[des_var] = attrbs['initial']
 
         # Run the driver
@@ -115,7 +133,40 @@ class SubDriverComponent(ExplicitComponent):
         p.run_driver()
 
         # Pull the value back up to the output array
-        for output_name in p.model.model_super_outputs:
-            outputs[output_name] = p[output_name]
+        doe_output_vectors = {}
+        for output_name in m.model_super_outputs:
+            if output_name in m.doe_parameters.keys():  # Add these outputs as vectors based on DOE driver
+                doe_output_vectors[output_name] = []
+            else:
+                if not p.driver.fail:
+                    outputs[output_name] = p[output_name]
+                else:
+                    outputs[output_name] = float('nan')
+
+        # If the driver failed (hence, optimization failed), then send message and clean for next run
+        if p.driver.fail:
+            print('Driver run failed!')
+            p.clean_driver_after_failure()
+
+        if doe_output_vectors:
+            # First read out the case reader
+            cr = CaseReader(p.case_reader_path)
+            cases = cr.driver_cases  # TODO: should be .list_cases('driver') in 2.5.0 !!!
+            for n in range(cases.num_cases):  # TODO: should be len(cases) in 2.5.0 !!!
+                cr_outputs = cases.get_case(n).outputs  # TODO: should be cr.get_case(cases[n]).outputs in 2.5.0 !!!
+                doe_param_matches = {}
+                # TODO: Do we need to unnormalize the input values?
+                for output_name in doe_output_vectors.keys():
+                    doe_param_matches[output_name] = doe_param_match = m.find_mapped_parameter(output_name, cr_outputs.keys())
+                    doe_output_vectors[output_name].append(cr_outputs[doe_param_match][0])
+
+            # Then write the final vectors to the global output array
+            for output_name in doe_output_vectors.keys():
+                if output_name in p.doe_samples[p.driver_uid]['inputs']:
+                    des_var_match = m.find_mapped_parameter(output_name, m.design_vars.keys())
+                    doe_output_vectors[output_name] = denormalize_vector(doe_output_vectors[output_name],
+                                                                         m.design_vars[des_var_match]['ref0'],
+                                                                         m.design_vars[des_var_match]['ref'])
+                outputs[output_name] = np.array(doe_output_vectors[output_name])
 
         p.cleanup()

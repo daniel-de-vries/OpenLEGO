@@ -29,6 +29,8 @@ from openlego.utils.cmdows_utils import get_loop_nesting_obj, get_element_by_uid
 from typing import Any, Optional
 from cached_property import cached_property
 
+from openlego.utils.xml_utils import xpath_to_param
+
 
 class InvalidCMDOWSFileError(ValueError):
 
@@ -217,6 +219,14 @@ class CMDOWSObject(object):
                 else:
                     sub_drivers.extend(self._get_sub_drivers(item[item.keys()[0]]))
         return sub_drivers
+
+    @cached_property
+    def coordinators(self):
+        # TODO: add docstring
+        _coordinators = []
+        for elem in self.elem_arch_elems.iterfind('executableBlocks/coordinators/coordinator'):
+            _coordinators.append(elem.attrib['uID'])
+        return _coordinators
 
     def invalidate(self):
         # type: () -> None
@@ -544,7 +554,7 @@ class CMDOWSObject(object):
         return [x for x in self.loop_element_types if self.loop_element_types[x] == 'distributed_system_converger']
 
     @cached_property
-    def doe_runs_dict(self):
+    def doe_runs(self):
         # TODO: Add docstring
         _doe_runs_dict = {}
         for doe_uid in self.doe_uids:
@@ -556,6 +566,84 @@ class CMDOWSObject(object):
                                                                       'Monte Carlo design'])
             _doe_runs_dict.update({doe_uid:doe_runs})
         return _doe_runs_dict
+
+    @cached_property
+    def doe_parameters(self):
+        # TODO: Add docstring
+        _doe_parameters = {}
+        for doe_uid in self.doe_uids:
+            for inp in self.doe_samples[doe_uid]['inputs']:
+                _doe_parameters[inp] = {'size':self.doe_runs[doe_uid]}
+            for out in self.doe_samples[doe_uid]['outputs']:
+                _doe_parameters[out] = {'size': self.doe_runs[doe_uid]}
+        return _doe_parameters
+
+    @cached_property
+    def doe_samples(self):
+        # TODO: Add docstring
+        _doe_samples = {}
+        for doe_uid in self.doe_uids:
+            _doe_samples[doe_uid] = doe_entry = {}
+            doe_entry.update({'inputs': [x for x in
+                                         self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[toExecutableBlockUID'
+                                                                r'="{}"]/fromParameterUID/text()'.format(doe_uid))
+                                         if x in self.doe_sample_lists['inputs']]})
+            doe_entry.update({'outputs': [x for x in
+                                          self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]'
+                                                                 r'/toParameterUID/text()'.format(doe_uid))
+                                          if x in self.doe_sample_lists['outputs']]})
+        return _doe_samples
+
+    @cached_property
+    def doe_sample_lists(self):
+        # TODO: add docstring
+        _doe_sample_lists = {'inputs': [], 'outputs': []}
+        for elem in self.elem_arch_elems.iter('doeInputSampleList'):
+            _doe_sample_lists['inputs'].append(elem.attrib['uID'])
+        for elem in self.elem_arch_elems.iter('doeOutputSampleList'):
+            _doe_sample_lists['outputs'].append(elem.attrib['uID'])
+        return _doe_sample_lists
+
+    @cached_property
+    def sm_uids(self):
+        return [surrogate_model.attrib['uID'] for surrogate_model in self.elem_cmdows.iter('surrogateModel')]
+
+    @cached_property
+    def sm_prediction_inputs(self):
+        return self._get_sm_parameters('prediction/inputs/input/parameterUID')
+
+    @cached_property
+    def sm_prediction_outputs(self):
+        return self._get_sm_parameters('prediction/outputs/output/parameterUID')
+
+    @cached_property
+    def sm_training_inputs(self):
+        return self._get_sm_parameters('training/inputs/input/parameterUID')
+
+    @cached_property
+    def sm_training_outputs(self):
+        return self._get_sm_parameters('training/outputs/output/parameterUID')
+
+    @cached_property
+    def sm_of_training_params(self):
+        _sm_mapping = {}
+        for sm_uid, xpaths in self.sm_training_inputs.iteritems():
+            for xpath in xpaths:
+                _sm_mapping[xpath_to_param(xpath)] = sm_uid
+        for sm_uid, xpaths in self.sm_training_outputs.iteritems():
+            for xpath in xpaths:
+                _sm_mapping[xpath_to_param(xpath)] = sm_uid
+        return _sm_mapping
+
+    def _get_sm_parameters(self, xpath):
+        _sm_parameters = {}
+        for elem_sm in self.elem_cmdows.iter('surrogateModel'):
+            sm_uid = elem_sm.attrib['uID']
+            if sm_uid not in _sm_parameters.keys():
+                _sm_parameters[sm_uid] = set()
+            for el_parameter in elem_sm.iterfind(xpath):
+                _sm_parameters[sm_uid].update([el_parameter.text])
+        return _sm_parameters
 
     @cached_property
     def block_order(self):
@@ -630,13 +718,3 @@ class CMDOWSObject(object):
         for i, uid in enumerate(self.process_info['uids']):
             _process_step_numbers[uid] = self.process_info['step_numbers'][i]
         return _process_step_numbers
-
-    @cached_property
-    def doe_sample_lists(self):
-        # TODO: add docstring
-        _doe_sample_lists = {'inputs':[], 'outputs':[]}
-        for elem in self.elem_arch_elems.iter('doeInputSampleList'):
-            _doe_sample_lists['inputs'].append(elem.attrib['uID'])
-        for elem in self.elem_arch_elems.iter('doeOutputSampleList'):
-            _doe_sample_lists['outputs'].append(elem.attrib['uID'])
-        return _doe_sample_lists

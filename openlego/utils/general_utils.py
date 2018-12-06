@@ -313,6 +313,12 @@ def normalized_to_bounds(driver):
     return NormalizedDriver
 
 
+def denormalize_vector(v, ref0, ref):
+    # TODO: add docstring
+    if isinstance(v, list):
+        v = np.array(v)
+    return v*(ref-ref0)+ref0
+
 re_sys_name_char = re.compile(r'[^_a-zA-Z0-9]')
 re_sys_name_starts = re.compile(r'^[a-zA-Z]')
 
@@ -353,9 +359,26 @@ def shorten_xpath(xpath):
     # TODO: Add docstring
     check_strs = ['/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy',
                   '/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy']
-    repl_strs = ['/dataSchema/doeInputSamples',
-                 '/dataSchema/doeOutputSamples']
+    # TODO: Reconsider the use and position of this function...
+    #repl_strs = ['/dataSchema/doeInputSamples',
+    #             '/dataSchema/doeOutputSamples']
+    repl_strs = ['/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy',
+                 '/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy']
     for check_str, repl_str in zip(check_strs, repl_strs):
         if check_str in xpath:
             return xpath.replace(check_str, repl_str)
     return xpath
+
+
+def warn_about_failed_experiments(failed_experiments):
+    # TODO: Add docstring
+    if failed_experiments:
+        for sm_uid, failure_data in failed_experiments.items():
+            if failure_data[1] > 0.5:
+                warnings.warn('ATTENTION! More than 50% of the experiments (actually {:.1f}%) failed for surrogate'
+                              ' model {}'.format(failure_data[1]*100., sm_uid))
+            elif failure_data[1] > 0.2:
+                warnings.warn('More than 20% of the experiments (actually {:.1f}%) failed for surrogate model {}'
+                              .format(failure_data[1] * 100., sm_uid))
+            else:
+                print('{:.1f}% of the experiments failed for surrogate model {}'.format(failure_data[1] * 100., sm_uid))

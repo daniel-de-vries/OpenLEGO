@@ -1,5 +1,4 @@
 from openmdao.api import ExecComp as OpenmdaoExecComp
-from openmdao.components.exec_comp import _expr_dict, _IODict
 import time
 
 

@@ -44,8 +44,13 @@ def deploy():
 
     os.remove(os.path.join(dir_path, 'Constraints-input.xml'))
     os.remove(os.path.join(dir_path, 'Constraints-output.xml'))
+    os.remove(os.path.join(dir_path, 'Constraints-partials.xml'))
     os.remove(os.path.join(dir_path, 'Objective-input.xml'))
     os.remove(os.path.join(dir_path, 'Objective-output.xml'))
+    os.remove(os.path.join(dir_path, 'Objective-partials.xml'))
+    os.remove(os.path.join(dir_path, 'DpdxCalc-input.xml'))
+    os.remove(os.path.join(dir_path, 'DpdxCalc-output.xml'))
+    os.remove(os.path.join(dir_path, 'DpdxCalc-partials.xml'))
 
 
 def clean():

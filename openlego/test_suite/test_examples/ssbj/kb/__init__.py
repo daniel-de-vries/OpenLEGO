@@ -42,6 +42,7 @@ def deploy():
             if check in file:
                 os.rename(os.path.join(dir_path, file), os.path.join(dir_path, replaces[i] + file[len(check):]))
 
+    # Clean up unused files from standard SSBJ package deployment
     os.remove(os.path.join(dir_path, 'Constraints-input.xml'))
     os.remove(os.path.join(dir_path, 'Constraints-output.xml'))
     os.remove(os.path.join(dir_path, 'Constraints-partials.xml'))

@@ -25,6 +25,7 @@ import warnings
 
 from cached_property import cached_property
 from lxml.etree import _Element, _ElementTree
+from six import iteritems
 
 from openlego.utils.xml_utils import xml_to_dict, xpath_to_param
 from openmdao.api import Problem, ScipyOptimizeDriver, DOEDriver, UniformGenerator, \
@@ -36,7 +37,7 @@ from typing import Optional, Any, Union, Dict
 from openlego.api import LEGOModel
 from openlego.core.cmdows import CMDOWSObject
 from openlego.utils.cmdows_utils import get_element_by_uid, get_opt_setting_safe, get_doe_setting_safe
-from openlego.utils.general_utils import print_optional, add_or_append_dict_entry
+from openlego.utils.general_utils import print_optional, add_or_append_dict_entry, PyOptSparseImportError
 
 
 class LEGOProblem(CMDOWSObject, Problem):
@@ -206,10 +207,7 @@ class LEGOProblem(CMDOWSObject, Problem):
                 try:
                     from openmdao.api import pyOptSparseDriver
                 except ImportError:
-                    raise ImportError("Cannot import name pyOptSparseDriver. This probably means that this package has "
-                                      "not been installed to your Python packages. Note that it needs to be installed"
-                                      " to your Python manually (no PyPIdistribution available). pyOptSparse can be "
-                                      "downloaded here: https://github.com/mdolab/pyoptsparse")
+                    raise PyOptSparseImportError()
                 driver = pyOptSparseDriver()
             else:
                 raise ValueError('Unsupported package {} encountered in CMDOWS file for optimizer "{}".'
@@ -323,21 +321,53 @@ class LEGOProblem(CMDOWSObject, Problem):
         self.initialize()
         for xpath, value in xml_to_dict(xml).items():
             name = xpath_to_param(xpath)
-            if name in self.model._var_allprocs_prom2abs_list['input'] or \
-                    name in self.model._var_allprocs_prom2abs_list['output']:
-                self[name] = value
+            prom2abs_list_inputs = self.model._var_allprocs_prom2abs_list['input']
+            prom2abs_list_outputs = self.model._var_allprocs_prom2abs_list['output']
+            if self.comm.size > 1:  # Small workaround for issue in OpenMDAO with mpirun
+                if name in prom2abs_list_inputs:
+                    for abs_name in prom2abs_list_inputs[name]:
+                        self[abs_name] = value
+                if name in prom2abs_list_outputs:
+                    for abs_name in prom2abs_list_outputs[name]:
+                        self[abs_name] = value
+            else:
+                if name in prom2abs_list_inputs or name in prom2abs_list_outputs:
+                   self[name] = value
             if name in self.model.mapped_parameters_inv:
                 for mapping in self.model.mapped_parameters_inv[name]:
-                    if mapping in self.model._var_allprocs_prom2abs_list['input'] or \
-                    mapping in self.model._var_allprocs_prom2abs_list['output']:
+                    if mapping in prom2abs_list_inputs or mapping in prom2abs_list_outputs:
                         try:
-                            self[mapping] = value
+                            if self.comm.size > 1:  # Small workaround for issue in OpenMDAO with mpirun
+                                abs_names = []
+                                if mapping in prom2abs_list_inputs:
+                                    abs_names.extend([abs_name for abs_name in prom2abs_list_inputs[mapping]])
+                                if mapping in prom2abs_list_outputs:
+                                    abs_names.extend([abs_name for abs_name in prom2abs_list_outputs[mapping]])
+                                for abs_name in abs_names:
+                                    self[abs_name] = value
+                            else:
+                                self[mapping] = value
                         except RuntimeError as e:
                             if 'The promoted name' in e[0] and 'is invalid' in e[0]:
                                 warnings.warn('Could not automatically set this invalid promoted name from the XML: '
                                               '{}.'.format(mapping))
                             else:
                                 raise RuntimeError(e)
+
+    def _set_initial_conditions(self):
+        """
+        Set all initial conditions that have been saved in cache after setup. Method is the same as in the OpenMDAO
+        implementation, but has a workaround for MPIs,
+        TODO: Remove this method if the workaround is no longer needed when running with MPI
+        """
+        for name, value in iteritems(self._initial_condition_cache):
+            try:
+                self[name] = value
+            except KeyError:
+                pass
+
+        # Clean up cache
+        self._initial_condition_cache = {}
 
     def collect_results(self, cases_to_collect='default', print_in_log=True):
         # type: (Union[str, list]) -> Dict[dict]
@@ -373,8 +403,9 @@ class LEGOProblem(CMDOWSObject, Problem):
         results = dict()
 
         # Get all cases from the case reader and determine amount of cases
-        cases = CaseReader(self.case_reader_path).driver_cases
-        num_cases = cases.num_cases
+        cr = CaseReader(self.case_reader_path)
+        cases = cr.list_cases('driver')
+        num_cases = len(cases)
 
         if num_cases == 0:
             raise AssertionError('No cases were recorded and therefore no results can be collected. Note that '
@@ -401,22 +432,18 @@ class LEGOProblem(CMDOWSObject, Problem):
                 print_optional('Driver finished!', print_in_log)
         print_optional('\nPrinting case numbers: {}'.format(cases_to_collect), print_in_log)
         for num_case in cases_to_collect:
-            case = cases.get_case(num_case)
+            case = cr.get_case(cases[num_case])
             print_optional('\n\n  Case {}/{} ({})'.format(num_case, num_cases-1, case.iteration_coordinate),
                            print_in_log)
+
+            # Get objectives, design variables and contraints
             recorded_objectives = case.get_objectives()
-            recorded__desvars = case.get_desvars()
+            recorded_design_vars = case.get_design_vars()
             recorded_constraints = case.get_constraints()
 
-            # TODO: Temporary fix due to issue with OpenMDAO 2.4.0, remove with new release of OpenMDAO
-            try:
-                var_objectives = sorted(list(recorded_objectives.keys()))
-                var_desvars = sorted(list(recorded__desvars.keys()))
-                var_constraints = sorted(list(recorded_constraints.keys()))
-            except TypeError:
-                var_objectives = sorted(list(recorded_objectives.keys))
-                var_desvars = sorted(list(recorded__desvars.keys))
-                var_constraints = sorted(list(recorded_constraints.keys))
+            var_objectives = sorted(list(recorded_objectives.keys()))
+            var_design_vars = sorted(list(recorded_design_vars.keys()))
+            var_constraints = sorted(list(recorded_constraints.keys()))
 
             var_does = sorted([elem.text for elem in self.elem_arch_elems
                               .findall('parameters/doeOutputSampleLists/doeOutputSampleList/relatedParameterUID')])
@@ -427,33 +454,55 @@ class LEGOProblem(CMDOWSObject, Problem):
             if var_objectives:
                 print_optional('    Objectives', print_in_log)
                 for var_objective in var_objectives:
-                    value = recorded_objectives[var_objective]
+                    value = recorded_objectives[xpath_to_param(var_objective)]  # TODO: Add new test case to check
                     print_optional('    {}: {}'.format(var_objective, value), print_in_log)
                     results = add_or_append_dict_entry(results, 'objectives', var_objective, value)
 
             # Print design variables
-            # TODO: Add bounds (currently a bug in OpenMDAO recorders)
-            if var_desvars:
+            if var_design_vars:
                 print_optional('\n    Design variables', print_in_log)
-                for var_desvar in var_desvars:
-                    value = recorded__desvars[var_desvar]
-                    print_optional('    {}: {}'.format(var_desvar, value), print_in_log)
+                for var_desvar in var_design_vars:
+                    value = recorded_design_vars[var_desvar]
+                    if len(value) == 1:
+                        value = value[0]
+                    metadata_name = cr._prom2abs['output'][var_desvar][0]
+                    lb_value = cr.problem_metadata['variables'][metadata_name]['lower']
+                    ub_value = cr.problem_metadata['variables'][metadata_name]['upper']
+                    print_optional('    {}: {} ({} < x < {})'.format(var_desvar, value, lb_value, ub_value), print_in_log)
                     results = add_or_append_dict_entry(results, 'desvars', var_desvar, value)
 
             # Print constraint values
-            # TODO: Add bounds (currently a bug in OpenMDAO recorders)
             if var_constraints:
                 print_optional('\n    Constraints', print_in_log)
                 for var_constraint in var_constraints:
                     value = recorded_constraints[var_constraint]
-                    print_optional('    {}: {}'.format(var_constraint, value), print_in_log)
+                    if len(value) == 1:
+                        value = value[0]
+                    metadata_name = cr._prom2abs['output'][var_constraint][0]
+                    lb_value = cr.problem_metadata['variables'][metadata_name]['lower']
+                    ub_value = cr.problem_metadata['variables'][metadata_name]['upper']
+                    eq_value = cr.problem_metadata['variables'][metadata_name]['equals']
+                    if eq_value is not None:
+                        print_optional('    {}: {} (== {})'.format(var_constraint, value, eq_value), print_in_log)
+                    else:
+                        if lb_value > -1e29 and ub_value < 1e29:
+                            print_optional('    {}: {} ({} < x < {})'.format(var_constraint, value, lb_value, ub_value),
+                                           print_in_log)
+                        elif lb_value < -1e29 and ub_value < 1e29:
+                            print_optional('    {}: {} (x < {})'.format(var_constraint, value, ub_value), print_in_log)
+                        elif lb_value > -1e29 and ub_value > 1e29:
+                            print_optional('    {}: {} (x > {})'.format(var_constraint, value, lb_value), print_in_log)
+                        else:
+                            print_optional('    {}: {} (x is unbounded)'.format(var_constraint, value), print_in_log)
                     results = add_or_append_dict_entry(results, 'constraints', var_constraint, value)
 
             # Print DOE quantities of interest
             if var_does:
-                print_optional('\n    Quantifies of interest', print_in_log)
+                print_optional('\n    Quantities of interest', print_in_log)
                 for var_qoi in var_does:
                     value = case.outputs[var_qoi]
+                    if len(value) == 1:
+                        value = value[0]
                     print_optional('    {}: {}'.format(var_qoi, value), print_in_log)
                     results = add_or_append_dict_entry(results, 'qois', var_qoi, value)
 
@@ -463,9 +512,11 @@ class LEGOProblem(CMDOWSObject, Problem):
                 for var_qoi in var_convs:
                     if var_qoi not in var_objectives + var_constraints + var_does:
                         if title_not_printed:
-                            print_optional('\n    Quantifies of interest', print_in_log)
+                            print_optional('\n    Quantities of interest', print_in_log)
                             title_not_printed = False
                         value = case.outputs[var_qoi]
+                        if len(value) == 1:
+                            value = value[0]
                         print_optional('    {}: {}'.format(var_qoi, value), print_in_log)
                         results = add_or_append_dict_entry(results, 'qois', var_qoi, value)
         return results

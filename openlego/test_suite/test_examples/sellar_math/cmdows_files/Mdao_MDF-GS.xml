@@ -50,6 +50,7 @@
       <mathematicalFunction uID="F1">
         <label>F1</label>
         <functionType>regular</functionType>
+        <sleepTime>0.1</sleepTime>
         <inputs>
           <input>
             <parameterUID>/dataSchema/geometry/x1</parameterUID>

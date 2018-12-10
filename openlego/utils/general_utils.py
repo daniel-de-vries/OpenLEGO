@@ -26,6 +26,7 @@ from os import path
 
 import numpy as np
 from lxml import etree
+
 from openmdao.core.driver import Driver
 from typing import Callable, Any, Optional, Union, Type, List, SupportsInt, SupportsFloat
 
@@ -347,3 +348,23 @@ def clean_dir_filtered(dr, filters):
             if fltr in f:
                 os.remove(f)
                 continue
+
+
+class PyOptSparseImportError(ImportError):
+
+    def __init__(self):
+        msg = "Cannot import name pyOptSparseDriver. This probably means that this package has not been installed to " \
+              "your Python packages. Note that it needs to be installed to your Python manually (no PyPIdistribution " \
+              "available). pyOptSparse can be downloaded here: https://github.com/mdolab/pyoptsparse"
+        super(PyOptSparseImportError, self).__init__(msg)
+
+
+def pyoptsparse_installed():
+    # type: () -> bool
+    """Check for the installation of the PyOptSparse Python package."""
+    try:
+        from openmdao.api import pyOptSparseDriver
+    except ImportError:
+        print(PyOptSparseImportError().message)
+        return False
+    return True

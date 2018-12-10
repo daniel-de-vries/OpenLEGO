@@ -416,8 +416,9 @@ class LEGOProblem(CMDOWSObject, Problem):
         results = dict()
 
         # Get all cases from the case reader and determine amount of cases
-        cases = CaseReader(self.case_reader_path).driver_cases
-        num_cases = cases.num_cases
+        cr = CaseReader(self.case_reader_path)
+        cases = cr.list_cases('driver')
+        num_cases = len(cases)
 
         if num_cases == 0:
             raise AssertionError('No cases were recorded and therefore no results can be collected. Note that '
@@ -444,22 +445,17 @@ class LEGOProblem(CMDOWSObject, Problem):
                 print_optional('Driver finished!', print_in_log)
         print_optional('\nPrinting case numbers: {}'.format(cases_to_collect), print_in_log)
         for num_case in cases_to_collect:
-            case = cases.get_case(num_case)
+            case = cr.get_case(cases[num_case])
             print_optional('\n\n  Case {}/{} ({})'.format(num_case, num_cases-1, case.iteration_coordinate),
                            print_in_log)
             recorded_objectives = case.get_objectives()
-            recorded__desvars = case.get_desvars()
+            recorded_design_vars = case.get_design_vars()
             recorded_constraints = case.get_constraints()
 
-            # TODO: Temporary fix due to issue with OpenMDAO 2.4.0, remove with new release of OpenMDAO
-            try:
-                var_objectives = sorted(list(recorded_objectives.keys()))
-                var_desvars = sorted(list(recorded__desvars.keys()))
-                var_constraints = sorted(list(recorded_constraints.keys()))
-            except TypeError:
-                var_objectives = sorted(list(recorded_objectives.keys))
-                var_desvars = sorted(list(recorded__desvars.keys))
-                var_constraints = sorted(list(recorded_constraints.keys))
+            # Get objectives, design variables and contraints
+            var_objectives = sorted(list(recorded_objectives.keys()))
+            var_design_vars = sorted(list(recorded_design_vars.keys()))
+            var_constraints = sorted(list(recorded_constraints.keys()))
 
             var_does = sorted([elem.text for elem in self.elem_arch_elems
                               .findall('parameters/doeOutputSampleLists/doeOutputSampleList/relatedParameterUID')])
@@ -470,26 +466,46 @@ class LEGOProblem(CMDOWSObject, Problem):
             if var_objectives:
                 print_optional('    Objectives', print_in_log)
                 for var_objective in var_objectives:
-                    value = recorded_objectives[var_objective]
+                    value = recorded_objectives[xpath_to_param(var_objective)]  # TODO: Add new test case to check
                     print_optional('    {}: {}'.format(var_objective, value), print_in_log)
                     results = add_or_append_dict_entry(results, 'objectives', var_objective, value)
 
             # Print design variables
-            # TODO: Add bounds (currently a bug in OpenMDAO recorders)
-            if var_desvars:
+            if var_design_vars:
                 print_optional('\n    Design variables', print_in_log)
-                for var_desvar in var_desvars:
-                    value = recorded__desvars[var_desvar]
-                    print_optional('    {}: {}'.format(var_desvar, value), print_in_log)
+                for var_desvar in var_design_vars:
+                    metadata_name = cr._prom2abs['output'][var_desvar][0]
+                    value = recorded_design_vars[var_desvar]
+                    if len(value) == 1:
+                        value = value[0]
+                    lb_value = cr.problem_metadata['variables'][metadata_name]['lower']
+                    ub_value = cr.problem_metadata['variables'][metadata_name]['upper']
+                    print_optional('    {}: {} ({} < x < {})'.format(var_desvar, value, lb_value, ub_value), print_in_log)
                     results = add_or_append_dict_entry(results, 'desvars', var_desvar, value)
 
             # Print constraint values
-            # TODO: Add bounds (currently a bug in OpenMDAO recorders)
             if var_constraints:
                 print_optional('\n    Constraints', print_in_log)
                 for var_constraint in var_constraints:
+                    metadata_name = cr._prom2abs['output'][var_constraint][0]
                     value = recorded_constraints[var_constraint]
-                    print_optional('    {}: {}'.format(var_constraint, value), print_in_log)
+                    if len(value) == 1:
+                        value = value[0]
+                    lb_value = cr.problem_metadata['variables'][metadata_name]['lower']
+                    ub_value = cr.problem_metadata['variables'][metadata_name]['upper']
+                    eq_value = cr.problem_metadata['variables'][metadata_name]['equals']
+                    if eq_value is not None:
+                        print_optional('    {}: {} (== {})'.format(var_constraint, value, eq_value), print_in_log)
+                    else:
+                        if lb_value > -1e29 and ub_value < 1e29:
+                            print_optional('    {}: {} ({} < x < {})'.format(var_constraint, value, lb_value, ub_value),
+                                           print_in_log)
+                        elif lb_value < -1e29 and ub_value < 1e29:
+                            print_optional('    {}: {} (x < {})'.format(var_constraint, value, ub_value), print_in_log)
+                        elif lb_value > -1e29 and ub_value > 1e29:
+                            print_optional('    {}: {} (x > {})'.format(var_constraint, value, lb_value), print_in_log)
+                        else:
+                            print_optional('    {}: {} (x is unbounded)'.format(var_constraint, value), print_in_log)
                     results = add_or_append_dict_entry(results, 'constraints', var_constraint, value)
 
             # Print DOE quantities of interest
@@ -497,6 +513,8 @@ class LEGOProblem(CMDOWSObject, Problem):
                 print_optional('\n    Quantifies of interest', print_in_log)
                 for var_qoi in var_does:
                     value = case.outputs[var_qoi]
+                    if len(value) == 1:
+                        value = value[0]
                     print_optional('    {}: {}'.format(var_qoi, value), print_in_log)
                     results = add_or_append_dict_entry(results, 'qois', var_qoi, value)
 
@@ -509,6 +527,8 @@ class LEGOProblem(CMDOWSObject, Problem):
                             print_optional('\n    Quantifies of interest', print_in_log)
                             title_not_printed = False
                         value = case.outputs[var_qoi]
+                        if len(value) == 1:
+                            value = value[0]
                         print_optional('    {}: {}'.format(var_qoi, value), print_in_log)
                         results = add_or_append_dict_entry(results, 'qois', var_qoi, value)
         return results

@@ -151,11 +151,10 @@ class SubDriverComponent(ExplicitComponent):
         if doe_output_vectors:
             # First read out the case reader
             cr = CaseReader(p.case_reader_path)
-            cases = cr.driver_cases  # TODO: should be .list_cases('driver') in 2.5.0 !!!
-            for n in range(cases.num_cases):  # TODO: should be len(cases) in 2.5.0 !!!
-                cr_outputs = cases.get_case(n).outputs  # TODO: should be cr.get_case(cases[n]).outputs in 2.5.0 !!!
+            cases = cr.list_cases('driver')
+            for n in range(len(cases)):
+                cr_outputs = cr.get_case(cases[n]).outputs
                 doe_param_matches = {}
-                # TODO: Do we need to unnormalize the input values?
                 for output_name in doe_output_vectors.keys():
                     doe_param_matches[output_name] = doe_param_match = m.find_mapped_parameter(output_name, cr_outputs.keys())
                     doe_output_vectors[output_name].append(cr_outputs[doe_param_match][0])

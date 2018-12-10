@@ -25,7 +25,7 @@ import unittest
 
 from openlego.core.problem import LEGOProblem
 import openlego.test_suite.test_examples.ssbj.kb as kb
-from openlego.utils.general_utils import clean_dir_filtered
+from openlego.utils.general_utils import clean_dir_filtered, pyoptsparse_installed
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
@@ -271,7 +271,11 @@ class TestSsbj(unittest.TestCase):
 
     def test_co(self):
         """Test run the SSBJ problem using the CO architecture."""
-        self.assertion_co(*run_openlego(13))
+        if pyoptsparse_installed():
+            self.assertion_co(*run_openlego(13))
+        else:
+            print('Skipped test due to missing PyOptSparse installation.')
+            pass
 
     def __del__(self):
         kb.clean()

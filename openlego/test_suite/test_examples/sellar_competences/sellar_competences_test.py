@@ -26,7 +26,7 @@ import unittest
 from openlego.core.problem import LEGOProblem
 import openlego.test_suite.test_examples.sellar_competences.kb as kb
 
-from openlego.utils.general_utils import clean_dir_filtered
+from openlego.utils.general_utils import clean_dir_filtered, pyoptsparse_installed
 
 # Settings for logging
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
@@ -189,7 +189,11 @@ class TestSellarCompetences(unittest.TestCase):
 
     def test_co(self):
         """Solve the Sellar problem using the Collaborative Optimization architecture."""
-        self.assertion_mdo(*run_openlego(9))
+        if pyoptsparse_installed():
+            self.assertion_mdo(*run_openlego(9))
+        else:
+            print('Skipped test due to missing PyOptSparse installation.')
+            pass
 
     def __del__(self):
         kb.clean()

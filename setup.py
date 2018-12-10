@@ -52,10 +52,10 @@ setup(
     packages=find_packages(),
     package_data={'openlego.partials': ['partials.xsd']},
     install_requires=[
-        'openmdao>=2.4.0',
+        'openmdao>=2.5.0',
         'lxml',
         'numpy',
-        'ssbjkadmos>=0.1.3',
+        'ssbjkadmos>=0.1.6',
         'cached-property'
     ],
     include_package_data=True,

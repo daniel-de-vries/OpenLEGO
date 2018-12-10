@@ -548,9 +548,9 @@ class LEGOModel(CMDOWSObject, Group):
                     name = xpath_to_param(value)
                     if name not in _model_super_inputs:
                         # Determine the targets of this input
-                        targets = [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID'
-                                                                     r'="{}"]/toExecutableBlockUID/text()'
-                                                                     .format(value)) if x in self.model_exec_blocks]
+                        targets = [x for x in self.model_exec_blocks if value in self.elem_cmdows.xpath(
+                                   r'workflow/dataGraph/edges/edge[toExecutableBlockUID="{}"]/fromParameterUID/'
+                                   r'text()'.format(x))]
                         _model_super_inputs.update({name: {'val': self.variable_sizes[name], 'targets': targets}})
         return _model_super_inputs
 

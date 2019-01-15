@@ -26,8 +26,9 @@ from os import path
 
 import numpy as np
 from lxml import etree
-from openmdao.core.driver import Driver
 from typing import Callable, Any, Optional, Union, Type, List, SupportsInt, SupportsFloat
+
+from openmdao.core.driver import Driver
 
 
 def try_hard(fun, *args, **kwargs):
@@ -189,6 +190,7 @@ def parse_cmdows_value(elem):
 
 
 def normalized_to_bounds(driver):
+    # TODO: Can this method be removed?
     # type: (Type[Driver]) -> Type[NormalizedDriver]
     """Decorate a `Driver` to adjust its ``adder``/``scaler`` attributes normalizing the ``desvar``s.
 
@@ -313,11 +315,23 @@ def normalized_to_bounds(driver):
     return NormalizedDriver
 
 
-def denormalize_vector(v, ref0, ref):
+def unscale_value(v, ref0, ref):
     # TODO: add docstring
     if isinstance(v, list):
         v = np.array(v)
     return v*(ref-ref0)+ref0
+
+
+def scale_value(v, adder, scaler):
+    # TODO: add docstring
+    if adder is None:
+        adder = 0.
+    if scaler is None:
+        scaler = 1.
+    if isinstance(v, list):
+        v = np.array(v)
+    return (v + adder) * scaler
+
 
 re_sys_name_char = re.compile(r'[^_a-zA-Z0-9]')
 re_sys_name_starts = re.compile(r'^[a-zA-Z]')
@@ -374,11 +388,14 @@ def warn_about_failed_experiments(failed_experiments):
     # TODO: Add docstring
     if failed_experiments:
         for sm_uid, failure_data in failed_experiments.items():
-            if failure_data[1] > 0.5:
+            if failure_data[1] == 1.:
+                raise AssertionError('All experiments failed for surrogate model {}'.format(sm_uid))
+            elif failure_data[1] > 0.5:
                 warnings.warn('ATTENTION! More than 50% of the experiments (actually {:.1f}%) failed for surrogate'
                               ' model {}'.format(failure_data[1]*100., sm_uid))
             elif failure_data[1] > 0.2:
                 warnings.warn('More than 20% of the experiments (actually {:.1f}%) failed for surrogate model {}'
                               .format(failure_data[1] * 100., sm_uid))
+
             else:
                 print('{:.1f}% of the experiments failed for surrogate model {}'.format(failure_data[1] * 100., sm_uid))

@@ -250,7 +250,7 @@ class LEGOProblem(CMDOWSObject, Problem):
             doe_center_runs = get_doe_setting_safe(doe_elem, 'centerRuns', 2, expected_type='int',
                                                    doe_method=doe_method,
                                                    required_for_doe_methods=['Box-Behnken design'])
-            doe_seed = get_doe_setting_safe(doe_elem, 'seed', 0, expected_type='int', doe_method=doe_method,
+            doe_seed = get_doe_setting_safe(doe_elem, 'seed', None, expected_type='int', doe_method=doe_method,
                                             required_for_doe_methods=['Latin hypercube design', 'Uniform design',
                                                                       'Monte Carlo design'])
             doe_levels = get_doe_setting_safe(doe_elem, 'levels', 2, expected_type='int', doe_method=doe_method,
@@ -284,7 +284,7 @@ class LEGOProblem(CMDOWSObject, Problem):
             elif doe_method == 'Box-Behnken design':
                 driver.options['generator'] = BoxBehnkenGenerator(center=doe_center_runs)
             elif doe_method == 'Latin hypercube design':
-                driver.options['generator'] = LatinHypercubeGenerator(samples=doe_runs, seed=doe_seed)
+                driver.options['generator'] = LatinHypercubeGenerator(samples=doe_runs, criterion='maximin', seed=None) # doe_seed: TODO: Change back?
             elif doe_method == 'Custom design table':
                 driver.options['generator'] = ListGenerator(data=doe_data)
             else:
@@ -304,11 +304,19 @@ class LEGOProblem(CMDOWSObject, Problem):
             """
         # TODO: Check later whether this is the right approach? Add initial values?
         for inp in self.model.list_inputs(out_stream=None):
-            if np.isnan(np.min(inp[1]['value'])):
-                self[inp[0]] = np.ones(len(inp[1]['value']))
+            prom_name = self.model._var_abs2prom['input'][inp[0]]
+            if np.isnan(np.min(inp[1]['value'])) or prom_name in self.model.design_vars:
+                if prom_name in self.model.design_vars:
+                    self[inp[0]] = np.array([self.model.design_vars[prom_name]['initial']])
+                else:
+                    self[inp[0]] = np.ones(len(inp[1]['value']))
         for out in self.model.list_outputs(out_stream=None):
-            if np.isnan(np.min(out[1]['value'])):
-                self[out[0]] = np.ones(len(out[1]['value']))
+            prom_name = self.model._var_abs2prom['output'][out[0]]
+            if np.isnan(np.min(out[1]['value'])) or prom_name in self.model.design_vars:
+                if prom_name in self.model.design_vars:
+                    self[out[0]] = np.array([self.model.design_vars[prom_name]['initial']])
+                else:
+                    self[out[0]] = np.ones(len(out[1]['value']))
 
     def store_model_view(self, open_in_browser=False):
         # type: (bool) -> None

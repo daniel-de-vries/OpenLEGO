@@ -718,3 +718,18 @@ class CMDOWSObject(object):
         for i, uid in enumerate(self.process_info['uids']):
             _process_step_numbers[uid] = self.process_info['step_numbers'][i]
         return _process_step_numbers
+
+    def get_target_functions(self, parameter_uid, filter_list=None):
+        # TODO: Add docstring and implement throughout code
+        if filter_list is not None:
+            return [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID'
+                                                      r'="{}"]/toExecutableBlockUID/text()'
+                                                      .format(parameter_uid)) if x in filter_list]
+        else:
+            return [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID'
+                                                      r'="{}"]/toExecutableBlockUID/text()'.format(parameter_uid))]
+
+    def get_target_parameters(self, function_uid):
+        # TODO: Add docstring and implement throughout code
+        return [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/'
+                                                  r'toParameterUID/text()'.format(function_uid))]

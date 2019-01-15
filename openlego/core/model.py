@@ -23,24 +23,27 @@ import copy
 import imp
 import os
 import warnings
-from itertools import chain
+from collections import OrderedDict, Iterable
+from numbers import Integral
 
 import numpy as np
-
 from cached_property import cached_property
 from lxml import etree
 from lxml.etree import _Element, _ElementTree
-from openmdao.core.parallel_group import ParallelGroup
+from six import string_types
+from typing import Union, Optional, List, Any, Dict, Tuple
 
+import openmdao
+from openlego.core.b2k_solver import NonlinearB2kSolver
+from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid, get_loop_nesting_obj, \
+    get_surrogate_model_setting_safe
+from openlego.utils.general_utils import parse_cmdows_value, str_to_valid_sys_name, parse_string, shorten_xpath
+from openlego.utils.xml_utils import xpath_to_param, xml_to_dict, param_to_xpath
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
     LinearRunOnce, ExecComp, NonlinearRunOnce, DirectSolver, MetaModelUnStructuredComp, FloatKrigingSurrogate, \
     ResponseSurface, FloatMultiFiCoKrigingSurrogate
-from typing import Union, Optional, List, Any, Dict, Tuple
-
-from openlego.utils.general_utils import parse_cmdows_value, str_to_valid_sys_name, parse_string, shorten_xpath
-from openlego.utils.xml_utils import xpath_to_param, xml_to_dict
-from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid, get_loop_nesting_obj, \
-    get_surrogate_model_setting_safe
+from openmdao.core.parallel_group import ParallelGroup
+from openmdao.utils.general_utils import format_as_float_or_array, determine_adder_scaler
 from .abstract_discipline import AbstractDiscipline
 from .cmdows import CMDOWSObject, InvalidCMDOWSFileError
 from .discipline_component import DisciplineComponent
@@ -200,6 +203,7 @@ class LEGOModel(CMDOWSObject, Group):
     def surrogate_model_components(self):
         # TODO: add docstring
         _sm_components = dict()
+
         for surrogate_model in self.elem_cmdows.iter('surrogateModel'):
             if surrogate_model.attrib['uID'] in self.model_exec_blocks or self.driver_uid in self.super_drivers or self._super_driver_components:
                 uid = surrogate_model.attrib['uID']
@@ -219,6 +223,7 @@ class LEGOModel(CMDOWSObject, Group):
                 for sm_pr_out in self.sm_prediction_outputs[uid]:
                     param = xpath_to_param(sm_pr_out)
                     component.add_output(param, val=np.zeros(self.get_variable_size(param)))
+                component.declare_partials('*', '*', method='exact')
                 _sm_components.update({uid: component})
         return _sm_components
 
@@ -442,6 +447,15 @@ class LEGOModel(CMDOWSObject, Group):
                 param, mapped = get_related_parameter_uid(var, self.elem_cmdows)
                 _des_var_copies.update({xpath_to_param(mapped): xpath_to_param(param)})
         return _des_var_copies
+
+    @cached_property
+    def des_var_copies_targets(self):
+        #TODO: add docstring
+        _des_var_copies_targets = dict()
+        for mapped_des_var, des_var_copy in self.des_var_copies.items():
+            targets = self.get_target_functions(param_to_xpath(des_var_copy))
+            _des_var_copies_targets.update({mapped_des_var: targets})
+        return _des_var_copies_targets
 
     @cached_property
     def loop_nesting_obj(self):
@@ -715,18 +729,34 @@ class LEGOModel(CMDOWSObject, Group):
             elem_desvar = get_element_by_uid(self.elem_cmdows, desvar_uid)
             name = xpath_to_param(elem_desvar.find('parameterUID').text)
 
-            # Obtain the lower and upper bounds
+            # Obtain the lower and upper bounds, including global upper and lower bounds
             bounds = 2 * [None]  # type: List[Optional[float, np.array]]
-            limit_range = elem_desvar.find('validRanges/limitRange')
-            if limit_range is not None:
+            for limit_range in elem_desvar.iterfind('validRanges/limitRange'):
+                scope = limit_range.get('scope')
                 for index, bnd, in enumerate(['minimum', 'maximum']):
                     elem = limit_range.find(bnd)
                     if elem is not None:
-                        bounds[index] = parse_cmdows_value(elem)
-                        if not self.does_value_fit(name, bounds[index]):
-                            raise ValueError('incompatible size of {} for design variable {}'.format(bnd, name))
-            else:
-                bounds[0], bounds[1] = None, None
+                        if scope is None or scope == 'local':
+                            bounds[index] = parse_cmdows_value(elem)
+                            if not self.does_value_fit(name, bounds[index]):
+                                raise ValueError('incompatible size of {} for design variable {}'
+                                                 .format(bnd, name))
+                        elif scope != 'global':
+                            raise ValueError('Invalid scope {} defined for variable {}'
+                                             .format(scope, name))
+
+            # Obtain the global upper and lower bounds (only used in BLISS-2000 implementation)
+            gl_bounds = list(bounds)  # type: List[Optional[float, np.array]]
+            for limit_range in elem_desvar.iterfind('validRanges/limitRange'):
+                scope = limit_range.get('scope')
+                for index, bnd, in enumerate(['minimum', 'maximum']):
+                    elem = limit_range.find(bnd)
+                    if elem is not None:
+                        if scope == 'global':
+                            gl_bounds[index] = parse_cmdows_value(elem)
+                            if not self.does_value_fit(name, gl_bounds[index]):
+                                raise ValueError('incompatible size of {} for design variable {}'
+                                                 .format(bnd, name))
 
             # Obtain the initial value
             initial = elem_desvar.find('nominalValue')
@@ -753,7 +783,9 @@ class LEGOModel(CMDOWSObject, Group):
                     ref0, ref = None, None
             design_vars.update({node_name: {'initial': initial,
                                             'lower': bounds[0], 'upper': bounds[1],
-                                            'ref0': ref0, 'ref': ref}})
+                                            'ref0': ref0, 'ref': ref,
+                                            'global_lower': gl_bounds[0],
+                                            'global_upper': gl_bounds[1]}})
         return design_vars
 
     @cached_property
@@ -868,13 +900,8 @@ class LEGOModel(CMDOWSObject, Group):
         hierarchy.
         """
         subsys = None
-        #if not root:  # TODO: Fix the ParallelGroup()
-        #    coupled_group = Group()
         if not root:
-            if hierarchy[0] in ['D2', 'D4']:
-                coupled_group = ParallelGroup()
-            else:
-                coupled_group = Group()
+            coupled_group = Group()
 
         for entry in hierarchy:
             if isinstance(entry, dict):  # if entry specifies a coupled group
@@ -973,7 +1000,11 @@ class LEGOModel(CMDOWSObject, Group):
                     coupled_group_set = True
             elif block in self.model_exec_blocks or self.SUBDRIVER_PREFIX + block in self.model_exec_blocks:
                 n += 1
-                _system_order.append(str_to_valid_sys_name(block))
+                if 'SubSurrogateModel' in str_to_valid_sys_name(block):  # TODO: REMOVE AFTER TESTING
+                    if 'SurrogateModels' not in _system_order:   # TODO: REMOVE AFTER TESTING
+                        _system_order.append('SurrogateModels')  # TODO: REMOVE AFTER TESTING
+                else:                                            # TODO: REMOVE AFTER TESTING
+                    _system_order.append(str_to_valid_sys_name(block))
 
         if len(self.discipline_components) + len(self.mathematical_functions_groups) + len(self.sub_drivers) + \
                 len(self.surrogate_model_components) + len(self._super_driver_components) < n:
@@ -1035,6 +1066,13 @@ class LEGOModel(CMDOWSObject, Group):
                                                                      if add_super_driver_type else None)),
                                                   promotes=['*'])
 
+    def _configure_system_converger(self):
+        # TODO: add docstring
+        self.add_subdrivers(self._super_driver_components, add_super_driver_type=True)
+        if self._super_driver_components:  # TODO: This should be a check for system converger
+            self.linear_solver = LinearRunOnce()  # TODO: Take this info from the CMDOWS file, including settings.
+            self.nonlinear_solver = NonlinearB2kSolver()
+
     def setup(self):
         # type: () -> None
         """Assemble the LEGOModel using the the CMDOWS file and knowledge base."""
@@ -1046,7 +1084,7 @@ class LEGOModel(CMDOWSObject, Group):
             self.add_subsystem(str_to_valid_sys_name(name), self.configure_super_driver(name), ['*'])
 
         # For the highest BLISS-2000 level, add the multiple superdriver groups as SubDriverComponents
-        self.add_subdrivers(self._super_driver_components, add_super_driver_type=True)
+        self._configure_system_converger()
 
         # Add all pre-coupling and post-coupling components
         for name, component in self.discipline_components.items():
@@ -1059,7 +1097,8 @@ class LEGOModel(CMDOWSObject, Group):
                             if 'copy' in self.coupling_vars[i]:
                                 promotes.append((i, self.coupling_vars[i]['copy']))
                     elif i in self.des_var_copies:
-                        promotes.append((i, self.des_var_copies[i]))
+                        if name in self.des_var_copies_targets[i]:
+                            promotes.append((i, self.des_var_copies[i]))
                     elif i in self.model_super_inputs_inv:
                         mapped_var = self.model_super_inputs_inv[i]
                         if mapped_var in self.model_super_inputs:
@@ -1069,13 +1108,22 @@ class LEGOModel(CMDOWSObject, Group):
         for name, component in self.mathematical_functions_groups.items():
             if name not in self.coupled_blocks and name in self.model_exec_blocks:
                 self.add_subsystem(str_to_valid_sys_name(name), component, ['*'])
+        sms_added = False
+        sm_group = Group()  # TODO: line can be removed after testing
         for name, component in self.surrogate_model_components.items():
             if name not in self.coupled_blocks and name in self.model_exec_blocks:
                 promotes = ['*']
                 for i in component._training_output.keys():
                     if i in self.mapped_parameters:
                         promotes.append((i, self.mapped_parameters[i]))
-                self.add_subsystem(str_to_valid_sys_name(name), component, promotes)
+                sm_group.add_subsystem(str_to_valid_sys_name(name), component, promotes)  # TODO: Line can be removed
+                sms_added = True
+                # TODO: Change back to:
+                # TODO: self.add_subsystem(str_to_valid_sys_name(name), component, promotes)
+        if sms_added:
+            sm_group.approx_totals()
+            self.add_subsystem('SurrogateModels', sm_group, promotes=['*'])  # TODO: Line can be removed
+
 
         # Add the coupled groups
         if self.coupled_hierarchy:
@@ -1097,7 +1145,7 @@ class LEGOModel(CMDOWSObject, Group):
 
         # Add the objective
         if self.objective:
-            self.add_objective(self.objective)
+            self.add_objective(self.objective, scaler=1.)
 
     def initialize_from_xml(self, xml):
         # type: (Union[str, _ElementTree]) -> None
@@ -1129,3 +1177,153 @@ class LEGOModel(CMDOWSObject, Group):
                                           .format(mapping))
                         else:
                             raise RuntimeError(e)
+
+    def adjust_design_var(self, name, initial=None, lower=None, upper=None, ref=None,
+                          ref0=None, indices=None, adder=None, scaler=None,
+                          parallel_deriv_color=None, vectorize_derivs=False,
+                          cache_linear_solution=False):
+        r"""
+        Adjust a design variable of this model (used in BLISS-2000 implementation).
+        This method is actually an almost exact copy of the add_design_var method
+        in OpenMDAO's System class.
+
+        Parameters
+        ----------
+        name : string
+            Name of the design variable in the system.
+        lower : float or ndarray, optional
+            Lower boundary for the param
+        upper : upper or ndarray, optional
+            Upper boundary for the param
+        ref : float or ndarray, optional
+            Value of design var that scales to 1.0 in the driver.
+        ref0 : float or ndarray, optional
+            Value of design var that scales to 0.0 in the driver.
+        indices : iter of int, optional
+            If a param is an array, these indicate which entries are of
+            interest for this particular design variable.  These may be
+            positive or negative integers.
+        adder : float or ndarray, optional
+            Value to add to the model value to get the scaled value. Adder
+            is first in precedence.
+        scaler : float or ndarray, optional
+            value to multiply the model value to get the scaled value. Scaler
+            is second in precedence.
+        parallel_deriv_color : string
+            If specified, this design var will be grouped for parallel derivative
+            calculations with other variables sharing the same parallel_deriv_color.
+        vectorize_derivs : bool
+            If True, vectorize derivative calculations.
+        cache_linear_solution : bool
+            If True, store the linear solution vectors for this variable so they can
+            be used to start the next linear solution with an initial guess equal to the
+            solution from the previous linear solve.
+
+        Notes
+        -----
+        The response can be scaled using ref and ref0.
+        The argument :code:`ref0` represents the physical value when the scaled value is 0.
+        The argument :code:`ref` represents the physical value when the scaled value is 1.
+        """
+        if name not in self._design_vars:
+            msg = "Design Variable '{}' does not exists."
+            raise RuntimeError(msg.format(name))
+
+        # Name must be a string
+        if not isinstance(name, string_types):
+            raise TypeError('The name argument should be a string, got {0}'.format(name))
+
+        # Adjust initial value
+        self.design_vars[name]['initial'] = format_as_float_or_array('initial', initial,
+                                                                     val_if_none=None)
+
+        # Convert ref/ref0 to ndarray/float as necessary
+        ref = format_as_float_or_array('ref', ref, val_if_none=None, flatten=True)
+        self.design_vars[name]['ref'] = ref
+
+        ref0 = format_as_float_or_array('ref0', ref0, val_if_none=None, flatten=True)
+        self.design_vars[name]['ref0'] = ref0
+
+        # determine adder and scaler based on args
+        adder, scaler = determine_adder_scaler(ref0, ref, adder, scaler)
+
+        # Convert lower to ndarray/float as necessary
+        lower = format_as_float_or_array('lower', lower, val_if_none=-openmdao.INF_BOUND,
+                                         flatten=True)
+        self.design_vars[name]['lower'] = lower
+
+        # Convert upper to ndarray/float as necessary
+        upper = format_as_float_or_array('upper', upper, val_if_none=openmdao.INF_BOUND,
+                                         flatten=True)
+        self.design_vars[name]['upper'] = upper
+
+        # Apply scaler/adder to lower and upper
+        lower = (lower + adder) * scaler
+        upper = (upper + adder) * scaler
+
+        design_vars = self._design_vars  # TODO: Check that self._static_design_vars are not updated
+
+        dvs = OrderedDict()
+
+        if isinstance(scaler, np.ndarray):
+            if np.all(scaler == 1.0):
+                scaler = None
+        elif scaler == 1.0:
+            scaler = None
+        dvs['scaler'] = scaler
+
+        if isinstance(adder, np.ndarray):
+            if not np.any(adder):
+                adder = None
+        elif adder == 0.0:
+            adder = None
+        dvs['adder'] = adder
+
+        dvs['name'] = name
+        dvs['upper'] = upper
+        dvs['lower'] = lower
+        dvs['ref'] = ref
+        dvs['ref0'] = ref0
+        dvs['cache_linear_solution'] = cache_linear_solution
+
+        if indices is not None:
+            # If given, indices must be a sequence
+            if not (isinstance(indices, Iterable) and
+                    all([isinstance(i, Integral) for i in indices])):
+                raise ValueError("If specified, indices must be a sequence of integers.")
+
+            indices = np.atleast_1d(indices)
+            dvs['size'] = size = len(indices)
+
+            # All refs: check the shape if necessary
+            for item, item_name in zip([ref, ref0, scaler, adder, upper, lower],
+                                       ['ref', 'ref0', 'scaler', 'adder', 'upper', 'lower']):
+                if isinstance(item, np.ndarray):
+                    if item.size != size:
+                        raise ValueError("'%s': When adding design var '%s', %s should have size "
+                                         "%d but instead has size %d." % (self.pathname, name,
+                                                                          item_name, size,
+                                                                          item.size))
+
+        dvs['indices'] = indices
+        dvs['parallel_deriv_color'] = parallel_deriv_color
+        dvs['vectorize_derivs'] = vectorize_derivs
+
+        design_vars[name] = dvs
+
+    def parameter_uids_are_related(self, uid1, uid2):
+        # TODO: Add docstring
+        try:
+            _, related_uid1 = get_related_parameter_uid(uid1, self.elem_cmdows)
+        except AssertionError:
+            related_uid1 = None
+        try:
+            _, related_uid2 = get_related_parameter_uid(uid2, self.elem_cmdows)
+        except AssertionError:
+            related_uid2 = None
+
+        if uid1 == uid2 or (related_uid1 == related_uid2 and related_uid1 is not None) \
+                or uid1 == related_uid2 or uid2 == related_uid1:
+            return True
+        else:
+            return False

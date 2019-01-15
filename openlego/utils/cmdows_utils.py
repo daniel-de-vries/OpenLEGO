@@ -29,9 +29,9 @@ from openlego.utils.general_utils import change_object_type
 
 def get_related_parameter_uid(elem_or_uid_param, full_xml):
     # type: (_Element, _Element) -> Tuple[str, str]
-    """Function to retrieve the UID of the related parameter. This UID refers to the original local in the XML file of
-     the parameter and is used when a parameter is found in a CMDOWS file which is an architecture type or a higher
-     instance.
+    """Function to retrieve the UID of the related parameter. This UID refers to the original location in the XML file
+    of the parameter and is used when a parameter is found in a CMDOWS file which is an architecture type or a higher
+    instance.
 
     Parameters
     ----------
@@ -44,7 +44,7 @@ def get_related_parameter_uid(elem_or_uid_param, full_xml):
     -------
         param : str
             Original parameter UID for which the related UID is searched for.
-        mapped : str
+        mapped : str or None
             The found related parameter UID.
     """
     if isinstance(elem_or_uid_param, _Element):

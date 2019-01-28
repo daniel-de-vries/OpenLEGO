@@ -503,17 +503,17 @@ class LEGOProblem(CMDOWSObject, Problem):
                     ub_value = cr.problem_metadata['variables'][metadata_name]['upper']
                     eq_value = cr.problem_metadata['variables'][metadata_name]['equals']
                     if eq_value is not None:
-                        print_optional('    {}: {} (== {})'.format(var_constraint, value, eq_value), print_in_log)
+                        print_optional('    {}: {} (c == {})'.format(var_constraint, value, eq_value), print_in_log)
                     else:
                         if lb_value > -1e29 and ub_value < 1e29:
-                            print_optional('    {}: {} ({} < x < {})'.format(var_constraint, value, lb_value, ub_value),
+                            print_optional('    {}: {} ({} < c < {})'.format(var_constraint, value, lb_value, ub_value),
                                            print_in_log)
                         elif lb_value < -1e29 and ub_value < 1e29:
-                            print_optional('    {}: {} (x < {})'.format(var_constraint, value, ub_value), print_in_log)
+                            print_optional('    {}: {} (c < {})'.format(var_constraint, value, ub_value), print_in_log)
                         elif lb_value > -1e29 and ub_value > 1e29:
-                            print_optional('    {}: {} (x > {})'.format(var_constraint, value, lb_value), print_in_log)
+                            print_optional('    {}: {} (c > {})'.format(var_constraint, value, lb_value), print_in_log)
                         else:
-                            print_optional('    {}: {} (x is unbounded)'.format(var_constraint, value), print_in_log)
+                            print_optional('    {}: {} (c is unbounded)'.format(var_constraint, value), print_in_log)
                     results = add_or_append_dict_entry(results, 'constraints', var_constraint, value)
 
             # Print DOE quantities of interest

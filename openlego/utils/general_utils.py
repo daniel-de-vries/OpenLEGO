@@ -369,21 +369,6 @@ def clean_dir_filtered(dr, filters):
                 continue
 
 
-def shorten_xpath(xpath):
-    # TODO: Add docstring
-    check_strs = ['/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy',
-                  '/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy']
-    # TODO: Reconsider the use and position of this function...
-    #repl_strs = ['/dataSchema/doeInputSamples',
-    #             '/dataSchema/doeOutputSamples']
-    repl_strs = ['/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy',
-                 '/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy']
-    for check_str, repl_str in zip(check_strs, repl_strs):
-        if check_str in xpath:
-            return xpath.replace(check_str, repl_str)
-    return xpath
-
-
 def warn_about_failed_experiments(failed_experiments):
     # TODO: Add docstring
     if failed_experiments:

@@ -21,15 +21,6 @@ from openmdao.recorders.recording_iteration_stack import Recording
 class NonlinearB2kSolver(NonlinearBlockGS):
     SOLVER = 'NL: BLISS-2000'
 
-    # BLISS design variables interval adjustment settings
-    # TODO: Add these as options of the solver later
-    F_K_RED = 2.0  # K_bound_reduction: K-factor reduction
-    F_INT_INC = 0.25  # interval increase: percentage of interval increase if bound is hit
-    F_INT_INC_ABS = 0.1  # absolute interval increase: minimum increase if percentual increase is too low
-    F_INT_RANGE = 1.e-3  # minimal range of the design variable interval
-    PRINT_LAST_ITERATION= True  # Setting to print the results of the last iteration in the log
-    PLOT_HISTORY = True  # Setting to plot the history of system-level optimization while running
-
     # Dictionaries used to store results
     GLOBAL_BOUNDS = {}
     LOCAL_BOUNDS = {}
@@ -64,6 +55,26 @@ class NonlinearB2kSolver(NonlinearBlockGS):
     def system_doe_probs(self):
         return [getattr(self._system, str_to_valid_sys_name(x)).prob for x in self.system_doe_names]
 
+    def _declare_options(self):
+        """
+        Declare options before kwargs are processed in the init method.
+        """
+        super(NonlinearB2kSolver, self)._declare_options()
+
+        self.options.declare('print_last_iteration', types=bool, default=True,
+                             desc='set to True to print last iteration information in log')
+        self.options.declare('plot_history', types=bool, default=True,
+                             desc='set to True to plot history of optimizer with plotly')
+        self.options.declare('f_k_red', default=2., types=float,
+                             desc='K-factor reduction for design variable ranges.')
+        self.options.declare('f_int_inc', default=0.25, types=float,
+                             desc='Percentage of interval increase if bound it hit.')
+        self.options.declare('f_int_inc_abs', default=.1, types=float,
+                             desc='Absolute interval increase, minimum increase if percentual '
+                                  'increase is too small.')
+        self.options.declare('f_int_range', default=1.e-3, types=float,
+                             desc='Minimal range of the design variable interval')
+
     def _iter_initialize(self):
         """
         Perform any necessary pre-processing operations.
@@ -89,14 +100,12 @@ class NonlinearB2kSolver(NonlinearBlockGS):
         super(NonlinearB2kSolver, self)._run_apply()
 
     def _run_iterator(self):
-        # TODO: add docs
         """
         Run the iterative solver.
         """
-        # TODO: Get these options from the CMDOWS file.
-        maxiter = 30#self.options['maxiter']
-        atol = 1e-4#self.options['atol']
-        rtol = 1e-4#self.options['rtol']
+        maxiter = self.options['maxiter']
+        atol = self.options['atol']
+        rtol = self.options['rtol']
         iprint = self.options['iprint']
 
         self._mpi_print_header()
@@ -104,7 +113,7 @@ class NonlinearB2kSolver(NonlinearBlockGS):
         self._iter_count = 0
         norm0, norm = self._iter_initialize()
 
-        self._norm0 = norm0  # TODO: check where this comes from / is used for?
+        self._norm0 = norm0
         self._objectives = []
 
         self._mpi_print(self._iter_count, norm, norm0)
@@ -123,9 +132,9 @@ class NonlinearB2kSolver(NonlinearBlockGS):
 
             self._mpi_print(self._iter_count, norm, norm0)
             self._save_history()
-            if self.PRINT_LAST_ITERATION:
+            if self.options['print_last_iteration']:
                 self._print_last_iteration()
-            if self.PLOT_HISTORY:
+            if self.options['plot_history']:
                 self._plot_history()
             self._iter_apply_new_bounds()
             self._untrain_surrogates()
@@ -175,49 +184,42 @@ class NonlinearB2kSolver(NonlinearBlockGS):
             objs.append(float('nan'))
             return float('nan'), float('nan')
 
-    def solve(self):
-        print('Solving with B2k solver')
-        super(NonlinearB2kSolver, self).solve()
-
     def _iter_apply_new_bounds(self):
-        # TODO: Add docstring
+        """Apply new bounds on the design variables and set up the models again."""
         prob = self.system_optimizer_prob
         # Get design variables
-        print('Apply new bounds for the full iteration')
         for des_var_name, attrbs in prob.model._design_vars.items():
-            attrbs_new = self._get_new_bounds(des_var_name, attrbs)  # N.B.: Input attrbs is scaled, output is unscaled
+            attrbs_new = self._get_new_bounds(des_var_name, attrbs)
             self._apply_new_bounds(des_var_name, attrbs_new)
-        prob.final_setup()  # TODO: or use prob.driver._update_voi_met(prob.model) -> see final_setup() in problem.py
+        prob.final_setup()
+        # TODO: Consider use of prob.driver._update_voi_met(prob.model)
+        # TODO: -> see final_setup() in problem.py
         for doe_prob in self.system_doe_probs:
             doe_prob.final_setup()
 
     def _get_new_bounds(self, var_name, attrbs):
-        # TODO: Update docstring
-        """Method that determines new bounds for the design variables for the next BLISS loop. Bounds are initially reduced,
-        but will be increased if bounds are hit or if the system-level optimization failed.
+        # type: (str, dict) -> dict
+        """Method that determines new bounds for the design variables for the next BLISS loop.
+        Bounds are initially reduced, but will be increased if bounds are hit or if the system-level
+        optimization failed.
 
-        :param des_vars: object containing all design variable details
-        :type des_vars: list
-        :param z_opt: optimal design vectors
-        :type z_opt: dict
-        :param f_k_red: K-factor reduction
-        :type f_k_red: float
-        :param f_int_inc: percentage of interval increase if bound is hit
-        :type f_int_inc: float
-        :param f_int_inc_abs: absolute interval increase: minimum increase if percentual increase is too low
-        :type f_int_inc_abs: float
-        :param f_int_range: minimum width of the design variable interval
-        :type f_int_range: float
-        :param optimization_failed: indication whether optimization was successful
-        :type optimization_failed: bool
-        :return: enriched design variables object with new bounds
-        :rtype: dict
+        Parameters
+        ----------
+            var_name : str
+                Design variable name of which new bounds should be determined
+            attrbs : dict
+                Attributes of the design variable (ref0, ref, lower, upper, adder, scaler)
+
+        Returns
+        -------
+            attrbs_new : dict
+                Dictionary specifying the new bounds.
         """
-        # TODO: Later take these as options of the solver
-        f_k_red = self.F_K_RED
-        f_int_inc = self.F_INT_INC
-        f_int_inc_abs = self.F_INT_INC_ABS
-        f_int_range = self.F_INT_RANGE
+        f_k_red = self.options['f_k_red']  # K-factor reduction
+        f_int_inc = self.options['f_int_inc']  # fraction of interval increase if bound is hit
+        f_int_inc_abs = self.options['f_int_inc_abs']  # absolute interval increase if fraction is
+                                                       # too small
+        f_int_range = self.options['f_int_range']  # minimum range of design variable interval
 
         btol = 1e-2  # Tolerance for boundary hit determination
 
@@ -267,7 +269,7 @@ class NonlinearB2kSolver(NonlinearBlockGS):
             val_ub_new = val_opt
             val_opt = val_ub
 
-        # Reduce bounds based on K-factor reduction TODO: add reference
+        # Reduce bounds based on K-factor reduction
         if not opt_failed and not out_of_bounds:
             adjust = abs((val_ub + val_lb) / 2 - val_opt) / ((val_ub + val_lb) / 2 - val_lb)
             reduce_val = adjust + (1 - adjust) * f_k_red
@@ -357,7 +359,16 @@ class NonlinearB2kSolver(NonlinearBlockGS):
         return attrbs_new
 
     def _apply_new_bounds(self, var_name, attrbs):
-        # TODO: Add docstring
+        # type: (str, dict) -> None
+        """Apply new bounds on design variables
+
+        Parameters
+        ----------
+            var_name : str
+                Design variable name of which new bounds should be determined
+            attrbs : dict
+                Attributes of the design variable (ref0, ref, lower, upper, adder, scaler)
+        """
         opt_prob = self.system_optimizer_prob
         opt_prob[var_name] = attrbs['initial']
         opt_prob.model.adjust_design_var(var_name,
@@ -366,8 +377,10 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                                          ref=attrbs['ref'], ref0=attrbs['ref0'])
         for doe_prob in self.system_doe_probs:
             for doe_des_var in doe_prob.model.design_vars.keys():
+                # TODO: It seems performance could be drastically improved here by creating an
+                # TODO: object with static design variable mappings
                 if doe_prob.model.parameter_uids_are_related(param_to_xpath(var_name),
-                                                             param_to_xpath(doe_des_var)):  # TODO: performance could be drastically improved here by creating an object with design variable mappings
+                                                             param_to_xpath(doe_des_var)):
                     doe_prob.model.adjust_design_var(doe_des_var,
                                                      initial=attrbs['initial'],
                                                      lower=attrbs['lower'], upper=attrbs['upper'],
@@ -375,13 +388,15 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                     break
 
     def _untrain_surrogates(self):
-        # TODO: Add docstring
+        # type: () -> None
+        """Untrain the surrogates in the model by setting the train attribute to True."""
         opt_model = self.system_optimizer_prob.model
         for name, component in opt_model.surrogate_model_components.items():
             component.train = True
 
     def _save_history(self):
-        # TODO: Update docstring
+        # type: () -> None
+        """Save the solvers history to a collection of dictionaries."""
 
         # Load optimization problem
         prob = self.system_optimizer_prob
@@ -433,6 +448,9 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                 OPT_CON_VALUES[var_name].append(val_con)
 
     def _print_last_iteration(self):
+        # type: () -> None
+        """Print the results of the last B2k iteration in the log."""
+
         i = self._iter_count - 1
         print('HISTORY OF LOOP {}'.format(i))
         # Design variables
@@ -444,7 +462,8 @@ class NonlinearB2kSolver(NonlinearBlockGS):
             print('{} < {} < {}  ({})\n'.format(unscaled(self.LOCAL_BOUNDS[var_name][i][0]),
                                                 unscaled(self.OPT_DV_VALUES[var_name][i]),
                                                 unscaled(self.LOCAL_BOUNDS[var_name][i][1]),
-                                                unscaled(self.OPT_DV_VALUES[var_name][i - 1]) if i > 0 else "..."))
+                                                unscaled(self.OPT_DV_VALUES[var_name][i - 1])
+                                                if i > 0 else "..."))
 
         # Constraints
         print('CONSTRAINTS')
@@ -466,7 +485,8 @@ class NonlinearB2kSolver(NonlinearBlockGS):
             print('{}\n'.format(self.OPT_OBJ_VALUES[var_name][i][0]))
 
     def _plot_history(self):
-        # Plot design variables
+        # type: () -> None
+        """Plot the results of the last B2k iteration in the browser."""
         traces_des_vars = []
         des_var_names = sorted(self.OPT_DV_VALUES.keys())
         legend_entries = [x.split('/')[-1] for x in des_var_names]
@@ -519,7 +539,26 @@ def create_plotly_plot(dct, plot_title, filename,
                        plot_xaxis_title='iterations',
                        plot_yaxis_title='value',
                        folder='output_files'):
-    # TODO: Add docstring
+    # type: (dict, str, str, str, str, str) -> None
+    """Plot the results of the last B2k iteration in the browser.
+
+    Parameters
+    ----------
+        dct : dict
+            Dictionary with variable names
+        plot_title : str
+            Title of the plot
+        filename : str
+            File to be created for the plot
+        plot_xaxis_title : str
+            Title provided on the X-axis
+        plot_yaxis_title : str
+            Title provided on the Y-axis
+
+    Returns
+    -------
+        Plotly plot stored as html-file.
+    """
     traces = []
     var_names = sorted(dct)
     legend_entries = ['/'.join(x.split('/')[-2:]) for x in var_names]

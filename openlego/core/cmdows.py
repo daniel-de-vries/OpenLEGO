@@ -25,7 +25,8 @@ from lxml import etree
 from lxml.etree import _Element
 from typing import Dict, List, Union
 
-from openlego.utils.cmdows_utils import get_loop_nesting_obj, get_element_by_uid, get_doe_setting_safe
+from openlego.utils.cmdows_utils import get_loop_nesting_obj, get_element_by_uid, \
+    get_doe_setting_safe
 from typing import Any, Optional
 from cached_property import cached_property
 
@@ -44,7 +45,8 @@ class InvalidCMDOWSFileError(ValueError):
 class CMDOWSObject(object):
     """A class that depends on a CMDOWS file and a Knowledge Base.
 
-    This class is used as a mixin for the `LEGOModel` and `LEGOProblem` classes to avoid code dependency.
+    This class is used as a mixin for the `LEGOModel` and `LEGOProblem` classes to avoid code
+    dependency.
 
     Attributes
     ----------
@@ -53,19 +55,21 @@ class CMDOWSObject(object):
         driver_uid
 
         data_folder : str, optional
-            Path to the folder in which to store all data generated during the `Problem`'s execution.
+            Path to the folder in which to store all data generated during the `Problem` execution.
 
         base_xml_file : str, optional
-            Path to an XML file which should be kept up-to-date with the latest data describing the problem.
+            Path to an XML file which should be kept up-to-date with the latest data describing the
+            problem.
     """
 
     SUPERDRIVER_PREFIX = '__SuperDriverComponent__'
     SUBDRIVER_PREFIX = '__SubDriverComponent__'
     SUPERCOMP_PREFIX = '__SuperComponent__'
 
-    def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None, base_xml_file=None, **kwargs):
+    def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None,
+                 base_xml_file=None, **kwargs):
         # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
-        """Initialize a CMDOWS dependent class from a given CMDOWS file, knowledge base and driver UID.
+        """Initialize CMDOWS dependent class from given CMDOWS file, knowledge base and driver UID.
 
         It is also possible to specify where (temporary) data should be stored, and if a base XML
         file should be kept up-to-data.
@@ -119,7 +123,8 @@ class CMDOWSObject(object):
                 The value of the requested attribute.
         """
         if name != '__class__' and name != '__dict__':
-            if name in [_name for _name, val in self.__class__.__dict__.items() if isinstance(val, cached_property)]:
+            if name in [_name for _name, val in self.__class__.__dict__.items() if
+                        isinstance(val, cached_property)]:
                 self.__integrity_check()
         return super(CMDOWSObject, self).__getattribute__(name)
 
@@ -200,7 +205,8 @@ class CMDOWSObject(object):
                 Object containing the way different elements are nested.
 
             super_driver_encountered : bool
-                Boolean on whether the superdriver has been encountered (used for iterative use of this function).
+                Boolean on whether the superdriver has been encountered (used for iterative use of
+                this function).
 
         Returns
         -------
@@ -210,10 +216,11 @@ class CMDOWSObject(object):
         for item in loop_nesting_obj:
             if isinstance(item, dict):
                 loop_elem_name = item.keys()[0]
-                if self.loop_element_types[loop_elem_name] in ['optimizer', 'doe'] and not super_driver_encountered:
-                    #super_driver_encountered = True  # TODO: Remove or fix for other
+                if self.loop_element_types[loop_elem_name] in ['optimizer', 'doe'] and \
+                        not super_driver_encountered:
                     sub_drivers.extend(self._get_sub_drivers(item[item.keys()[0]], True))
-                elif self.loop_element_types[loop_elem_name] in ['optimizer', 'doe'] and super_driver_encountered:
+                elif self.loop_element_types[loop_elem_name] in ['optimizer', 'doe'] and \
+                        super_driver_encountered:
                     sub_drivers.append(loop_elem_name)
                     sub_drivers.extend(self._get_sub_drivers(item[item.keys()[0]], True))
                 else:
@@ -222,7 +229,8 @@ class CMDOWSObject(object):
 
     @cached_property
     def coordinators(self):
-        # TODO: add docstring
+        # type: () -> List[str]
+        """:obj:`List[str]`: List with the coordinators in the CMDOWS file."""
         _coordinators = []
         for elem in self.elem_arch_elems.iterfind('executableBlocks/coordinators/coordinator'):
             _coordinators.append(elem.attrib['uID'])
@@ -232,7 +240,8 @@ class CMDOWSObject(object):
         # type: () -> None
         """Invalidate the instance.
 
-        All computed (cached) properties will be recomputed upon being read once the instance has been invalidated."""
+        All computed (cached) properties will be recomputed upon being read once the instance has
+        been invalidated."""
         __dict__ = self.__class__.__dict__.copy()
         __dict__.update(CMDOWSObject.__dict__)
         for name, value in __dict__.items():
@@ -359,8 +368,8 @@ class CMDOWSObject(object):
 
     def filter_loop_nesting(self, loop_nesting_list, sub_driver_found=False):
         # type: (List[str, dict]) -> List[str, dict]
-        """This method filters the loop nesting to only return a loop nesting object with entries that are relevant for
-        the driver under consideration.
+        """This method filters the loop nesting to only return a loop nesting object with entries
+        that are relevant for the driver under consideration.
 
         Parameters
         ----------
@@ -371,10 +380,10 @@ class CMDOWSObject(object):
 
         Returns
         -------
-        _filtered_loop_nesting_list : List[str, dict]
-            Filtered version of the loop nesting based on the current driver that is under consideration.
+        _filt_loop_nesting_lst : List[str, dict]
+            Filtered version of the loop nesting based on the current driver under consideration.
         """
-        _filtered_loop_nesting_list = []
+        _filt_loop_nesting_lst = []
         if self._driver_uid in self.sub_drivers and not sub_driver_found:
             add_all_blocks = False
         else:
@@ -382,90 +391,101 @@ class CMDOWSObject(object):
         driver_uid_is_sub_driver = True if self._driver_uid in self.sub_drivers else False
         for item in loop_nesting_list:
             if isinstance(item, dict):
-                loop_elem_name = item.keys()[0]
-                if self.loop_element_types[loop_elem_name] == 'converger' and add_all_blocks:
-                    _filtered_loop_nesting_list.append(item)
-                elif self.loop_element_types[loop_elem_name] == 'coordinator':
-                    _filtered_loop_nesting_list.append({loop_elem_name: self.filter_loop_nesting(item[loop_elem_name])})
-                elif self.loop_element_types[loop_elem_name] in ['optimizer', 'doe']:
-                    if loop_elem_name == self._driver_uid:
+                loop_el = item.keys()[0]
+                if self.loop_element_types[loop_el] == 'converger' and add_all_blocks:
+                    _filt_loop_nesting_lst.append(item)
+                elif self.loop_element_types[loop_el] == 'coordinator':
+                    _filt_loop_nesting_lst\
+                        .append({loop_el: self.filter_loop_nesting(item[loop_el])})
+                elif self.loop_element_types[loop_el] in ['optimizer', 'doe']:
+                    if loop_el == self._driver_uid:
                         if driver_uid_is_sub_driver:
-                            _filtered_loop_nesting_list.append(
-                                                    {loop_elem_name: self.filter_loop_nesting(item[loop_elem_name],
-                                                                                              sub_driver_found=True)})
+                            _filt_loop_nesting_lst\
+                                .append({loop_el: self.filter_loop_nesting(item[loop_el],
+                                                                           sub_driver_found=True)})
                         else:
-                            _filtered_loop_nesting_list.append(
-                                                    {loop_elem_name: self.filter_loop_nesting(item[loop_elem_name],
-                                                                                              sub_driver_found=False)})
+                            _filt_loop_nesting_lst\
+                                .append({loop_el: self.filter_loop_nesting(item[loop_el],
+                                                                           sub_driver_found=False)})
                     else:
                         if driver_uid_is_sub_driver:
-                            if loop_elem_name in self.sub_drivers:
+                            if loop_el in self.sub_drivers:
                                 pass
                             else:
-                                _filtered_loop_nesting_list.append(
-                                    {self.SUPERDRIVER_PREFIX + loop_elem_name:
-                                         self.filter_loop_nesting(item[loop_elem_name], sub_driver_found=False)})
+                                _filt_loop_nesting_lst.append(
+                                    {self.SUPERDRIVER_PREFIX + loop_el:
+                                         self.filter_loop_nesting(item[loop_el],
+                                                                  sub_driver_found=False)})
                         else:
-                            _filtered_loop_nesting_list.append(self.SUBDRIVER_PREFIX + loop_elem_name)
-                elif self.loop_element_types[loop_elem_name] == 'distributed_system_converger':
+                            _filt_loop_nesting_lst.append(self.SUBDRIVER_PREFIX + loop_el)
+                elif self.loop_element_types[loop_el] == 'distributed_system_converger':
                     # Find the right sublist of the multiple subworkflows handled by the converger
                     wf_to_append = []
                     driver_key = None
-                    for idx, subworkflow in enumerate(item[loop_elem_name]):
+                    for idx, subworkflow in enumerate(item[loop_el]):
                         if not driver_uid_is_sub_driver:
                             if subworkflow.keys()[0] == self.driver_uid:
                                 wf_to_append = subworkflow[self.driver_uid]
                                 driver_key = self.driver_uid
                                 break
                             elif subworkflow.keys()[0] in self._super_driver_components:
-                                driver_key = loop_elem_name
+                                driver_key = loop_el
                                 wf_to_append.append(subworkflow.keys()[0])
                         else:
                             entry_to_check = subworkflow[subworkflow.keys()[0]][0]
-                            if isinstance(entry_to_check, dict) and entry_to_check.keys()[0] == self.driver_uid:
+                            if isinstance(entry_to_check, dict) and \
+                                    entry_to_check.keys()[0] == self.driver_uid:
                                 wf_to_append = subworkflow[subworkflow.keys()[0]]
                                 driver_key = self.SUPERDRIVER_PREFIX + subworkflow.keys()[0]
                                 break
                     if wf_to_append is None or driver_key is None:
-                        raise AssertionError('Could not match the right subworkflow for driver_uid: {}'
-                                             .format(self.driver_uid))
+                        raise AssertionError('Could not match the right subworkflow for '
+                                             'driver_uid: {}'.format(self.driver_uid))
                     if all(isinstance(elem, str) for elem in wf_to_append):
-                        _filtered_loop_nesting_list.append({driver_key: wf_to_append})
+                        _filt_loop_nesting_lst.append({driver_key: wf_to_append})
                     else:
-                        _filtered_loop_nesting_list.append({driver_key: self.filter_loop_nesting(wf_to_append)})
+                        _filt_loop_nesting_lst.\
+                            append({driver_key: self.filter_loop_nesting(wf_to_append)})
                 else:
-                    raise AssertionError('Could not find element details for loop element {}.'.format(loop_elem_name))
+                    raise AssertionError('Could not find element details for loop element {}.'
+                                         .format(loop_el))
             elif isinstance(item, str):
                 if add_all_blocks:
-                    _filtered_loop_nesting_list.append(item)
+                    _filt_loop_nesting_lst.append(item)
                 else:
                     pass
             else:
-                raise AssertionError('Invalid type {} found in loop nesting object.'.format(type(item)))
-        return _filtered_loop_nesting_list
+                raise AssertionError('Invalid type {} found in loop nesting object.'
+                                     .format(type(item)))
+        return _filt_loop_nesting_lst
 
     @cached_property
     def model_exec_blocks(self):
         # type: () -> List[str]
-        """:obj:`List[str]`: List of all the executable blocks in the model w.r.t. the driver UID."""
-        return self.collect_all_executable_blocks(self.filtered_loop_nesting)
+        """:obj:`List[str]`: List of all executable blocks in the model w.r.t. the driver UID."""
+        return self.collect_all_exec_blocks(self.filtered_loop_nesting)
 
     @cached_property
     def model_nested_exec_blocks(self):
-        """:obj:`List[str]`: List of all the executable blocks that are nested inside  w.r.t. the superdriver UID."""
+        """:obj:`List[str]`: List of all the executable blocks that are nested inside  w.r.t. the
+        superdriver UID."""
         if self.driver_uid in self.super_drivers or self._super_driver_components:
-            return self.collect_all_executable_blocks(self.full_loop_nesting, nested_in=self.driver_uid)
+            return self.collect_all_exec_blocks(self.full_loop_nesting,
+                                                nested_in=self.driver_uid)
         else:
             return []
 
-    def collect_all_executable_blocks(self, loop_nesting_list, nested_in=None):
+    def collect_all_exec_blocks(self, loop_nesting_list, nested_in=None):
         # type: (List[str, dict]) -> List[str]
-        """Method collects the executable blocks in the model. w.r.t. the driver UID under consideration.
+        """Method collects the executable blocks in the model w.r.t. the driver UID under
+        consideration.
 
         Parameters
         ----------
         loop_nesting_list : List[dict, str]
             The loop nesting object
+        nested_in : Union[None, str]
+            UID of executable block in which the blocks should be nested
 
         Returns
         -------
@@ -480,7 +500,8 @@ class CMDOWSObject(object):
                 if nested_in is not None and loop_elem_name == nested_in:
                     nested_in = None
                     break_loop = True
-                all_executable_blocks.extend(self.collect_all_executable_blocks(item[loop_elem_name], nested_in=nested_in))
+                all_executable_blocks.extend(self.collect_all_exec_blocks(item[loop_elem_name],
+                                                                          nested_in=nested_in))
                 if break_loop:
                     break
             elif isinstance(item, str):
@@ -491,7 +512,7 @@ class CMDOWSObject(object):
     @cached_property
     def all_loop_elements(self):
         # type: () -> List[str]
-        """:obj:`List[str]`: List with all loop elements w.r.t. the driver UID under consideration."""
+        """:obj:`List[str]`: Lists all loop elements w.r.t. the driver UID under consideration."""
         return self.collect_all_loop_elements(self.filtered_loop_nesting)
 
     def collect_all_loop_elements(self, loop_nesting_list):
@@ -545,58 +566,70 @@ class CMDOWSObject(object):
 
     @cached_property
     def doe_uids(self):
-        # TODO: Add doc
+        # type: () -> List[str]
+        """List of UIDs of the DOE elements."""
         return [x for x in self.loop_element_types if self.loop_element_types[x] == 'doe']
 
     @cached_property
     def distributed_system_converger_uids(self):
-        # TODO: Add doc
-        return [x for x in self.loop_element_types if self.loop_element_types[x] == 'distributed_system_converger']
+        # type: () -> List[str]
+        """List of UIDs of the distributed system converger elements."""
+        return [x for x in self.loop_element_types if
+                self.loop_element_types[x] == 'distributed_system_converger']
+
+    @cached_property
+    def has_distributed_system_converger(self):
+        # type: () -> bool
+        """:obj:`bool`: True if there is a distributed system converger element in the CMDOWS file,
+        False if not."""
+        return bool(self.distributed_system_converger_uids)
 
     @cached_property
     def doe_runs(self):
-        # TODO: Add docstring
+        # type: () -> Dict[str,float]
+        """Dictionary containing mapping between DOE UID and number of runs."""
         _doe_runs_dict = {}
         for doe_uid in self.doe_uids:
             doe_elem = get_element_by_uid(self.elem_cmdows, doe_uid)
             # Load settings from CMDOWS file
-            doe_method = get_doe_setting_safe(doe_elem, 'method', 'Uniform design')
-            doe_runs = get_doe_setting_safe(doe_elem, 'runs', None, expected_type='int', doe_method=doe_method,
-                                            required_for_doe_methods=['Latin hypercube design', 'Uniform design',
+            doe_method = get_doe_setting_safe(doe_elem, 'method', 'Uniform design')  # type: str
+            doe_runs = get_doe_setting_safe(doe_elem, 'runs', None, expected_type='int',
+                                            doe_method=doe_method,
+                                            required_for_doe_methods=['Latin hypercube design',
+                                                                      'Uniform design',
                                                                       'Monte Carlo design'])
-            _doe_runs_dict.update({doe_uid:doe_runs})
+            _doe_runs_dict.update({doe_uid: doe_runs})
         return _doe_runs_dict
 
     @cached_property
     def doe_parameters(self):
-        # TODO: Add docstring
+        # type: () -> Dict[str]
+        """Mapping between all input and output parameters of all DOE element and their size."""
         _doe_parameters = {}
         for doe_uid in self.doe_uids:
             for inp in self.doe_samples[doe_uid]['inputs']:
-                _doe_parameters[inp] = {'size':self.doe_runs[doe_uid]}
+                _doe_parameters[inp] = {'size': self.doe_runs[doe_uid]}
             for out in self.doe_samples[doe_uid]['outputs']:
                 _doe_parameters[out] = {'size': self.doe_runs[doe_uid]}
         return _doe_parameters
 
     @cached_property
     def doe_samples(self):
-        # TODO: Add docstring
+        # type: () -> Dict[str]
+        """DOE element UIDs and their input and output parameters containing samples."""
         _doe_samples = {}
         for doe_uid in self.doe_uids:
-            _doe_samples[doe_uid] = doe_entry = {}
-            doe_entry.update({'inputs': [x for x in
-                                         self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[toExecutableBlockUID'
-                                                                r'="{}"]/fromParameterUID/text()'.format(doe_uid))
-                                         if x in self.doe_sample_lists['inputs']]})
-            doe_entry.update({'outputs': [x for x in
-                                          self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]'
-                                                                 r'/toParameterUID/text()'.format(doe_uid))
-                                          if x in self.doe_sample_lists['outputs']]})
+            _doe_samples[doe_uid] = entry = {}
+            entry.update({'inputs': self.get_source_parameters(doe_uid,
+                                                               self.doe_sample_lists['inputs'])})
+            entry.update({'outputs': self.get_target_parameters(doe_uid,
+                                                                self.doe_sample_lists['outputs'])})
         return _doe_samples
 
     @cached_property
     def doe_sample_lists(self):
-        # TODO: add docstring
+        # type: () -> Dict[str]
+        """Input and output sample lists stored in the CMDOWS file under architecture elements."""
         _doe_sample_lists = {'inputs': [], 'outputs': []}
         for elem in self.elem_arch_elems.iter('doeInputSampleList'):
             _doe_sample_lists['inputs'].append(elem.attrib['uID'])
@@ -606,36 +639,51 @@ class CMDOWSObject(object):
 
     @cached_property
     def sm_uids(self):
-        return [surrogate_model.attrib['uID'] for surrogate_model in self.elem_cmdows.iter('surrogateModel')]
+        # type: () -> List[str]
+        return [sm.attrib['uID'] for sm in self.elem_cmdows.iter('surrogateModel')]
 
     @cached_property
     def sm_prediction_inputs(self):
+        # type: () -> Dict[str]
         return self._get_sm_parameters('prediction/inputs/input/parameterUID')
 
     @cached_property
     def sm_prediction_outputs(self):
+        # type: () -> Dict[str]
         return self._get_sm_parameters('prediction/outputs/output/parameterUID')
 
     @cached_property
     def sm_training_inputs(self):
+        # type: () -> Dict[str]
         return self._get_sm_parameters('training/inputs/input/parameterUID')
 
     @cached_property
     def sm_training_outputs(self):
+        # type: () -> Dict[str]
         return self._get_sm_parameters('training/outputs/output/parameterUID')
 
     @cached_property
     def sm_of_training_params(self):
+        # type: () -> Dict[str]
+        """Mapping between training parameters and surrogate model UIDs."""
         _sm_mapping = {}
-        for sm_uid, xpaths in self.sm_training_inputs.iteritems():
+        for sm_uid, xpaths in self.sm_training_inputs.items():
             for xpath in xpaths:
                 _sm_mapping[xpath_to_param(xpath)] = sm_uid
-        for sm_uid, xpaths in self.sm_training_outputs.iteritems():
+        for sm_uid, xpaths in self.sm_training_outputs.items():
             for xpath in xpaths:
                 _sm_mapping[xpath_to_param(xpath)] = sm_uid
         return _sm_mapping
 
     def _get_sm_parameters(self, xpath):
+        # type: (str) -> Dict[str]
+        """Retrieve surrogate model parameters meeting a certain XPath.
+
+        Parameters
+        ----------
+            xpath : str
+                XPath to be searched for.
+        """
         _sm_parameters = {}
         for elem_sm in self.elem_cmdows.iter('surrogateModel'):
             sm_uid = elem_sm.attrib['uID']
@@ -648,9 +696,10 @@ class CMDOWSObject(object):
     @cached_property
     def block_order(self):
         # type: () -> List[str]
-        """:obj:`List[str]`: The order of all the blocks based on the step_numbers provided in the CMDOWS file
+        """:obj:`List[str]`: Order of all blocks based on the step_numbers provided in CMDOWS file.
         processGraph."""
-        return [x for _, x in sorted(zip(self.process_info['step_numbers'], self.process_info['uids']))]
+        return [x for _, x in sorted(zip(self.process_info['step_numbers'],
+                                         self.process_info['uids']))]
 
     @cached_property
     def partition_sets(self):
@@ -669,7 +718,8 @@ class CMDOWSObject(object):
     @cached_property
     def coupled_blocks(self):
         # type: () -> List[str]
-        """:obj:`list` of :obj:`str`: List of ``uIDs`` of the coupled executable blocks specified in the CMDOWS file."""
+        """:obj:`list` of :obj:`str`: Lists ``uIDs`` of the coupled executable blocks specified in
+        CMDOWS file."""
         _coupled_blocks = []
         for block in self.elem_arch_elems.iterfind(
                 'executableBlocks/coupledAnalyses/coupledAnalysis/relatedExecutableBlockUID'):
@@ -680,7 +730,7 @@ class CMDOWSObject(object):
     @cached_property
     def loop_element_types(self):
         # type: () -> Dict[str]
-        """:obj:`dict` of :obj:`str`: Dictionary with mapping of loop elements specified in the CMDOWS file."""
+        """:obj:`dict` of :obj:`str`: Mapping of loop elements specified in CMDOWS file."""
         _loopelement_details = {}
         for elem in self.elem_arch_elems.iterfind('executableBlocks/coordinators/coordinator'):
             _loopelement_details[elem.attrib['uID']] = 'coordinator'
@@ -690,7 +740,8 @@ class CMDOWSObject(object):
             _loopelement_details[elem.attrib['uID']] = 'optimizer'
         for elem in self.elem_arch_elems.iterfind('executableBlocks/does/doe'):
             _loopelement_details[elem.attrib['uID']] = 'doe'
-        for elem in self.elem_arch_elems.iterfind('executableBlocks/distributedSystemConvergers/distributedSystemConverger'):
+        for elem in self.elem_arch_elems.iterfind('executableBlocks/distributedSystemConvergers/'
+                                                  'distributedSystemConverger'):
             _loopelement_details[elem.attrib['uID']] = 'distributed_system_converger'
         return _loopelement_details
 
@@ -708,28 +759,119 @@ class CMDOWSObject(object):
                 _partition_ids.append(elem.find('partitionID').text)
             else:
                 _partition_ids.append(None)
-        return {'uids': _uids, 'step_numbers': _process_step_numbers, 'partition_ids': _partition_ids}
+        return {'uids': _uids, 'step_numbers': _process_step_numbers,
+                'partition_ids': _partition_ids}
 
     @cached_property
     def block_step_numbers(self):
         # type: () -> Dict[int]
-        """:obj:`Dict[int]`: Dictionary with mapping between block UID (key) and process step number (value)."""
+        """:obj:`Dict[int]`: Mapping between block UID (key) and process step number (value)."""
         _process_step_numbers = {}
         for i, uid in enumerate(self.process_info['uids']):
             _process_step_numbers[uid] = self.process_info['step_numbers'][i]
         return _process_step_numbers
 
-    def get_target_functions(self, parameter_uid, filter_list=None):
-        # TODO: Add docstring and implement throughout code
-        if filter_list is not None:
-            return [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID'
-                                                      r'="{}"]/toExecutableBlockUID/text()'
-                                                      .format(parameter_uid)) if x in filter_list]
-        else:
-            return [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromParameterUID'
-                                                      r'="{}"]/toExecutableBlockUID/text()'.format(parameter_uid))]
+    # TODO: Implement / use this function throughout code
+    def get_source_functions(self, parameter_uid, filter_list=None):
+        # type: (str, List[str]) -> List[str]
+        """
+        Get the source functions of a certain parameter UID in the CMDOWS file based on the
+        workflow/dataGraph element.
 
-    def get_target_parameters(self, function_uid):
-        # TODO: Add docstring and implement throughout code
-        return [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlockUID="{}"]/'
-                                                  r'toParameterUID/text()'.format(function_uid))]
+        Parameters
+        ----------
+            parameter_uid : str
+                UID of the parameter to analyze
+            filter_list : List[str]
+                list with target functions to include
+
+        Returns
+        -------
+            list with source functions
+        """
+        _srce_funcs = [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge'
+                                                         r'[toParameterUID="{}"]/fromExecutable'
+                                                         r'BlockUID/text()'.format(parameter_uid))]
+        if filter_list is not None:
+            return list(filter(lambda y: y in filter_list, _srce_funcs))
+        else:
+            return _srce_funcs
+
+
+    # TODO: Implement / use this function throughout code
+    def get_target_functions(self, parameter_uid, filter_list=None):
+        # type: (str, List[str]) -> List[str]
+        """
+        Get the target functions of a certain parameter UID in the CMDOWS file based on the
+        workflow/dataGraph element.
+
+        Parameters
+        ----------
+            parameter_uid : str
+                UID of the parameter to analyze
+            filter_list : List[str]
+                list with target functions to include
+
+        Returns
+        -------
+            list with target functions
+        """
+        _trgt_funcs = [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge'
+                                                         r'[fromParameterUID="{}"]/toExecutable'
+                                                         r'BlockUID/text()'.format(parameter_uid))]
+        if filter_list is not None:
+            return list(filter(lambda y: y in filter_list, _trgt_funcs))
+        else:
+            return _trgt_funcs
+
+    # TODO: Implement / use this function throughout code
+    def get_source_parameters(self, function_uid, filter_list=None):
+        # type: (str) -> List[str]
+        """
+        Get the source parameters of a certain function UID in the CMDOWS file based on the
+        workflow/dataGraph element.
+
+        Parameters
+        ----------
+            function_uid : str
+                UID of the function to analyze
+            filter_list : List[str]
+                list with source parameters to include
+
+        Returns
+        -------
+            list with target parameters
+        """
+        _srce_parms = [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[to'
+                                                         r'ExecutableBlockUID="{}"]/fromParameter'
+                                                         r'UID/text()'.format(function_uid))]
+        if filter_list is not None:
+            return list(filter(lambda y: y in filter_list, _srce_parms))
+        else:
+            return _srce_parms
+
+    # TODO: Implement / use this function throughout code
+    def get_target_parameters(self, function_uid, filter_list=None):
+        # type: (str) -> List[str]
+        """
+        Get the target parameters of a certain function UID in the CMDOWS file based on the
+        workflow/dataGraph element.
+
+        Parameters
+        ----------
+            function_uid : str
+                UID of the function to analyze
+            filter_list : List[str]
+                list with target parameters to include
+
+        Returns
+        -------
+            list with target parameters
+        """
+        _trgt_parms = [x for x in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[from'
+                                                         r'ExecutableBlockUID="{}"]/toParameterUID'
+                                                         r'/text()'.format(function_uid))]
+        if filter_list is not None:
+            return list(filter(lambda y: y in filter_list, _trgt_parms))
+        else:
+            return _trgt_parms

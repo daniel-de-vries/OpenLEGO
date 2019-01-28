@@ -28,7 +28,7 @@ from openlego.utils.general_utils import change_object_type
 
 
 def get_related_parameter_uid(elem_or_uid_param, full_xml):
-    # type: (_Element, _Element) -> Tuple[str, str]
+    # type: (Union[str,_Element], _Element) -> Tuple[str, str]
     """Function to retrieve the UID of the related parameter. This UID refers to the original location in the XML file
     of the parameter and is used when a parameter is found in a CMDOWS file which is an architecture type or a higher
     instance.

@@ -55,8 +55,9 @@ setup(
         'openmdao>=2.5.0',
         'lxml',
         'numpy',
-        'ssbjkadmos>=0.1.6',
-        'cached-property'
+        'ssbjkadmos>=0.1.7',
+        'cached-property',
+        'plotly'
     ],
     include_package_data=True,
     zip_safe=False

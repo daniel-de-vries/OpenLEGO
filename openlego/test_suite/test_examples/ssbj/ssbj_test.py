@@ -97,25 +97,25 @@ def run_openlego(analyze_mdao_definitions):
             prob.collect_results()
 
         # 5. Collect test results for test assertions
-        tc = prob['/dataSchema/aircraft/geometry/tc']
-        h = prob['/dataSchema/reference/h']
-        M = prob['/dataSchema/reference/M']
-        AR = prob['/dataSchema/aircraft/geometry/AR']
-        Lambda = prob['/dataSchema/aircraft/geometry/Lambda']
-        Sref = prob['/dataSchema/aircraft/geometry/Sref']
+        tc = prob['/dataSchema/aircraft/geometry/tc'][0]
+        h = prob['/dataSchema/reference/h'][0]
+        M = prob['/dataSchema/reference/M'][0]
+        AR = prob['/dataSchema/aircraft/geometry/AR'][0]
+        Lambda = prob['/dataSchema/aircraft/geometry/Lambda'][0]
+        Sref = prob['/dataSchema/aircraft/geometry/Sref'][0]
         if mdao_def != 'CO':
-            lambda_ = prob['/dataSchema/aircraft/geometry/lambda']
-            section = prob['/dataSchema/aircraft/geometry/section']
-            Cf = prob['/dataSchema/aircraft/other/Cf']
-            T = prob['/dataSchema/aircraft/other/T']
-            R = prob['/dataSchema/scaledData/R/value']
-            extra = prob['/dataSchema/aircraft/weight/WT']
+            lambda_ = prob['/dataSchema/aircraft/geometry/lambda'][0]
+            section = prob['/dataSchema/aircraft/geometry/section'][0]
+            Cf = prob['/dataSchema/aircraft/other/Cf'][0]
+            T = prob['/dataSchema/aircraft/other/T'][0]
+            R = prob['/dataSchema/scaledData/R/value'][0]
+            extra = prob['/dataSchema/aircraft/weight/WT'][0]
         else:
-            lambda_ = prob.model.SubOptimizer0.prob['/dataSchema/aircraft/geometry/lambda']
-            section = prob.model.SubOptimizer0.prob['/dataSchema/aircraft/geometry/section']
-            Cf = prob.model.SubOptimizer1.prob['/dataSchema/aircraft/other/Cf']
-            T = prob.model.SubOptimizer2.prob['/dataSchema/aircraft/other/T']
-            R = prob['/dataSchema/scaledData/R/value']
+            lambda_ = prob.model.SubOptimizer0.prob['/dataSchema/aircraft/geometry/lambda'][0]
+            section = prob.model.SubOptimizer0.prob['/dataSchema/aircraft/geometry/section'][0]
+            Cf = prob.model.SubOptimizer1.prob['/dataSchema/aircraft/other/Cf'][0]
+            T = prob.model.SubOptimizer2.prob['/dataSchema/aircraft/other/T'][0]
+            R = prob['/dataSchema/scaledData/R/value'][0]
             extra = (prob['/dataSchema/distributedArchitectures/group0/objective'],
                      prob['/dataSchema/distributedArchitectures/group1/objective'],
                      prob['/dataSchema/distributedArchitectures/group2/objective'])

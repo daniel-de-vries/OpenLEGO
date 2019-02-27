@@ -22,6 +22,7 @@ from __future__ import absolute_import, division, print_function
 import copy
 import imp
 import os
+import sys
 import warnings
 
 import numpy as np
@@ -173,8 +174,17 @@ class LEGOModel(CMDOWSObject, Group):
                 uid = design_competence.attrib['uID']
                 name = design_competence.find('ID').text
                 try:
-                    fp, pathname, description = imp.find_module(name, [self.kb_path])
-                    mod = imp.load_module(name, fp, pathname, description)
+                    try:  # Python 3
+                        import importlib.util as importlibutil
+                        pyfp = os.path.join(os.path.abspath(self.kb_path), name + '.py')
+                        spec = importlibutil.spec_from_file_location(name, pyfp)
+                        mod = importlibutil.module_from_spec(spec)
+                        spec.loader.exec_module(mod)
+                        sys.modules[name] = mod
+                    except ImportError:  # Python 2
+                        import imp
+                        fp, pathname, description = imp.find_module(name, [self.kb_path])
+                        mod = imp.load_module(name, fp, pathname, description)
                     cls = getattr(mod, name)  # type: AbstractDiscipline.__class__
                     if not issubclass(cls, AbstractDiscipline):
                         raise RuntimeError
@@ -416,12 +426,12 @@ class LEGOModel(CMDOWSObject, Group):
         basic_hierarchy_new = copy.deepcopy(basic_hierarchy)
         # First determine the partition IDs of the different functions and converger groups.
         for idx, entry in enumerate(basic_hierarchy):
-            sublevel_list = entry[entry.keys()[0]]
+            sublevel_list = entry[list(entry)[0]]
             partitions_ids = [None]*len(sublevel_list)
             # Find out to which partition the converger dictionaries and separate functions belong
             for jdx, item in enumerate(sublevel_list):
                 if isinstance(item, dict):
-                    funcs = item[item.keys()[0]]
+                    funcs = item[list(item)[0]]
                     funcs_partition_ids = [None]*len(funcs)
                     for kdx, fun in enumerate(funcs):
                         for key, part_set in self.partition_sets.items():
@@ -431,7 +441,7 @@ class LEGOModel(CMDOWSObject, Group):
                     # Check that all partition IDs are the same
                     if not funcs_partition_ids.count(funcs_partition_ids[0]) == len(funcs_partition_ids):
                         raise AssertionError('The functions inside the converger {} do not belong to the same '
-                                             'partition.'.format(item.keys()[0]))
+                                             'partition.'.format(list(item)[0]))
                     else:
                         partitions_ids[jdx] = funcs_partition_ids[0]
                 elif isinstance(item, str):
@@ -445,11 +455,11 @@ class LEGOModel(CMDOWSObject, Group):
                 if len(part_id_idxs) > 1:  # create new partition group for this case
                     # Sort the part_id_idxs based on the step number
                     process_steps = []
-                    updated_bhn = basic_hierarchy_new[idx][basic_hierarchy_new[idx].keys()[0]]
+                    updated_bhn = basic_hierarchy_new[idx][list(basic_hierarchy_new[idx])[0]]
                     for part_id_idx in part_id_idxs:
                         list_item = updated_bhn[part_id_idx]
                         if isinstance(list_item, dict):
-                            item_uid = list_item.keys()[0]
+                            item_uid = list(list_item)[0]
                         elif isinstance(list_item, str):
                             item_uid = list_item
                         else:
@@ -461,10 +471,10 @@ class LEGOModel(CMDOWSObject, Group):
                     for part_id_idx in part_id_idxs_sorted:
                         part_dict['_Partition_{}'.format(part_id)].append(updated_bhn[part_id_idx])
                     for part_id_idx in sorted(part_id_idxs, reverse=True):
-                        del basic_hierarchy_new[idx][entry.keys()[0]][part_id_idx]
+                        del basic_hierarchy_new[idx][list(entry)[0]][part_id_idx]
                         del partitions_ids[part_id_idx]
                     # Add the new partition group to the hierarchy
-                    basic_hierarchy_new[idx][entry.keys()[0]].append(part_dict)
+                    basic_hierarchy_new[idx][list(entry)[0]].append(part_dict)
         return basic_hierarchy_new
 
     def _get_basic_coupled_hierarchy(self, hierarchy):
@@ -474,7 +484,7 @@ class LEGOModel(CMDOWSObject, Group):
         _coupled_hierarchy = []
         for entry in hierarchy:
             if isinstance(entry, dict):
-                keys = entry.keys()
+                keys = list(entry)
                 if len(keys) != 1:
                     raise AssertionError('One key is expected in the dictionary of a process hierarchy.')
                 if self.loop_element_types[keys[0]] == 'converger':
@@ -772,7 +782,7 @@ class LEGOModel(CMDOWSObject, Group):
 
         for entry in hierarchy:
             if isinstance(entry, dict):  # if entry specifies a coupled group
-                uid = entry.keys()[0]
+                uid = list(entry)[0]
                 if root:
                     subsys = self.add_subsystem(str_to_valid_sys_name(uid),
                                                 self._configure_coupled_groups(entry[uid], False), ['*'])
@@ -863,7 +873,7 @@ class LEGOModel(CMDOWSObject, Group):
                 n += 1
                 if not coupled_group_set:
                     for entry in self.coupled_hierarchy:
-                        _system_order.append(str_to_valid_sys_name(entry.keys()[0]))
+                        _system_order.append(str_to_valid_sys_name(list(entry)[0]))
                     coupled_group_set = True
             elif block in self.model_exec_blocks or self.SUBDRIVER_PREFIX + block in self.model_exec_blocks:
                 n += 1

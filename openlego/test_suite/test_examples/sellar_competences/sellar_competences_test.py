@@ -123,23 +123,23 @@ class TestSellarCompetences(unittest.TestCase):
 
     def assertion_con_mda(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 5.00, 2)
-        self.assertAlmostEqual(y[0], 9.19, 2)
-        self.assertAlmostEqual(y[1], 9.03, 2)
+        self.assertAlmostEqual(float(y[0]), 9.19, 2)
+        self.assertAlmostEqual(float(y[1]), 9.03, 2)
         self.assertAlmostEqual(z[0], 1.00, 2)
         self.assertAlmostEqual(z[1], 5.00, 2)
-        self.assertAlmostEqual(f[0], 39.19, 2)
-        self.assertAlmostEqual(g[0], 1.91, 2)
-        self.assertAlmostEqual(g[1], 0.62, 2)
+        self.assertAlmostEqual(float(f[0]), 39.19, 2)
+        self.assertAlmostEqual(float(g[0]), 1.91, 2)
+        self.assertAlmostEqual(float(g[1]), 0.62, 2)
 
     def assertion_doe(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 2.75, 2)
-        self.assertAlmostEqual(y[0], 4.15, 2)
-        self.assertAlmostEqual(y[1], 4.54, 2)
+        self.assertAlmostEqual(float(y[0]), 4.15, 2)
+        self.assertAlmostEqual(float(y[1]), 4.54, 2)
         self.assertAlmostEqual(z[0], 0.75, 2)
         self.assertAlmostEqual(z[1], 1.75, 2)
-        self.assertAlmostEqual(f[0], 13.48, 2)
-        self.assertAlmostEqual(g[0], 0.31, 2)
-        self.assertAlmostEqual(g[1], 0.81, 2)
+        self.assertAlmostEqual(float(f[0]), 13.48, 2)
+        self.assertAlmostEqual(float(g[0]), 0.31, 2)
+        self.assertAlmostEqual(float(g[1]), 0.81, 2)
 
     def assertion_mdo(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 0.00, delta=0.1)

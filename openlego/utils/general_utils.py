@@ -353,10 +353,14 @@ def clean_dir_filtered(dr, filters):
 class PyOptSparseImportError(ImportError):
 
     def __init__(self):
-        msg = "Cannot import name pyOptSparseDriver. This probably means that this package has not been installed to " \
-              "your Python packages. Note that it needs to be installed to your Python manually (no PyPIdistribution " \
-              "available). pyOptSparse can be downloaded here: https://github.com/mdolab/pyoptsparse"
-        super(PyOptSparseImportError, self).__init__(msg)
+        super(PyOptSparseImportError, self).__init__()
+
+    @property
+    def msg(self):
+        return "Cannot import name pyOptSparseDriver. This probably means that this package has " \
+               "not been installed to your Python packages. Note that it needs to be installed to " \
+               "your Python manually (no PyPIdistribution available). pyOptSparse can be " \
+               "downloaded here: https://github.com/mdolab/pyoptsparse"
 
 
 def pyoptsparse_installed():
@@ -365,6 +369,6 @@ def pyoptsparse_installed():
     try:
         from openmdao.api import pyOptSparseDriver
     except ImportError:
-        print(PyOptSparseImportError().message)
+        print(PyOptSparseImportError().msg)
         return False
     return True

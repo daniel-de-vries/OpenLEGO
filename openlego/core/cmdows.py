@@ -168,11 +168,11 @@ class CMDOWSObject(object):
         super_drivers = []
         for item in loop_nesting_obj:
             if isinstance(item, dict):
-                loop_elem_name = item.keys()[0]
+                loop_elem_name = list(item)[0]
                 if self.loop_element_types[loop_elem_name] in ['optimizer', 'doe']:
                     super_drivers.append(loop_elem_name)
                 else:
-                    super_drivers.extend(self._get_super_drivers(item[item.keys()[0]]))
+                    super_drivers.extend(self._get_super_drivers(item[list(item)[0]]))
         return super_drivers
 
     @cached_property
@@ -206,15 +206,15 @@ class CMDOWSObject(object):
         sub_drivers = []
         for item in loop_nesting_obj:
             if isinstance(item, dict):
-                loop_elem_name = item.keys()[0]
+                loop_elem_name = list(item)[0]
                 if self.loop_element_types[loop_elem_name] in ['optimizer', 'doe'] and not super_driver_encountered:
                     super_driver_encountered = True
-                    sub_drivers.extend(self._get_sub_drivers(item[item.keys()[0]], True))
+                    sub_drivers.extend(self._get_sub_drivers(item[list(item)[0]], True))
                 elif self.loop_element_types[loop_elem_name] in ['optimizer', 'doe'] and super_driver_encountered:
                     sub_drivers.append(loop_elem_name)
-                    sub_drivers.extend(self._get_sub_drivers(item[item.keys()[0]], True))
+                    sub_drivers.extend(self._get_sub_drivers(item[list(item)[0]], True))
                 else:
-                    sub_drivers.extend(self._get_sub_drivers(item[item.keys()[0]]))
+                    sub_drivers.extend(self._get_sub_drivers(item[list(item)[0]]))
         return sub_drivers
 
     def invalidate(self):
@@ -371,7 +371,7 @@ class CMDOWSObject(object):
         driver_uid_is_sub_driver = True if self._driver_uid in self.sub_drivers else False
         for item in loop_nesting_list:
             if isinstance(item, dict):
-                loop_elem_name = item.keys()[0]
+                loop_elem_name = list(item)[0]
                 if self.loop_element_types[loop_elem_name] == 'converger' and add_all_blocks:
                     _filtered_loop_nesting_list.append(item)
                 elif self.loop_element_types[loop_elem_name] == 'coordinator':
@@ -430,7 +430,7 @@ class CMDOWSObject(object):
         all_executable_blocks = []
         for item in loop_nesting_list:
             if isinstance(item, dict):
-                loop_elem_name = item.keys()[0]
+                loop_elem_name = list(item)[0]
                 all_executable_blocks.extend(self.collect_all_executable_blocks(item[loop_elem_name]))
             elif isinstance(item, str):
                 all_executable_blocks.append(item)
@@ -460,7 +460,7 @@ class CMDOWSObject(object):
         all_loop_elements = []
         for item in loop_nesting_list:
             if isinstance(item, dict):
-                loop_elem_name = item.keys()[0]
+                loop_elem_name = list(item)[0]
                 all_loop_elements.append(loop_elem_name)
                 all_loop_elements.extend(self.collect_all_loop_elements(item[loop_elem_name]))
         return all_loop_elements

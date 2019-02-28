@@ -274,7 +274,7 @@ class TestSsbj(unittest.TestCase):
         if pyoptsparse_installed():
             self.assertion_co(*run_openlego(13))
         else:
-            print('Skipped test due to missing PyOptSparse installation.')
+            print('\nSkipped test due to missing PyOptSparse installation.')
             pass
 
     def __del__(self):

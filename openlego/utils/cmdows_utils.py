@@ -28,10 +28,10 @@ from openlego.utils.general_utils import change_object_type
 
 
 def get_related_parameter_uid(elem_or_uid_param, full_xml):
-    # type: (_Element, _Element) -> Tuple[str, str]
-    """Function to retrieve the UID of the related parameter. This UID refers to the original local in the XML file of
-     the parameter and is used when a parameter is found in a CMDOWS file which is an architecture type or a higher
-     instance.
+    # type: (Union[str,_Element], _Element) -> Tuple[str, str]
+    """Function to retrieve the UID of the related parameter. This UID refers to the original location in the XML file
+    of the parameter and is used when a parameter is found in a CMDOWS file which is an architecture type or a higher
+    instance.
 
     Parameters
     ----------
@@ -44,7 +44,7 @@ def get_related_parameter_uid(elem_or_uid_param, full_xml):
     -------
         param : str
             Original parameter UID for which the related UID is searched for.
-        mapped : str
+        mapped : str or None
             The found related parameter UID.
     """
     if isinstance(elem_or_uid_param, _Element):
@@ -59,9 +59,15 @@ def get_related_parameter_uid(elem_or_uid_param, full_xml):
         mapped = elem_param.find('relatedParameterUID').text
     elif isinstance(elem_param.find('relatedInstanceUID'), _Element):
         related_instance = get_element_by_uid(full_xml, elem_param.find('relatedInstanceUID').text)
-        mapped = related_instance.find('relatedParameterUID').text
+        if isinstance(related_instance.find('relatedParameterUID'), _Element):
+            mapped = related_instance.find('relatedParameterUID').text
+        else:
+            mapped = related_instance.attrib['uID']
     else:
-        raise AssertionError('Could not map element {}.'.format(param))
+        if elem_param.tag == 'couplingWeight':
+            return str(param), None
+        else:
+            raise AssertionError('Could not map element {}.'.format(param))
     return str(param), str(mapped)
 
 
@@ -192,6 +198,18 @@ def get_doe_setting_safe(doe_elem, setting, default, expected_type='str', doe_me
         return change_object_type(doe_setting, expected_type)
     else:
         return doe_setting
+
+
+def get_surrogate_model_setting_safe(sm_elem, setting, default, expected_type='str'):
+    # TODO: add docstring
+
+    if isinstance(sm_elem.find('training/settings/{}'.format(setting)), _Element):
+        doe_setting = sm_elem.find('training/settings/{}'.format(setting)).text
+    else:
+        warnings.warn('Setting "{}" not specified for surrogate model element "{}", setting to default "{}".'
+                      .format(setting, sm_elem.attrib['uID'], default))
+        doe_setting = default
+    return change_object_type(doe_setting, expected_type)
 
 
 def get_loop_nesting_obj(elem):

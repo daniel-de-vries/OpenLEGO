@@ -21,6 +21,7 @@ from __future__ import absolute_import, division, print_function
 
 import datetime
 import os
+import numpy as np
 import warnings
 
 from cached_property import cached_property
@@ -95,6 +96,9 @@ class LEGOProblem(CMDOWSObject, Problem):
         """
         if output_case_str:
             self.output_case_string = output_case_str
+        elif driver_uid:
+            self.output_case_string = os.path.splitext(os.path.basename(cmdows_path))[0] + '_' + \
+                                      driver_uid + '_' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S%f")[:-4]
         else:
             self.output_case_string = os.path.splitext(os.path.basename(cmdows_path))[0] + '_' + \
                                       datetime.datetime.now().strftime("%Y%m%d_%H%M%S%f")[:-4]
@@ -244,7 +248,7 @@ class LEGOProblem(CMDOWSObject, Problem):
             doe_center_runs = get_doe_setting_safe(doe_elem, 'centerRuns', 2, expected_type='int',
                                                    doe_method=doe_method,
                                                    required_for_doe_methods=['Box-Behnken design'])
-            doe_seed = get_doe_setting_safe(doe_elem, 'seed', 0, expected_type='int', doe_method=doe_method,
+            doe_seed = get_doe_setting_safe(doe_elem, 'seed', None, expected_type='int', doe_method=doe_method,
                                             required_for_doe_methods=['Latin hypercube design', 'Uniform design',
                                                                       'Monte Carlo design'])
             doe_levels = get_doe_setting_safe(doe_elem, 'levels', 2, expected_type='int', doe_method=doe_method,
@@ -278,7 +282,7 @@ class LEGOProblem(CMDOWSObject, Problem):
             elif doe_method == 'Box-Behnken design':
                 driver.options['generator'] = BoxBehnkenGenerator(center=doe_center_runs)
             elif doe_method == 'Latin hypercube design':
-                driver.options['generator'] = LatinHypercubeGenerator(samples=doe_runs, seed=doe_seed)
+                driver.options['generator'] = LatinHypercubeGenerator(samples=doe_runs, criterion='maximin', seed=None) # doe_seed: TODO: Change back?
             elif doe_method == 'Custom design table':
                 driver.options['generator'] = ListGenerator(data=doe_data)
             else:
@@ -287,6 +291,30 @@ class LEGOProblem(CMDOWSObject, Problem):
             return driver
         else:
             return Driver()
+
+    def clean_driver_after_failure(self):
+        # TODO: Update docstring
+        """Clean the driver of an OpenMDAO Probem() object. This is done if the driver (optimization) has failed
+           nd nan (not a number) values are stored in the inputs and outputs.
+
+            :param p: OpenMDAO problem object with a driver
+            :type p: Problem
+            """
+        # TODO: Check later whether this is the right approach? Add initial values?
+        for inp in self.model.list_inputs(out_stream=None):
+            prom_name = self.model._var_abs2prom['input'][inp[0]]
+            if np.isnan(np.min(inp[1]['value'])) or prom_name in self.model.design_vars:
+                if prom_name in self.model.design_vars:
+                    self[inp[0]] = np.array([self.model.design_vars[prom_name]['initial']])
+                else:
+                    self[inp[0]] = np.ones(len(inp[1]['value']))
+        for out in self.model.list_outputs(out_stream=None):
+            prom_name = self.model._var_abs2prom['output'][out[0]]
+            if np.isnan(np.min(out[1]['value'])) or prom_name in self.model.design_vars:
+                if prom_name in self.model.design_vars:
+                    self[out[0]] = np.array([self.model.design_vars[prom_name]['initial']])
+                else:
+                    self[out[0]] = np.ones(len(out[1]['value']))
 
     def store_model_view(self, open_in_browser=False):
         # type: (bool) -> None
@@ -353,6 +381,29 @@ class LEGOProblem(CMDOWSObject, Problem):
                                               '{}.'.format(mapping))
                             else:
                                 raise RuntimeError(e)
+
+    def postprocess_experiments(self, vector, vector_name, failed_experiments=(None, None)):
+        # TODO: Add docstring
+        # Determine whether it concerns input or output sample lists
+        if vector_name in [xpath_to_param(xpath) for xpath in self.doe_sample_lists['inputs']]:
+            # Assert that the failed_experiments are known, or else throw an error
+            if failed_experiments[0] is None:
+                raise IOError('For DOE input sample lists the failed experiments need to be known before postprocessing.')
+            return np.delete(vector, list(failed_experiments[0])), failed_experiments
+        elif vector_name in [xpath_to_param(xpath) for xpath in self.doe_sample_lists['outputs']]:
+            # Determine the failed experiments in the vector
+            vector_failures = set(np.where(np.isnan(vector))[0])
+
+            # Add or compare failed experiments w.r.t. failed_experiments input
+            if failed_experiments[0] is None:
+                failed_experiments = (vector_failures, len(vector_failures) / len(vector))
+            else:
+                if not vector_failures == failed_experiments[0]:
+                    raise AssertionError('The failed experiments of {} are not consistent in the training data.'
+                                         .format(vector_name))
+            return np.array(filter(lambda x: not np.isnan(x), vector)), failed_experiments
+        else:
+            raise AssertionError('Could not determine the vector type for vector_name: {}.'.format(vector_name))
 
     def _set_initial_conditions(self):
         """
@@ -441,6 +492,7 @@ class LEGOProblem(CMDOWSObject, Problem):
             recorded_design_vars = case.get_design_vars()
             recorded_constraints = case.get_constraints()
 
+            # Get objectives, design variables and contraints
             var_objectives = sorted(list(recorded_objectives.keys()))
             var_design_vars = sorted(list(recorded_design_vars.keys()))
             var_constraints = sorted(list(recorded_constraints.keys()))
@@ -462,10 +514,10 @@ class LEGOProblem(CMDOWSObject, Problem):
             if var_design_vars:
                 print_optional('\n    Design variables', print_in_log)
                 for var_desvar in var_design_vars:
+                    metadata_name = cr._prom2abs['output'][var_desvar][0]
                     value = recorded_design_vars[var_desvar]
                     if len(value) == 1:
                         value = value[0]
-                    metadata_name = cr._prom2abs['output'][var_desvar][0]
                     lb_value = cr.problem_metadata['variables'][metadata_name]['lower']
                     ub_value = cr.problem_metadata['variables'][metadata_name]['upper']
                     print_optional('    {}: {} ({} < x < {})'.format(var_desvar, value, lb_value, ub_value), print_in_log)
@@ -475,25 +527,25 @@ class LEGOProblem(CMDOWSObject, Problem):
             if var_constraints:
                 print_optional('\n    Constraints', print_in_log)
                 for var_constraint in var_constraints:
+                    metadata_name = cr._prom2abs['output'][var_constraint][0]
                     value = recorded_constraints[var_constraint]
                     if len(value) == 1:
                         value = value[0]
-                    metadata_name = cr._prom2abs['output'][var_constraint][0]
                     lb_value = cr.problem_metadata['variables'][metadata_name]['lower']
                     ub_value = cr.problem_metadata['variables'][metadata_name]['upper']
                     eq_value = cr.problem_metadata['variables'][metadata_name]['equals']
                     if eq_value is not None:
-                        print_optional('    {}: {} (== {})'.format(var_constraint, value, eq_value), print_in_log)
+                        print_optional('    {}: {} (c == {})'.format(var_constraint, value, eq_value), print_in_log)
                     else:
                         if lb_value > -1e29 and ub_value < 1e29:
-                            print_optional('    {}: {} ({} < x < {})'.format(var_constraint, value, lb_value, ub_value),
+                            print_optional('    {}: {} ({} < c < {})'.format(var_constraint, value, lb_value, ub_value),
                                            print_in_log)
                         elif lb_value < -1e29 and ub_value < 1e29:
-                            print_optional('    {}: {} (x < {})'.format(var_constraint, value, ub_value), print_in_log)
+                            print_optional('    {}: {} (c < {})'.format(var_constraint, value, ub_value), print_in_log)
                         elif lb_value > -1e29 and ub_value > 1e29:
-                            print_optional('    {}: {} (x > {})'.format(var_constraint, value, lb_value), print_in_log)
+                            print_optional('    {}: {} (c > {})'.format(var_constraint, value, lb_value), print_in_log)
                         else:
-                            print_optional('    {}: {} (x is unbounded)'.format(var_constraint, value), print_in_log)
+                            print_optional('    {}: {} (c is unbounded)'.format(var_constraint, value), print_in_log)
                     results = add_or_append_dict_entry(results, 'constraints', var_constraint, value)
 
             # Print DOE quantities of interest

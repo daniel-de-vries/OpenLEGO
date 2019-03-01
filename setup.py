@@ -58,6 +58,7 @@ setup(
         'numpy',
         'ssbjkadmos>=0.1.8',
         'cached-property',
+        'plotly',
         'six'
     ],
     include_package_data=True,

@@ -20,7 +20,6 @@ This file contains the definition of the `LEGOModel` class.
 from __future__ import absolute_import, division, print_function
 
 import copy
-import imp
 import os
 import sys
 import warnings
@@ -31,21 +30,21 @@ import numpy as np
 from cached_property import cached_property
 from lxml import etree
 from lxml.etree import _Element, _ElementTree
-from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, NonlinearBlockJac, \
-    LinearRunOnce, NonlinearRunOnce, DirectSolver
+
 from six import string_types
 from typing import Union, Optional, List, Any, Dict, Tuple
+
+from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, \
+    NonlinearBlockJac, LinearRunOnce, ExecComp, NonlinearRunOnce, DirectSolver, \
+    MetaModelUnStructuredComp, FloatKrigingSurrogate, ResponseSurface
+from openmdao.utils.general_utils import format_as_float_or_array, determine_adder_scaler
+from openmdao import INF_BOUND as INF_BOUND
 
 from openlego.core.b2k_solver import NonlinearB2kSolver
 from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid, \
     get_loop_nesting_obj, get_surrogate_model_setting_safe
 from openlego.utils.general_utils import parse_cmdows_value, str_to_valid_sys_name, parse_string
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict, param_to_xpath
-from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, \
-    NonlinearBlockJac, LinearRunOnce, ExecComp, NonlinearRunOnce, DirectSolver, \
-    MetaModelUnStructuredComp, FloatKrigingSurrogate, ResponseSurface, \
-    FloatMultiFiCoKrigingSurrogate
-from openmdao.utils.general_utils import format_as_float_or_array, determine_adder_scaler
 from .abstract_discipline import AbstractDiscipline
 from .cmdows import CMDOWSObject, InvalidCMDOWSFileError
 from .discipline_component import DisciplineComponent
@@ -240,9 +239,6 @@ class LEGOModel(CMDOWSObject, Group):
                     component = MetaModelUnStructuredComp(default_surrogate=FloatKrigingSurrogate())
                 elif fitting_method == 'ResponseSurface':
                     component = MetaModelUnStructuredComp(default_surrogate=ResponseSurface())
-                elif fitting_method == 'CoKriging':
-                    component = MetaModelUnStructuredComp(
-                        default_surrogate=FloatMultiFiCoKrigingSurrogate())
                 else:
                     raise InvalidCMDOWSFileError('Unsupported fitting method "{}" provided for '
                                                  'surrogate model {}.'.format(fitting_method, uid))
@@ -788,7 +784,7 @@ class LEGOModel(CMDOWSObject, Group):
                 doe_samples = self.doe_samples[self.driver_uid]
                 outputs = doe_samples['inputs'] + doe_samples['outputs']
             elif driver_type == 'optimizer':
-                outputs = self.design_vars.keys()
+                outputs = list(self.design_vars)
                 outputs.append(self.objective)
             else:
                 outputs = []
@@ -1377,12 +1373,12 @@ class LEGOModel(CMDOWSObject, Group):
         adder, scaler = determine_adder_scaler(ref0, ref, adder, scaler)
 
         # Convert lower to ndarray/float as necessary
-        lower = format_as_float_or_array('lower', lower, val_if_none=-openmdao.INF_BOUND,
+        lower = format_as_float_or_array('lower', lower, val_if_none=-INF_BOUND,
                                          flatten=True)
         self.design_vars[name]['lower'] = lower
 
         # Convert upper to ndarray/float as necessary
-        upper = format_as_float_or_array('upper', upper, val_if_none=openmdao.INF_BOUND,
+        upper = format_as_float_or_array('upper', upper, val_if_none=INF_BOUND,
                                          flatten=True)
         self.design_vars[name]['upper'] = upper
 

@@ -4292,7 +4292,7 @@
         <optimizer uID="Sub-Optimizer-1">
           <label>Sub-OPT-1</label>
           <settings>
-            <package>SciPy</package>
+            <package>pyOptSparse</package>
             <algorithm>SLSQP</algorithm>
             <maximumIterations>100</maximumIterations>
             <maximumFunctionEvaluations>1000</maximumFunctionEvaluations>

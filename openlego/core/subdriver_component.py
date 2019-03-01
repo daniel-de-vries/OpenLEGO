@@ -84,7 +84,7 @@ class SubDriverComponent(ExplicitComponent):
                                     data_folder=self.options['data_folder'],  # Output directory
                                     base_xml_file=self.options['base_xml_file'],
                                     driver_uid=self.options['driver_uid'])
-        #if p.driver_uid == 'Sys-Optimizer':  # TODO: used for testing purposes, remove later!
+        #if p.driver_uid == 'Sub-Optimizer-1':  # TODO: used for testing purposes, remove later!
         #    p.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
 
         # Add inputs/outputs
@@ -102,6 +102,9 @@ class SubDriverComponent(ExplicitComponent):
             self.declare_partials('*', '*', method='fd', step=1e-4, step_calc='abs')
 
         #if p.driver_uid == 'Sys-Optimizer':  # TODO: Remove this again (if fixed)
+        #    p.model.approx_totals(step_calc='rel')
+
+        #if p.driver_uid == 'Sub-Optimizer-1':  # TODO: Remove this again (if fixed)
         #    p.model.approx_totals(step_calc='rel')
 
         # Setup

@@ -89,17 +89,17 @@ def run_openlego(analyze_mdao_definitions):
         prob.collect_results()
 
         # 5. Collect test results for test assertions
-        if '/dataSchema/geometry/x1' in prob.model._outputs:
-            x = [prob['/dataSchema/geometry/x1']]
+        if '/dataSchema/variables/x0' in prob.model._outputs:
+            x = [prob['/dataSchema/variables/x0']]
             y = [prob['/dataSchema/analyses/y1'], prob['/dataSchema/analyses/y2']]
-            z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
+            z = [prob['/dataSchema/variables/z1'], prob['/dataSchema/variables/z2']]
             f = [prob['/dataSchema/analyses/f']]
             g = [prob['/dataSchema/analyses/g1'], prob['/dataSchema/analyses/g2']]
-        elif '/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/geometry/x1' in prob.model._outputs:
-            x = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/geometry/x1']]
+        elif '/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0' in prob.model._outputs:
+            x = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0']]
             y = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1'],
                  prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y2']]
-            z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
+            z = [prob['/dataSchema/variables/z1'], prob['/dataSchema/variables/z2']]
             f = [prob['/dataSchema/analyses/f']]
             g = [prob.model.SubOptimizer0.prob['/dataSchema/analyses/g1'],
                  prob.model.SubOptimizer1.prob['/dataSchema/analyses/g2']]
@@ -113,6 +113,7 @@ def run_openlego(analyze_mdao_definitions):
 class TestSellarCompetences(unittest.TestCase):
 
     def __call__(self, *args, **kwargs):
+        # TODO: Use setUpClass to only deploy once?
         kb.deploy()
         super(TestSellarCompetences, self).__call__(*args, **kwargs)
 

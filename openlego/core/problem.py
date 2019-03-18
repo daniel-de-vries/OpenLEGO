@@ -220,6 +220,10 @@ class LEGOProblem(CMDOWSObject, Problem):
             # optimization algorithm
             if opt_algo == 'SLSQP':
                 driver.options['optimizer'] = 'SLSQP'
+            elif opt_algo == 'COBYLA':
+                driver.options['optimizer'] = 'COBYLA'
+            elif opt_algo == 'L-BFGS-B':
+                driver.options['optimizer'] = 'L-BFGS-B'
             else:
                 raise ValueError('Unsupported algorithm {} encountered in CMDOWS file for optimizer "{}".'
                                  .format(opt_algo, opt_uid))

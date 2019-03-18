@@ -31,12 +31,17 @@ base_file_path = os.path.join(dir_path, 'sellar-base.xml')
 root_tag = 'dataSchema'
 x_root = '/' + root_tag
 
-x_geometry = 'geometry'
+x_settings = 'settings'
+x_variables = 'variables'
 x_analyses = 'analyses'
 
-x_z1 = '/'.join([x_root, x_geometry, 'z1'])
-x_z2 = '/'.join([x_root, x_geometry, 'z2'])
-x_x1 = '/'.join([x_root, x_geometry, 'x1'])
+x_a = '/'.join([x_root, x_settings, 'a'])
+x_c = '/'.join([x_root, x_settings, 'c'])
+
+x_z1 = '/'.join([x_root, x_variables, 'z1'])
+x_z2 = '/'.join([x_root, x_variables, 'z2'])
+x_x0 = '/'.join([x_root, x_variables, 'x0'])
+x_x1 = '/'.join([x_root, x_variables, 'x1'])
 
 x_y1 = '/'.join([x_root, x_analyses, 'y1'])
 x_y2 = '/'.join([x_root, x_analyses, 'y2'])
@@ -44,15 +49,16 @@ x_f1 = '/'.join([x_root, x_analyses, 'f'])
 x_g1 = '/'.join([x_root, x_analyses, 'g1'])
 x_g2 = '/'.join([x_root, x_analyses, 'g2'])
 
-from openlego.test_suite.test_examples.sellar_competences.kb.D1 import D1
-from openlego.test_suite.test_examples.sellar_competences.kb.D2 import D2
+from openlego.test_suite.test_examples.sellar_competences.kb.D_1 import D_1
+from openlego.test_suite.test_examples.sellar_competences.kb.D_2 import D_2
 from openlego.test_suite.test_examples.sellar_competences.kb.F import F
-from openlego.test_suite.test_examples.sellar_competences.kb.G1 import G1
-from openlego.test_suite.test_examples.sellar_competences.kb.G2 import G2
+from openlego.test_suite.test_examples.sellar_competences.kb.G_1 import G_1
+from openlego.test_suite.test_examples.sellar_competences.kb.G_2 import G_2
+from openlego.test_suite.test_examples.sellar_competences.kb.H import H
 
 
 def list_disciplines():
-    return [D1(), D2(), F(), G1(), G2()]
+    return [D_1(), D_2(), F(), G_1(), G_2(), H()]
 
 
 def remove_if_exists(file_path):

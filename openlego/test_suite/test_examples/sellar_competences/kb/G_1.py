@@ -27,7 +27,7 @@ from openlego.test_suite.test_examples.sellar_competences.kb import root_tag, x_
 from openlego.partials.partials import Partials
 
 
-class G1(AbstractDiscipline):
+class G_1(AbstractDiscipline):
 
     @property
     def creator(self):

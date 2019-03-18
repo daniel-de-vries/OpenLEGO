@@ -188,6 +188,9 @@ class LEGOModel(CMDOWSObject, Group):
                                      'file contains design competences.'.format(self._kb_path))
                 uid = design_competence.attrib['uID']
                 name = design_competence.find('ID').text
+                mode = design_competence.find('modeID').text
+                if mode != 'main':
+                    name = '{}_{}'.format(name, mode)
                 try:
                     try:  # Python 3
                         import importlib.util as importlibutil

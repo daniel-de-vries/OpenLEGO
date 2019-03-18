@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Copyright 2018 D. de Vries
+Copyright 2019 D. de Vries and I. van Gent
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-This file contains the definition of the Sellar with mathematical functions test cases.
+This file contains the definition of the Sellar with mathematical relations test cases.
 """
 from __future__ import absolute_import, division, print_function
 
@@ -23,11 +23,10 @@ import logging
 import os
 import unittest
 
-from openlego.core.problem import LEGOProblem
-
-from openlego.utils.general_utils import clean_dir_filtered, pyoptsparse_installed
-
 # Settings for logging
+from openlego.core.problem import LEGOProblem
+from openlego.utils.general_utils import clean_dir_filtered
+
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
 # List of MDAO definitions that can be wrapped around the problem
@@ -52,15 +51,19 @@ def get_loop_items(analyze_mdao_definitions):
         if analyze_mdao_definitions == 'all':
             mdao_defs_loop = mdao_definitions
         else:
-            raise ValueError('String value {} is not allowed for analyze_mdao_definitions.'.format(analyze_mdao_definitions))
+            raise ValueError('String value {} is not allowed for analyze_mdao_definitions.'
+                             .format(analyze_mdao_definitions))
     else:
-        raise IOError('Invalid input {} provided of type {}.'.format(analyze_mdao_definitions, type(analyze_mdao_definitions)))
+        raise IOError(
+            'Invalid input {} provided of type {}.'.format(analyze_mdao_definitions,
+                                                           type(analyze_mdao_definitions)))
     return mdao_defs_loop
 
 
 def run_openlego(analyze_mdao_definitions):
     # Check and analyze inputs
     mdao_defs_loop = get_loop_items(analyze_mdao_definitions)
+    file_dir = os.path.dirname(__file__)
 
     for mdao_def in mdao_defs_loop:
         print('\n-----------------------------------------------')
@@ -68,16 +71,17 @@ def run_openlego(analyze_mdao_definitions):
         print('------------------------------------------------')
         """Solve the Sellar problem using the given CMDOWS file."""
         # 1. Create Problem
-        prob = LEGOProblem(cmdows_path=os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
-                           kb_path='kb',
+        prob = LEGOProblem(cmdows_path=os.path.join(file_dir, 'cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),
+                           # CMDOWS file
+                           kb_path='',
                            data_folder='',  # Output directory
                            base_xml_file='sellar-output.xml')  # Output file
-        # prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
-        prob.set_solver_print(0)  # Set printing of solver information
+        #prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
+        #prob.set_solver_print(0)  # Set printing of solver information
 
         # 2. Initialize the Problem and export N2 chart
         prob.store_model_view(open_in_browser=False)
-        prob.initialize_from_xml('sellar-input.xml')
+        prob.initialize_from_xml(os.path.join(file_dir, 'sellar-input.xml'))
 
         # 3. Run the Problem
         prob.run_driver()  # Run the driver (optimization, DOE, or convergence)
@@ -86,17 +90,17 @@ def run_openlego(analyze_mdao_definitions):
         prob.collect_results()
 
         # 5. Collect test results for test assertions
-        if '/dataSchema/geometry/x1' in prob.model._outputs:
-            x = [prob['/dataSchema/geometry/x1']]
+        if '/dataSchema/variables/x0' in prob.model._outputs:
+            x = [prob['/dataSchema/variables/x0']]
             y = [prob['/dataSchema/analyses/y1'], prob['/dataSchema/analyses/y2']]
-            z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
+            z = [prob['/dataSchema/variables/z1'], prob['/dataSchema/variables/z2']]
             f = [prob['/dataSchema/analyses/f']]
             g = [prob['/dataSchema/analyses/g1'], prob['/dataSchema/analyses/g2']]
-        elif '/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/geometry/x1' in prob.model._outputs:
-            x = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/geometry/x1']]
+        elif '/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0' in prob.model._outputs:
+            x = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0']]
             y = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1'],
                  prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y2']]
-            z = [prob['/dataSchema/geometry/z1'], prob['/dataSchema/geometry/z2']]
+            z = [prob['/dataSchema/variables/z1'], prob['/dataSchema/variables/z2']]
             f = [prob['/dataSchema/analyses/f']]
             g = [prob.model.SubOptimizer0.prob['/dataSchema/analyses/g1'],
                  prob.model.SubOptimizer1.prob['/dataSchema/analyses/g2']]
@@ -110,45 +114,55 @@ def run_openlego(analyze_mdao_definitions):
 class TestSellarMath(unittest.TestCase):
 
     def assertion_unc_mda(self, x, y, z, f, g):
-        self.assertAlmostEqual(x[0], 5.00, 2)
-        self.assertAlmostEqual(z[0], 1.00, 2)
-        self.assertAlmostEqual(z[1], 5.00, 2)
+        self.assertAlmostEqual(float(x[0]), 5.00, 2)
+        self.assertAlmostEqual(float(z[0]), 1.00, 2)
+        self.assertAlmostEqual(float(z[1]), 5.00, 2)
 
     def assertion_con_mda(self, x, y, z, f, g):
-        self.assertAlmostEqual(x[0], 5.00, 2)
+        self.assertAlmostEqual(float(x[0]), 5.00, 2)
         self.assertAlmostEqual(float(y[0]), 9.19, 2)
         self.assertAlmostEqual(float(y[1]), 9.03, 2)
-        self.assertAlmostEqual(z[0], 1.00, 2)
-        self.assertAlmostEqual(z[1], 5.00, 2)
+        self.assertAlmostEqual(float(z[0]), 1.00, 2)
+        self.assertAlmostEqual(float(z[1]), 5.00, 2)
         self.assertAlmostEqual(float(f[0]), 39.19, 2)
         self.assertAlmostEqual(float(g[0]), 1.91, 2)
         self.assertAlmostEqual(float(g[1]), 0.62, 2)
 
     def assertion_doe(self, x, y, z, f, g):
-        self.assertAlmostEqual(x[0], 2.75, 2)
+        self.assertAlmostEqual(float(x[0]), 2.75, 2)
         self.assertAlmostEqual(float(y[0]), 4.15, 2)
         self.assertAlmostEqual(float(y[1]), 4.54, 2)
-        self.assertAlmostEqual(z[0], 0.75, 2)
-        self.assertAlmostEqual(z[1], 1.75, 2)
+        self.assertAlmostEqual(float(z[0]), 0.75, 2)
+        self.assertAlmostEqual(float(z[1]), 1.75, 2)
         self.assertAlmostEqual(float(f[0]), 13.48, 2)
         self.assertAlmostEqual(float(g[0]), 0.31, 2)
         self.assertAlmostEqual(float(g[1]), 0.81, 2)
 
     def assertion_mdo(self, x, y, z, f, g):
-        self.assertAlmostEqual(x[0], 0.00, delta=0.1)
-        self.assertAlmostEqual(y[0], 3.16, delta=0.1)
-        self.assertAlmostEqual(y[1], 3.76, delta=0.1)
-        self.assertAlmostEqual(z[0], 1.98, delta=0.1)
-        self.assertAlmostEqual(z[1], 0.00, delta=0.1)
-        self.assertAlmostEqual(f[0], 3.18, delta=0.1)
-        self.assertAlmostEqual(g[0], 0.00, delta=0.1)
-        self.assertAlmostEqual(g[1], 0.84, delta=0.1)
+        self.assertAlmostEqual(float(x[0]), 0.00, 2)
+        self.assertAlmostEqual(float(y[0]), 3.16, 2)
+        self.assertAlmostEqual(float(y[1]), 3.76, 2)
+        self.assertAlmostEqual(float(z[0]), 1.98, 2)
+        self.assertAlmostEqual(float(z[1]), 0.00, 2)
+        self.assertAlmostEqual(float(f[0]), 3.18, 2)
+        self.assertAlmostEqual(float(g[0]), 0.00, 2)
+        self.assertAlmostEqual(float(g[1]), 0.84, 2)
 
-    def test_unc_mda_j(self):
+    def assertion_co(self, x, y, z, f, g):
+        self.assertAlmostEqual(float(x[0]), 0.00, 1)
+        self.assertAlmostEqual(float(y[0]), 3.16, 1)
+        self.assertAlmostEqual(float(y[1]), 3.76, 1)
+        self.assertAlmostEqual(float(z[0]), 1.98, 1)
+        self.assertAlmostEqual(float(z[1]), 0.00, 1)
+        self.assertAlmostEqual(float(f[0]), 3.18, 2)
+        self.assertAlmostEqual(float(g[0]), 0.00, 2)
+        self.assertAlmostEqual(float(g[1]), 0.84, 2)
+
+    def test_unc_mda_gs(self):
         """Test run the Sellar system using a sequential tool execution."""
         self.assertion_unc_mda(*run_openlego(0))
 
-    def test_unc_mda_gs(self):
+    def test_unc_mda_j(self):
         """Test run the Sellar system using a parallel tool execution."""
         self.assertion_unc_mda(*run_openlego(1))
 
@@ -182,14 +196,11 @@ class TestSellarMath(unittest.TestCase):
 
     def test_co(self):
         """Solve the Sellar problem using the Collaborative Optimization architecture."""
-        if pyoptsparse_installed():
-            self.assertion_mdo(*run_openlego(9))
-        else:
-            print('Skipped test due to missing PyOptSparse installation.')
-            pass
+        self.assertion_co(*run_openlego(9))
 
     def __del__(self):
-        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'sellar-output.xml', 'SLSQP.out'])
+        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_',
+                                                       'sellar-output.xml', 'SLSQP.out'])
 
 
 if __name__ == '__main__':

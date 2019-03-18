@@ -2,6 +2,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
 <!-- definition of simple elements -->
+<xs:element name="x0" type="xs:decimal"/>
 <xs:element name="x1" type="xs:decimal"/>
 <xs:element name="z1" type="xs:decimal"/>
 <xs:element name="z2" type="xs:decimal"/>
@@ -16,6 +17,7 @@
 <xs:element name="data_schema">
   <xs:complexType>
     <xs:all>
+      <xs:element ref="x0" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="x1" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="z1" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="z2" minOccurs="0" maxOccurs="1"/>

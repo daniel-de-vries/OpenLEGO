@@ -25,6 +25,8 @@ import unittest
 
 from openlego.core.problem import LEGOProblem
 import openlego.test_suite.test_examples.sellar_competences.kb as kb
+from openlego.test_suite.test_examples.sellar_functions import get_couplings, get_objective, get_g1, \
+    get_g2
 
 from openlego.utils.general_utils import clean_dir_filtered, pyoptsparse_installed
 
@@ -61,9 +63,17 @@ def get_loop_items(analyze_mdao_definitions):
     return mdao_defs_loop
 
 
-def run_openlego(analyze_mdao_definitions):
+def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=None, data_folder=None,
+                 return_setting='test', approx_totals=False):
     # Check and analyze inputs
     mdao_defs_loop = get_loop_items(analyze_mdao_definitions)
+    file_dir = os.path.dirname(__file__)
+    if not cmdows_dir:
+        cmdows_dir = os.path.join(file_dir, 'cmdows_files')
+    if not initial_file_path:
+        initial_file_path = os.path.join(file_dir, 'sellar-input.xml')
+    if not data_folder:
+        data_folder = ''
 
     for mdao_def in mdao_defs_loop:
         print('\n-----------------------------------------------')
@@ -71,16 +81,19 @@ def run_openlego(analyze_mdao_definitions):
         print('------------------------------------------------')
         """Solve the Sellar problem using the given CMDOWS file."""
         # 1. Create Problem
-        prob = LEGOProblem(cmdows_path=os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
-                           kb_path='kb',
-                           data_folder='',  # Output directory
+        prob = LEGOProblem(cmdows_path=os.path.join(cmdows_dir, 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
+                           kb_path=os.path.join(file_dir, 'kb'),
+                           data_folder=data_folder,  # Output directory
                            base_xml_file='sellar-output.xml')  # Output file
         # prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
         prob.set_solver_print(0)  # Set printing of solver information
 
+        if approx_totals:
+            prob.model.approx_totals()
+
         # 2. Initialize the Problem and export N2 chart
         prob.store_model_view(open_in_browser=False)
-        prob.initialize_from_xml('sellar-input.xml')
+        prob.initialize_from_xml(initial_file_path)
 
         # 3. Run the Problem
         prob.run_driver()  # Run the driver (optimization, DOE, or convergence)
@@ -88,49 +101,50 @@ def run_openlego(analyze_mdao_definitions):
         # 4. Read out the case reader
         prob.collect_results()
 
-        # 5. Collect test results for test assertions
-        if '/dataSchema/variables/x0' in prob.model._outputs:
-            x = [prob['/dataSchema/variables/x0']]
-            y = [prob['/dataSchema/analyses/y1'], prob['/dataSchema/analyses/y2']]
-            z = [prob['/dataSchema/variables/z1'], prob['/dataSchema/variables/z2']]
-            f = [prob['/dataSchema/analyses/f']]
-            g = [prob['/dataSchema/analyses/g1'], prob['/dataSchema/analyses/g2']]
-        elif '/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0' in prob.model._outputs:
-            x = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0']]
-            y = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1'],
-                 prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y2']]
-            z = [prob['/dataSchema/variables/z1'], prob['/dataSchema/variables/z2']]
-            f = [prob['/dataSchema/analyses/f']]
-            g = [prob.model.SubOptimizer0.prob['/dataSchema/analyses/g1'],
-                 prob.model.SubOptimizer1.prob['/dataSchema/analyses/g2']]
+        if return_setting == 'test':
+            # 5. Collect test results for test assertions
+            if '/dataSchema/variables/x0' in prob.model._outputs:
+                x = [prob['/dataSchema/variables/x0']]
+                y = [prob['/dataSchema/analyses/y1'], prob['/dataSchema/analyses/y2']]
+                z = [prob['/dataSchema/variables/z1'], prob['/dataSchema/variables/z2']]
+                f = [prob['/dataSchema/analyses/f']]
+                g = [prob['/dataSchema/analyses/g1'], prob['/dataSchema/analyses/g2']]
+            elif '/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0' in prob.model._outputs:
+                x = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0']]
+                y = [prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1'],
+                     prob['/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y2']]
+                z = [prob['/dataSchema/variables/z1'], prob['/dataSchema/variables/z2']]
+                f = [prob['/dataSchema/analyses/f']]
+                g = [prob.model.SubOptimizer0.prob['/dataSchema/analyses/g1'],
+                     prob.model.SubOptimizer1.prob['/dataSchema/analyses/g2']]
 
-        # 6. Cleanup and invalidate the Problem afterwards
-        prob.invalidate()
-
-    return x, y, z, f, g
+            # 6. Cleanup and invalidate the Problem afterwards
+            prob.invalidate()
+            return x, y, z, f, g
+        elif return_setting == 'validation':
+            return prob
 
 
 class TestSellarCompetences(unittest.TestCase):
 
     def __call__(self, *args, **kwargs):
-        # TODO: Use setUpClass to only deploy once?
         kb.deploy()
         super(TestSellarCompetences, self).__call__(*args, **kwargs)
 
     def assertion_unc_mda(self, x, y, z, f, g):
-        self.assertAlmostEqual(x[0], 5.00, 2)
+        self.assertAlmostEqual(x[0], 4.00, 2)
         self.assertAlmostEqual(z[0], 1.00, 2)
         self.assertAlmostEqual(z[1], 5.00, 2)
 
     def assertion_con_mda(self, x, y, z, f, g):
-        self.assertAlmostEqual(x[0], 5.00, 2)
-        self.assertAlmostEqual(float(y[0]), 9.19, 2)
-        self.assertAlmostEqual(float(y[1]), 9.03, 2)
+        self.assertAlmostEqual(x[0], 4.00, 2)
+        self.assertAlmostEqual(float(y[0]), get_couplings(z[0], z[1], x[0])[0], 2)
+        self.assertAlmostEqual(float(y[1]), get_couplings(z[0], z[1], x[0])[1], 2)
         self.assertAlmostEqual(z[0], 1.00, 2)
         self.assertAlmostEqual(z[1], 5.00, 2)
-        self.assertAlmostEqual(float(f[0]), 39.19, 2)
-        self.assertAlmostEqual(float(g[0]), 1.91, 2)
-        self.assertAlmostEqual(float(g[1]), 0.62, 2)
+        self.assertAlmostEqual(float(f[0]), get_objective(x[0], z[1], y[0], y[1]), 2)
+        self.assertAlmostEqual(float(g[0]), get_g1(y[0]), 2)
+        self.assertAlmostEqual(float(g[1]), get_g2(y[1]), 2)
 
     def assertion_doe(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 2.75, 2)
@@ -144,8 +158,8 @@ class TestSellarCompetences(unittest.TestCase):
 
     def assertion_mdo(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 0.00, delta=0.1)
-        self.assertAlmostEqual(y[0], 3.16, delta=0.1)
-        self.assertAlmostEqual(y[1], 3.76, delta=0.1)
+        self.assertAlmostEqual(y[0], get_couplings(z[0], z[1], x[0])[0], delta=0.1)
+        self.assertAlmostEqual(y[1], get_couplings(z[0], z[1], x[0])[1], delta=0.1)
         self.assertAlmostEqual(z[0], 1.98, delta=0.1)
         self.assertAlmostEqual(z[1], 0.00, delta=0.1)
         self.assertAlmostEqual(f[0], 3.18, delta=0.1)

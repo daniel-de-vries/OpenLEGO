@@ -99,7 +99,7 @@ class NonlinearB2kSolver(NonlinearBlockGS):
         print('Run_apply for B2k solver')
         super(NonlinearB2kSolver, self)._run_apply()
 
-    def _run_iterator(self):
+    def _solve(self):
         """
         Run the iterative solver.
         """
@@ -121,7 +121,7 @@ class NonlinearB2kSolver(NonlinearBlockGS):
         while self._iter_count < maxiter and \
                 (norm > atol or isnan(norm)) and (norm0 > rtol or isnan(norm0)):
             with Recording(type(self).__name__, self._iter_count, self) as rec:
-                self._iter_execute()
+                self._single_iteration()
                 self._iter_count += 1
                 norm0, norm = self._iter_get_norm()
                 # With solvers, we want to record the norm AFTER the call, but the call needs to
@@ -215,11 +215,11 @@ class NonlinearB2kSolver(NonlinearBlockGS):
             attrbs_new : dict
                 Dictionary specifying the new bounds.
         """
-        f_k_red = self.options['f_k_red']  # K-factor reduction
-        f_int_inc = self.options['f_int_inc']  # fraction of interval increase if bound is hit
-        f_int_inc_abs = self.options['f_int_inc_abs']  # absolute interval increase if fraction is
-                                                       # too small
-        f_int_range = self.options['f_int_range']  # minimum range of design variable interval
+        options = self.options
+        f_k_red = options['f_k_red']  # K-factor reduction
+        f_int_inc = options['f_int_inc']  # fraction of interval increase if bound is hit
+        f_int_inc_abs = options['f_int_inc_abs']  # absolute interval increase if fraction too small
+        f_int_range = options['f_int_range']  # minimum range of design variable interval
 
         btol = 1e-2  # Tolerance for boundary hit determination
 
@@ -231,8 +231,12 @@ class NonlinearB2kSolver(NonlinearBlockGS):
         val_lb, val_ub = attrbs['lower'], attrbs['upper']
         val_ref0, val_ref = attrbs['ref0'], attrbs['ref']
         adder, scaler = attrbs['adder'], attrbs['scaler']
-        unscaled = lambda x : unscale_value(x, val_ref0, val_ref)
-        scaled = lambda x : scale_value(x, adder, scaler)
+
+        def unscaled(x):
+            return unscale_value(x, val_ref0, val_ref)
+
+        def scaled(x):
+            return scale_value(x, adder, scaler)
         val_opt = scaled(format_as_float_or_array('optimum', copy.deepcopy(prob[var_name])))
 
         if isinstance(val_opt, np.ndarray) and val_opt.size != 1:
@@ -273,8 +277,8 @@ class NonlinearB2kSolver(NonlinearBlockGS):
         if not opt_failed and not out_of_bounds:
             adjust = abs((val_ub + val_lb) / 2 - val_opt) / ((val_ub + val_lb) / 2 - val_lb)
             reduce_val = adjust + (1 - adjust) * f_k_red
-            val_lb_new = val_opt - ((val_interval) / (reduce_val)) / 2
-            val_ub_new = val_opt + ((val_interval) / (reduce_val)) / 2
+            val_lb_new = val_opt - (val_interval / reduce_val) / 2
+            val_ub_new = val_opt + (val_interval / reduce_val) / 2
         elif n_loop == 0 and opt_failed:
             raise NotImplementedError('First system-level optimization needs to be successful '
                                       'for the BLISS solver to work.')
@@ -283,12 +287,12 @@ class NonlinearB2kSolver(NonlinearBlockGS):
         if (n_loop > 0 or opt_failed) and not out_of_bounds:
             val_opt_pr = float(self.OPT_DV_VALUES[var_name][n_loop - 1])
             # lower bound hit twice or optimization failed
-            lower_bound_hit = (val_opt - btol <= val_lb and val_opt_pr - btol <= local_bounds_pr[0]) \
-                              or opt_failed
+            lower_bound_hit = (val_opt - btol <= val_lb and
+                               val_opt_pr - btol <= local_bounds_pr[0]) or opt_failed
             dist_lb = abs(val_opt-val_lb)
             # upper bound hit twice or optimization failed
-            upper_bound_hit = (val_opt + btol >= val_ub and val_opt_pr + btol >= local_bounds_pr[1]) \
-                              or opt_failed
+            upper_bound_hit = (val_opt + btol >= val_ub and
+                               val_opt_pr + btol >= local_bounds_pr[1]) or opt_failed
             dist_ub = abs(val_opt-val_ub)
             change_bound = []
             if lower_bound_hit and upper_bound_hit:
@@ -377,7 +381,7 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                                          ref=attrbs['ref'], ref0=attrbs['ref0'])
         for doe_prob in self.system_doe_probs:
             for doe_des_var in doe_prob.model.design_vars.keys():
-                # TODO: It seems performance could be drastically improved here by creating an
+                # TODO: Performance could be drastically improved here by creating an
                 # TODO: object with static design variable mappings
                 if doe_prob.model.parameter_uids_are_related(param_to_xpath(var_name),
                                                              param_to_xpath(doe_des_var)):
@@ -408,44 +412,46 @@ class NonlinearB2kSolver(NonlinearBlockGS):
             val_lb, val_ub = attrbs['lower'], attrbs['upper']
             val_ref0, val_ref = attrbs['ref0'], attrbs['ref']
             adder, scaler = attrbs['adder'], attrbs['scaler']
-            scaled = lambda x : scale_value(x, adder, scaler)
+
+            def scaled(x):
+                return scale_value(x, adder, scaler)
             val_opt = scaled(format_as_float_or_array('optimum', copy.deepcopy(prob[var_name])))
 
-            LOCAL_BOUNDS = self.LOCAL_BOUNDS
-            OPT_DV_VALUES = self.OPT_DV_VALUES
-            REF0_VALUES = self.REF0_VALUES
-            REF_VALUES = self.REF_VALUES
+            local_bounds = self.LOCAL_BOUNDS
+            opt_dv_values = self.OPT_DV_VALUES
+            ref0_values = self.REF0_VALUES
+            ref_values = self.REF_VALUES
 
-            if var_name not in LOCAL_BOUNDS:
-                LOCAL_BOUNDS[var_name] = [(val_lb, val_ub)]
-                REF0_VALUES[var_name] = [val_ref0]
-                REF_VALUES[var_name] = [val_ref]
-                OPT_DV_VALUES[var_name] = [val_opt]
+            if var_name not in local_bounds:
+                local_bounds[var_name] = [(val_lb, val_ub)]
+                ref0_values[var_name] = [val_ref0]
+                ref_values[var_name] = [val_ref]
+                opt_dv_values[var_name] = [val_opt]
             else:
-                LOCAL_BOUNDS[var_name].append((val_lb, val_ub))
-                REF0_VALUES[var_name].append(val_ref0)
-                REF_VALUES[var_name].append(val_ref)
-                OPT_DV_VALUES[var_name].append(val_opt)
+                local_bounds[var_name].append((val_lb, val_ub))
+                ref0_values[var_name].append(val_ref0)
+                ref_values[var_name].append(val_ref)
+                opt_dv_values[var_name].append(val_opt)
 
         # Save objective value
         var_name = prob.model.objective
-        OPT_OBJ_VALUES = self.OPT_OBJ_VALUES
+        opt_obj_values = self.OPT_OBJ_VALUES
         val_obj = copy.deepcopy(prob[var_name])
-        if var_name not in OPT_OBJ_VALUES:
-            OPT_OBJ_VALUES[var_name] = [val_obj]
+        if var_name not in opt_obj_values:
+            opt_obj_values[var_name] = [val_obj]
         else:
-            OPT_OBJ_VALUES[var_name].append(val_obj)
+            opt_obj_values[var_name].append(val_obj)
 
         # Save constraint values
-        OPT_CON_VALUES = self.OPT_CON_VALUES
-        ATTRBS_CON_VALUES = self.ATTRBS_CON_VALUES
+        opt_con_values = self.OPT_CON_VALUES
+        attrbs_con_values = self.ATTRBS_CON_VALUES
         for var_name, attrbs in prob.model.constraints.items():
             val_con = copy.deepcopy(prob[var_name])
-            if var_name not in OPT_CON_VALUES:
-                OPT_CON_VALUES[var_name] = [val_con]
-                ATTRBS_CON_VALUES[var_name] = attrbs
+            if var_name not in opt_con_values:
+                opt_con_values[var_name] = [val_con]
+                attrbs_con_values[var_name] = attrbs
             else:
-                OPT_CON_VALUES[var_name].append(val_con)
+                opt_con_values[var_name].append(val_con)
 
     def _print_last_iteration(self):
         # type: () -> None
@@ -456,8 +462,9 @@ class NonlinearB2kSolver(NonlinearBlockGS):
         # Design variables
         print('DESIGN VARIABLES')
         for var_name in sorted(self.OPT_DV_VALUES.keys()):
-            unscaled = lambda x : unscale_value(x, self.REF0_VALUES[var_name][i],
-                                               self.REF_VALUES[var_name][i])
+
+            def unscaled(x):
+                return unscale_value(x, self.REF0_VALUES[var_name][i], self.REF_VALUES[var_name][i])
             print(var_name)
             print('{} < {} < {}  ({})\n'.format(unscaled(self.LOCAL_BOUNDS[var_name][i][0]),
                                                 unscaled(self.OPT_DV_VALUES[var_name][i]),
@@ -499,9 +506,9 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                       for k, val in enumerate(self.LOCAL_BOUNDS[var_name])]
             val_ub = [float(unscale_value(val[1], ref0s[k], refs[k]))
                       for k, val in enumerate(self.LOCAL_BOUNDS[var_name])]
+            error_y = []
+            error_y_minus = []
             for j in range(len(self.OPT_DV_VALUES[var_name])):
-                error_y = []
-                error_y_minus = []
                 for l in range(len(val_opt)):
                     if val_ub[l] > val_opt[l]:
                         error_y.append(abs(val_ub[l] - val_opt[l]))
@@ -517,22 +524,26 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                                marker=dict(size=12))
             traces_des_vars.append(trace)
         layout_des_vars = go.Layout(title='Design variables of top-level system optimization',
-                                 showlegend=True,
-                                 xaxis=dict(title='iteration'),
-                                 yaxis=dict(title='value'))
+                                    showlegend=True,
+                                    xaxis=dict(title='iteration'),
+                                    yaxis=dict(title='value'))
         fig_des_vars = go.Figure(data=traces_des_vars, layout=layout_des_vars)
+        output_folder = self.system_optimizer_prob.model.data_folder
         plotly.offline.plot(fig_des_vars,
-                            filename=os.path.join('output_files', 'ssbj_b2k_des_vars.html'))
+                            filename=os.path.join(output_folder, 'ssbj_b2k_des_vars.html'),
+                            auto_open=False)
 
         # Plot constraints
         create_plotly_plot(self.OPT_CON_VALUES,
                            'Constraints of top-level system optimization',
-                           'ssbj_b2k_cons.html')
+                           'ssbj_b2k_cons.html',
+                           folder=output_folder)
 
         # Plot objective value(s)
         create_plotly_plot(self.OPT_OBJ_VALUES,
                            'Objective(s) of top-level system optimization',
-                           'ssbj_b2k_obj.html')
+                           'ssbj_b2k_obj.html',
+                           folder=output_folder)
 
 
 def create_plotly_plot(dct, plot_title, filename,
@@ -554,6 +565,8 @@ def create_plotly_plot(dct, plot_title, filename,
             Title provided on the X-axis
         plot_yaxis_title : str
             Title provided on the Y-axis
+        folder : str
+            Destination folder for html file
 
     Returns
     -------
@@ -573,4 +586,5 @@ def create_plotly_plot(dct, plot_title, filename,
                             yaxis=dict(title=plot_yaxis_title))
     fig_con_vars = go.Figure(data=traces, layout=layout_cons)
     plotly.offline.plot(fig_con_vars,
-                        filename=os.path.join(folder, filename))
+                        filename=os.path.join(folder, filename),
+                        auto_open=False)

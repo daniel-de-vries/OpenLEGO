@@ -79,7 +79,7 @@ def run_openlego(analyze_mdao_definitions):
                            kb_path='kb',  # Knowledge base path
                            data_folder='',  # Output directory
                            base_xml_file='ssbj-output-{}.xml'.format(mdao_def))  # Output file
-        # prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
+        prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
         prob.set_solver_print(0)  # Set printing of solver information
 
         # 2. Initialize the Problem and export N2 chart
@@ -87,13 +87,13 @@ def run_openlego(analyze_mdao_definitions):
         prob.initialize_from_xml('SSBJ-base.xml')  # Set the initial values from an XML file
 
         # 3. Run the Problem
-        if mdao_def == 'CO':
+        if mdao_def in ['CO', 'BLISS-2000']:
             prob.run_model()
         else:
             prob.run_driver()  # Run the driver (optimization, DOE, or convergence)
 
         # 4. Read out the case reader
-        if mdao_def != 'CO':
+        if mdao_def not in ['CO', 'BLISS-2000']:
             prob.collect_results()
 
         # 5. Collect test results for test assertions
@@ -103,14 +103,14 @@ def run_openlego(analyze_mdao_definitions):
         AR = prob['/dataSchema/aircraft/geometry/AR'][0]
         Lambda = prob['/dataSchema/aircraft/geometry/Lambda'][0]
         Sref = prob['/dataSchema/aircraft/geometry/Sref'][0]
-        if mdao_def != 'CO':
+        if mdao_def not in ['CO', 'BLISS-2000']:
             lambda_ = prob['/dataSchema/aircraft/geometry/lambda'][0]
             section = prob['/dataSchema/aircraft/geometry/section'][0]
             Cf = prob['/dataSchema/aircraft/other/Cf'][0]
             T = prob['/dataSchema/aircraft/other/T'][0]
             R = prob['/dataSchema/scaledData/R/value'][0]
             extra = prob['/dataSchema/aircraft/weight/WT'][0]
-        else:
+        elif mdao_def == 'CO':
             lambda_ = prob.model.SubOptimizer0.prob['/dataSchema/aircraft/geometry/lambda'][0]
             section = prob.model.SubOptimizer0.prob['/dataSchema/aircraft/geometry/section'][0]
             Cf = prob.model.SubOptimizer1.prob['/dataSchema/aircraft/other/Cf'][0]
@@ -119,6 +119,8 @@ def run_openlego(analyze_mdao_definitions):
             extra = (prob['/dataSchema/distributedArchitectures/group0/objective'],
                      prob['/dataSchema/distributedArchitectures/group1/objective'],
                      prob['/dataSchema/distributedArchitectures/group2/objective'])
+        else:
+            lambda_, section, Cf, T, R, extra = None, None, None, None, None, None
 
         # 6. Cleanup and invalidate the Problem afterwards
         prob.invalidate()
@@ -200,7 +202,7 @@ class TestSsbj(unittest.TestCase):
         self.assertAlmostEqual(Cf, .75, 2)
         self.assertAlmostEqual(T, .15620845, 2)
         self.assertAlmostEqual(R, -7.40624897, 2)
-        self.assertAlmostEqual(extra, 44957.70, delta=1.)
+        self.assertAlmostEqual(extra, 44957.70, delta=100.)
 
     def assertion_co(self, tc, h, M, AR, Lambda, Sref, lambda_, section, Cf, T, R, extra):
         self.assertAlmostEqual(tc, .05, 2)
@@ -209,13 +211,27 @@ class TestSsbj(unittest.TestCase):
         self.assertAlmostEqual(AR, 5.5, 2)
         self.assertAlmostEqual(Lambda, 55., 2)
         self.assertAlmostEqual(Sref, 1000., 2)
-        self.assertAlmostEqual(lambda_, .25, 2)
+        self.assertAlmostEqual(lambda_, .15, 2)
         self.assertAlmostEqual(section, 1., 2)
         self.assertAlmostEqual(Cf, 1., 2)
         self.assertAlmostEqual(T, .2, 2)
         self.assertAlmostEqual(R, -.7855926, 2)
         for J in extra:
             self.assertAlmostEqual(J, 0., delta=0.1)
+
+    def assertion_b2k(self, tc, h, M, AR, Lambda, Sref, lambda_, section, Cf, T, R, extra):
+        self.assertTrue(isinstance(tc, float))
+        self.assertTrue(isinstance(h, float))
+        self.assertTrue(isinstance(M, float))
+        self.assertTrue(isinstance(AR, float))
+        self.assertTrue(isinstance(Lambda, float))
+        self.assertTrue(isinstance(Sref, float))
+        self.assertTrue(lambda_ is None)
+        self.assertTrue(section is None)
+        self.assertTrue(Cf is None)
+        self.assertTrue(T is None)
+        self.assertTrue(R is None)
+        self.assertTrue(extra is None)
 
     def test_unc_mda_gs(self):
         """Test run the SSBJ tools in sequence."""
@@ -277,9 +293,17 @@ class TestSsbj(unittest.TestCase):
             print('\nSkipped test due to missing PyOptSparse installation.')
             pass
 
+    def test_b2k(self):
+        """Test run the SSBJ problem using the BLISS-2000 architecture."""
+        if pyoptsparse_installed():
+            self.assertion_b2k(*run_openlego(14))
+        else:
+            print('\nSkipped test due to missing PyOptSparse installation.')
+            pass
+
     def __del__(self):
         kb.clean()
-        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'ssbj-output-', 'SLSQP.out'])
+        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'ssbj-output-', 'SLSQP.out', 'ssbj_b2k_'])
 
 
 if __name__ == '__main__':

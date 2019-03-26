@@ -31,9 +31,9 @@ from openlego.utils.general_utils import str_to_valid_sys_name, warn_about_faile
 
 
 class SubDriverComponent(ExplicitComponent):
-    """Abstract base class exposing an interface to use subdriver (or nested) drivers within an OpenMDAO model. This
-    nested subdriver appears as an ExplicitComponent in the top-level hierarchy, but configures and executes its own
-    LEGOProblem() and LEGOModel() instances inside.
+    """Abstract base class exposing an interface to use subdriver (or nested) drivers within an
+    OpenMDAO model. This nested subdriver appears as an ExplicitComponent in the top-level
+    hierarchy, but configures and executes its own LEGOProblem() and LEGOModel() instances inside.
 
     Attributes
     ----------
@@ -84,8 +84,6 @@ class SubDriverComponent(ExplicitComponent):
                                     data_folder=self.options['data_folder'],  # Output directory
                                     base_xml_file=self.options['base_xml_file'],
                                     driver_uid=self.options['driver_uid'])
-        #if p.driver_uid == 'Sub-Optimizer-1':  # TODO: used for testing purposes, remove later!
-        #    p.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
 
         # Add inputs/outputs
         for input_name, shape in p.model.model_constants.items():
@@ -98,17 +96,14 @@ class SubDriverComponent(ExplicitComponent):
             self.add_output(output_name, shape=shape)
 
         # Declare partials
-        if p.model.model_super_outputs and not super_driver_type:  # TODO: Check this!
-            self.declare_partials('*', '*', method='fd', step=1e-4, step_calc='abs')
-
-        #if p.driver_uid == 'Sys-Optimizer':  # TODO: Remove this again (if fixed)
-        #    p.model.approx_totals(step_calc='rel')
-
-        #if p.driver_uid == 'Sub-Optimizer-1':  # TODO: Remove this again (if fixed)
-        #    p.model.approx_totals(step_calc='rel')
+        if p.model.model_super_outputs and not super_driver_type:
+            input_names = p.model.model_super_inputs.keys()
+            for output_name in p.model.model_super_outputs.keys():
+                self.declare_partials(output_name, input_names,
+                                      method='fd', step=1e-6, step_calc='abs')
 
         # Setup
-        p.setup()  # TODO: Addition of recorders is removed here.
+        p.setup()
         p.final_setup()
 
         # Store (and view?) model
@@ -132,100 +127,78 @@ class SubDriverComponent(ExplicitComponent):
             p[input_name] = inputs[input_name]
 
         failed_experiments = {}
-        sorted_model_super_inputs = sorted(m.model_super_inputs.keys(), reverse=True)  # sort to have outputs first
+        # sort to have outputs first
+        sorted_model_super_inputs = sorted(m.model_super_inputs.keys(), reverse=True)
         for input_name in sorted_model_super_inputs:
-            if input_name in m.sm_of_training_params.keys():  # Add these inputs as training data for SM
+            if input_name in m.sm_of_training_params.keys():  # Add these inputs as training data
                 sm_uid = m.sm_of_training_params[input_name]
                 pred_param = m.find_mapped_parameter(input_name,
-                                                     m.sm_prediction_inputs[sm_uid] | m.sm_prediction_outputs[sm_uid])
-                sm_comp = getattr(getattr(m, 'SurrogateModels'), str_to_valid_sys_name(sm_uid))  # TODO: TO BE REMOVED AFTER TESTING
-                # sm_comp = getattr(m, str_to_valid_sys_name(sm_uid))  # TODO: PUT BACK THIS LINE
+                                                     m.sm_prediction_inputs[sm_uid] |
+                                                     m.sm_prediction_outputs[sm_uid])
+                sm_comp = getattr(m, str_to_valid_sys_name(sm_uid))
                 if sm_uid not in failed_experiments.keys():
                     failed_experiments[sm_uid] = (None, None)
                 sm_comp.options['train:'+pred_param], failed_experiments[sm_uid]\
-                    = p.postprocess_experiments(inputs[input_name], input_name, failed_experiments[sm_uid])
+                    = p.postprocess_experiments(inputs[input_name], input_name,
+                                                failed_experiments[sm_uid])
             else:
                 p[input_name] = inputs[input_name]
 
         # Provide message on failed experiments
         warn_about_failed_experiments(failed_experiments)
 
-        # Set initial values of design variables back to original ones (to avoid using values of last run)
+        # Set initial values of design variables back to original ones (to avoid using values of
+        # last run)
         for des_var, attrbs in m.design_vars.items():
             p[des_var] = attrbs['initial']
 
         # Run the driver
         print('Running subdriver {}'.format(self.options['driver_uid']))
-        if not 'Sub-Optimizer' in p.case_reader_path:  # TODO: replace by more sophisticated if-statement...
+        if 'Sub-Optimizer' not in p.case_reader_path:
             p.driver.cleanup()
             basename, extension = os.path.splitext(p.case_reader_path)
             case_reader_filename = basename + '_loop' + str(self._run_count) + extension
             p.driver.add_recorder(SqliteRecorder(case_reader_filename))
             p.driver.recording_options['includes'] = ['*']
-        if 'Sys-Optimizer' in p.driver_uid:  # TODO: remove this after testing
-            #totals = p.compute_totals()
-            p.run_driver()
-            #p.run_model()
-            #for key, item in totals.items():
-            #    print('{}'.format(str(item[0][0]).replace('.', ',')))
-        else:
-            p.run_driver()
+            p.driver.recording_options['record_model_metadata'] = True
+            p.driver._setup_recording()
+        p.run_driver()
         self._add_run_count()
 
         # Pull the value back up to the output array
-        doe_output_vectors = {}
+        doe_out_vecs = {}
         for output_name in m.model_super_outputs:
-            if output_name in m.doe_parameters.keys():  # Add these outputs as vectors based on DOE driver
-                doe_output_vectors[output_name] = []
+            # Add these outputs as vectors based on DOE driver
+            if output_name in m.doe_parameters.keys():
+                doe_out_vecs[output_name] = []
             else:
                 if not p.driver.fail:
                     outputs[output_name] = p[output_name]
                 else:
                     outputs[output_name] = float('nan')
 
-        # If the driver failed (hence, optimization failed), then send message and clean for next run
+        # If the driver failed (hence, optimization failed), then send message and clean
         if p.driver.fail:
             print('Driver run failed!')
             p.clean_driver_after_failure()
 
-        if doe_output_vectors:
+        if doe_out_vecs:
             # First read out the case reader
             cr = CaseReader(case_reader_filename)
             cases = cr.list_cases('driver')
             for n in range(len(cases)):
                 cr_outputs = cr.get_case(n).outputs
                 doe_param_matches = {}
-                for output_name in doe_output_vectors.keys():
-                    doe_param_matches[output_name] = doe_param_match = m.find_mapped_parameter(output_name, cr_outputs.keys())
-                    doe_output_vectors[output_name].append(cr_outputs[doe_param_match][0])
-
-            # TODO : Remove pickling, used for testing only
-            pickle_file = open('scaled_data_{}.pkl'.format(self.options['driver_uid']), 'wb')
-            pickle.dump(doe_output_vectors, pickle_file)
-            pickle_file.close()
-            refs = {}
+                for output_name in doe_out_vecs.keys():
+                    doe_param_matches[output_name] = doe_param_match \
+                        = m.find_mapped_parameter(output_name, cr_outputs.keys())
+                    doe_out_vecs[output_name].append(cr_outputs[doe_param_match][0])
 
             # Then write the final vectors to the global output array
-            for output_name in doe_output_vectors.keys():
+            for output_name in doe_out_vecs.keys():
                 if output_name in p.doe_samples[p.driver_uid]['inputs']:
                     des_var_match = m.find_mapped_parameter(output_name, m._design_vars.keys())
-                    doe_output_vectors[output_name] = unscale_value(doe_output_vectors[output_name],
-                                                                    m._design_vars[des_var_match]['ref0'],
-                                                                    m._design_vars[des_var_match]['ref'])
-
-                    # TODO: Remove the three lines below
-                    refs[output_name] = {}
-                    refs[output_name]['ref0'] = m._design_vars[des_var_match]['ref0']
-                    refs[output_name]['ref'] = m._design_vars[des_var_match]['ref']
-
-                outputs[output_name] = np.array(doe_output_vectors[output_name])
-
-
-
-            pickle_file2 = open('unscaled_data_{}.pkl'.format(self.options['driver_uid']), 'wb')
-            pickle.dump(doe_output_vectors, pickle_file2)
-            pickle_file2.close()
-
-            pickle_file3 = open('refs_data_{}.pkl'.format(self.options['driver_uid']), 'wb')
-            pickle.dump(refs, pickle_file3)
-            pickle_file3.close()
+                    doe_out_vecs[output_name] = unscale_value(doe_out_vecs[output_name],
+                                                              m._design_vars[des_var_match]['ref0'],
+                                                              m._design_vars[des_var_match]['ref'])
+                outputs[output_name] = np.array(doe_out_vecs[output_name])

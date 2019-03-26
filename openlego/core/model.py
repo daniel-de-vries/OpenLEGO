@@ -35,7 +35,7 @@ from six import string_types
 from typing import Union, Optional, List, Any, Dict, Tuple
 
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, \
-    NonlinearBlockJac, LinearRunOnce, ExecComp, NonlinearRunOnce, DirectSolver, \
+    NonlinearBlockJac, LinearRunOnce, NonlinearRunOnce, DirectSolver, \
     MetaModelUnStructuredComp, FloatKrigingSurrogate, ResponseSurface
 from openmdao.utils.general_utils import format_as_float_or_array, determine_adder_scaler
 from openmdao import INF_BOUND as INF_BOUND
@@ -45,10 +45,10 @@ from openlego.utils.cmdows_utils import get_element_by_uid, get_related_paramete
     get_loop_nesting_obj, get_surrogate_model_setting_safe
 from openlego.utils.general_utils import parse_cmdows_value, str_to_valid_sys_name, parse_string
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict, param_to_xpath
+from openlego.core.exec_comp import ExecComp
 from .abstract_discipline import AbstractDiscipline
 from .cmdows import CMDOWSObject, InvalidCMDOWSFileError
 from .discipline_component import DisciplineComponent
-from .exec_comp import ExecComp
 
 
 class LEGOModel(CMDOWSObject, Group):
@@ -182,7 +182,7 @@ class LEGOModel(CMDOWSObject, Group):
         _discipline_components = dict()
         for design_competence in self.elem_cmdows.iter('designCompetence'):
             if design_competence.attrib['uID'] in self.model_exec_blocks or \
-                    self.driver_uid in self.super_drivers or self._super_driver_components:  # TODO: Check this condition...
+                    self.driver_uid in self.super_drivers or self._super_driver_components:
                 if not self._kb_path or not os.path.isdir(self._kb_path):
                     raise ValueError('No valid knowledge base path ({}) specified while the CMDOWS '
                                      'file contains design competences.'.format(self._kb_path))
@@ -420,11 +420,13 @@ class LEGOModel(CMDOWSObject, Group):
                                     if eq_label in eq_expr:
                                         promotes.append((eq_label, input_name))
                                 group.add_subsystem(str_to_valid_sys_name(eq_uid),
-                                                    ExecComp(eq_output_label + ' = ' + eq_expr, sleep_time=sleep_time),
-                                                    promotes=promotes + [(eq_output_label, eq_output), ])
-                                # sleep_time is set to None to only have simulated time for one equation of the
-                                # mathematical function in the CMDOWS file
-                                sleep_time=None
+                                                    ExecComp(eq_output_label + ' = ' + eq_expr,
+                                                             sleep_time=sleep_time),
+                                                    promotes=promotes +
+                                                             [(eq_output_label, eq_output), ])
+                                # sleep_time is set to None to only have simulated time for one
+                                # equation of the mathematical function in the CMDOWS file
+                                sleep_time = None
                 _mathematical_functions.update({uid: group})
 
         return _mathematical_functions
@@ -710,7 +712,7 @@ class LEGOModel(CMDOWSObject, Group):
             for super_driver in self.super_drivers:
                 for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutable'
                                                     r'BlockUID="{}"]/toParameterUID/text()'
-                                                            .format(super_driver)):
+                                                    .format(super_driver)):
                     if value in self.model_required_inputs:
                         name = xpath_to_param(value)
                         if name not in _model_super_inputs:
@@ -1192,19 +1194,33 @@ class LEGOModel(CMDOWSObject, Group):
         BLISS-2000."""
         self.add_subdrivers(self._super_driver_components, add_super_driver_type=True)
         if self._super_driver_components and self.has_distributed_system_converger:
-            self.linear_solver = LinearRunOnce()
-            self.nonlinear_solver = NonlinearB2kSolver()
 
-            # TODO: Take this info from the CMDOWS file.
-            self.nonlinear_solver.options['maxiter'] = 30
-            self.nonlinear_solver.options['atol'] = 1e-4
-            self.nonlinear_solver.options['rtol'] = 1e-4
-            self.nonlinear_solver.options['f_k_red'] = 2.
-            self.nonlinear_solver.options['f_int_inc'] = .25
-            self.nonlinear_solver.options['f_int_inc_abs'] = .1
-            self.nonlinear_solver.options['f_int_range'] = 1.e-3
-            self.nonlinear_solver.options['print_last_iteration'] = True
-            self.nonlinear_solver.options['plot_history'] = True
+            dsv_uids = self.distributed_system_converger_uids
+            if len(dsv_uids) > 1:
+                raise AssertionError('Multiple distributed system convergers found.')
+            uid = dsv_uids[0]
+            dsv_elem = get_element_by_uid(self.elem_arch_elems, uid)
+
+            # Get method
+            method = dsv_elem.findtext('settings/method')
+            if method == 'BLISS-2000':
+                self.linear_solver = LinearRunOnce()
+                self.nonlinear_solver = NonlinearB2kSolver()
+            else:
+                raise AssertionError('Method {} for distributed system converger is not supported.'
+                                     .format(method))
+            pf1 = 'settings/'
+            pf2 = 'settings/designVariableFactors/'
+            nl_options = self.nonlinear_solver.options
+            nl_options['maxiter'] = int(dsv_elem.findtext(pf1 + 'maximumIterations'))
+            nl_options['atol'] = float(dsv_elem.findtext(pf1 + 'convergenceToleranceAbsolute'))
+            nl_options['rtol'] = float(dsv_elem.findtext(pf1 + 'convergenceToleranceRelative'))
+            nl_options['f_k_red'] = float(dsv_elem.findtext(pf2 + 'kBoundReduction'))
+            nl_options['f_int_inc'] = float(dsv_elem.findtext(pf2 + 'intervalIncreaseRelative'))
+            nl_options['f_int_inc_abs'] = float(dsv_elem.findtext(pf2 + 'intervalIncreaseAbsolute'))
+            nl_options['f_int_range'] = float(dsv_elem.findtext(pf2 + 'intervalRangeMinimum'))
+            nl_options['print_last_iteration'] = True
+            nl_options['plot_history'] = True
 
     def setup(self):
         # type: () -> None

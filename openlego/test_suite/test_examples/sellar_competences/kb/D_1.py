@@ -45,7 +45,7 @@ class D_1(AbstractDiscipline):
         root = etree.Element(root_tag)
         doc = etree.ElementTree(root)
 
-        xml_safe_create_element(doc, x_c, 0.)
+        xml_safe_create_element(doc, x_c, 1.)
         xml_safe_create_element(doc, x_x1, 0.)
         xml_safe_create_element(doc, x_z1, 0.)
         xml_safe_create_element(doc, x_z2, 0.)

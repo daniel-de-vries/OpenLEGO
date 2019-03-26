@@ -27,7 +27,7 @@ from ssbjkadmos.utils.database import clean as database_clean
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-list_disciplines = ['AeroAnalysis', 'PerformanceAnalysis', 'PropulsionAnalysis', 'StructuralAnalysis']
+list_disciplines = ['AeroAnalysis', 'PerformanceAnalysis', 'PropulsionAnalysis', 'StructuralAnalysis', 'DpdxAnalysis']
 
 
 def deploy():
@@ -36,40 +36,30 @@ def deploy():
     database_deploy(dir_path)
 
     for file in os.listdir(dir_path):
-        checks = ['Aerodynamics-', 'Performance-', 'Propulsion-', 'Structures-']
-        replaces = ['AeroAnalysis-', 'PerformanceAnalysis-', 'PropulsionAnalysis-', 'StructuralAnalysis-']
+        checks = ['Aerodynamics-', 'Performance-', 'Propulsion-', 'Structures-', 'DpdxCalc-']
+        replaces = ['AeroAnalysis-', 'PerformanceAnalysis-', 'PropulsionAnalysis-', 'StructuralAnalysis-', 'DpdxAnalysis-']
         for i, check in enumerate(checks):
             if check in file:
                 os.rename(os.path.join(dir_path, file), os.path.join(dir_path, replaces[i] + file[len(check):]))
 
-    # Clean up unused files from standard SSBJ package deployment
     os.remove(os.path.join(dir_path, 'Constraints-input.xml'))
     os.remove(os.path.join(dir_path, 'Constraints-output.xml'))
-    os.remove(os.path.join(dir_path, 'Constraints-partials.xml'))
     os.remove(os.path.join(dir_path, 'Objective-input.xml'))
     os.remove(os.path.join(dir_path, 'Objective-output.xml'))
-    os.remove(os.path.join(dir_path, 'Objective-partials.xml'))
-    os.remove(os.path.join(dir_path, 'DpdxCalc-input.xml'))
-    os.remove(os.path.join(dir_path, 'DpdxCalc-output.xml'))
-    os.remove(os.path.join(dir_path, 'DpdxCalc-partials.xml'))
 
 
 def clean():
     for discipline in list_disciplines:
-        for pf in ['-input.xml', '-output.xml', '-partials.xml']:
-            remove_if_exists(os.path.join(dir_path, discipline + pf))
-    remove_if_exists(os.path.join(dir_path, 'SSBJ-base.xml'))
+        for pf in ['-input.xml', '-output.xml']:
+            os.remove(os.path.join(dir_path, discipline + pf))
+    os.remove(os.path.join(dir_path, 'SSBJ-base.xml'))
 
     for file in os.listdir(dir_path):
         if '__test__' in file:
-            remove_if_exists(os.path.join(dir_path, file))
+            os.remove(os.path.join(dir_path, file))
         if '__run__' in file and '_output.xml' in file:
-            remove_if_exists(os.path.join(dir_path, file))
+            os.remove(os.path.join(dir_path, file))
 
-
-def remove_if_exists(file_path):
-    if os.path.isfile(file_path):
-        os.remove(file_path)
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:

@@ -3,14 +3,14 @@
   <header>
     <creator>Imco van Gent</creator>
     <description>Mdao CMDOWS file of the well-known Sellar problem</description>
-    <timestamp>2019-03-14T17:27:27.398971</timestamp>
+    <timestamp>2019-03-26T17:02:06.346979</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2019-03-14T17:27:27.398971</timestamp>
+        <timestamp>2019-03-26T17:02:06.346979</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -81,18 +81,46 @@
           </output>
         </outputs>
       </mathematicalFunction>
+      <mathematicalFunction uID="ABC">
+        <label>ABC</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/settings/a</parameterUID>
+            <equationLabel>a</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/settings/c</parameterUID>
+            <equations uID="ABC_equation">
+              <equation language="Python">a</equation>
+            </equations>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="H">
+        <label>H</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/variables/x0</parameterUID>
+            <equationLabel>x0</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/variables/x1</parameterUID>
+            <equations uID="H_equation">
+              <equation language="Python">x0</equation>
+            </equations>
+          </output>
+        </outputs>
+      </mathematicalFunction>
       <mathematicalFunction uID="Gc">
         <label>Gc</label>
         <functionType>consistency</functionType>
         <inputs>
-          <input>
-            <parameterUID>/dataSchema/analyses/y1</parameterUID>
-            <equationLabel>y1</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</parameterUID>
-            <equationLabel>y1c</equationLabel>
-          </input>
           <input>
             <parameterUID>/dataSchema/analyses/y2</parameterUID>
             <equationLabel>y2</equationLabel>
@@ -101,19 +129,49 @@
             <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2</parameterUID>
             <equationLabel>y2c</equationLabel>
           </input>
+          <input>
+            <parameterUID>/dataSchema/analyses/y1</parameterUID>
+            <equationLabel>y1</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</parameterUID>
+            <equationLabel>y1c</equationLabel>
+          </input>
         </inputs>
         <outputs>
           <output>
-            <parameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</parameterUID>
+            <parameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</parameterUID>
             <equations uID="Gc_equation">
-              <equation language="Python">y1-y1c</equation>
+              <equation language="Python">y2-y2c</equation>
             </equations>
           </output>
           <output>
-            <parameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</parameterUID>
+            <parameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</parameterUID>
             <equations uID="Gc_equation_1">
-              <equation language="Python">y2-y2c</equation>
+              <equation language="Python">y1-y1c</equation>
             </equations>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="G[1]">
+        <label>G[1]</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/analyses/y1</parameterUID>
+            <equationLabel>y1</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/analyses/g1</parameterUID>
+            <equations uID="G[1]_equation">
+              <equation language="Python">y1/3.16-1</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g1</parameterUID>
+            <equationsUID>G[1]_equation</equationsUID>
           </output>
         </outputs>
       </mathematicalFunction>
@@ -155,6 +213,28 @@
           </output>
         </outputs>
       </mathematicalFunction>
+      <mathematicalFunction uID="G[2]">
+        <label>G[2]</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/analyses/y2</parameterUID>
+            <equationLabel>y2</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/analyses/g2</parameterUID>
+            <equations uID="G[2]_equation">
+              <equation language="Python">1-y2/24.0</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g2</parameterUID>
+            <equationsUID>G[2]_equation</equationsUID>
+          </output>
+        </outputs>
+      </mathematicalFunction>
       <mathematicalFunction uID="D[2]">
         <label>D[2]</label>
         <functionType>regular</functionType>
@@ -186,86 +266,6 @@
           <output>
             <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y2</parameterUID>
             <equationsUID>D[2]_equation</equationsUID>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="G[1]">
-        <label>G[1]</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/analyses/y1</parameterUID>
-            <equationLabel>y1</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/analyses/g1</parameterUID>
-            <equations uID="G[1]_equation">
-              <equation language="Python">y1/3.16-1</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g1</parameterUID>
-            <equationsUID>G[1]_equation</equationsUID>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="H">
-        <label>H</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/variables/x0</parameterUID>
-            <equationLabel>x0</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/variables/x1</parameterUID>
-            <equations uID="H_equation">
-              <equation language="Python">x0</equation>
-            </equations>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="ABC">
-        <label>ABC</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/settings/a</parameterUID>
-            <equationLabel>a</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/settings/c</parameterUID>
-            <equations uID="ABC_equation">
-              <equation language="Python">a</equation>
-            </equations>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="G[2]">
-        <label>G[2]</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/analyses/y2</parameterUID>
-            <equationLabel>y2</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/analyses/g2</parameterUID>
-            <equations uID="G[2]_equation">
-              <equation language="Python">1-y2/24.0</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/g2</parameterUID>
-            <equationsUID>G[2]_equation</equationsUID>
           </output>
         </outputs>
       </mathematicalFunction>
@@ -401,14 +401,14 @@
             <constraintOperator>&gt;=</constraintOperator>
             <referenceValue>0.0</referenceValue>
           </constraintVariable>
-          <constraintVariable uID="__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1">
-            <parameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</parameterUID>
+          <constraintVariable uID="__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2">
+            <parameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</parameterUID>
             <constraintType>equality</constraintType>
             <constraintOperator>==</constraintOperator>
             <referenceValue>0.0</referenceValue>
           </constraintVariable>
-          <constraintVariable uID="__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2">
-            <parameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</parameterUID>
+          <constraintVariable uID="__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1">
+            <parameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</parameterUID>
             <constraintType>equality</constraintType>
             <constraintOperator>==</constraintOperator>
             <referenceValue>0.0</referenceValue>
@@ -573,11 +573,11 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
@@ -593,11 +593,11 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Optimizer</fromExecutableBlockUID>
@@ -624,34 +624,6 @@
           <toParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z2</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
-          <toExecutableBlockUID>D[2]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
-          <toExecutableBlockUID>Gc</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Gc</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Gc</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</toParameterUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</fromParameterUID>
-          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
           <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2</fromParameterUID>
           <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
         </edge>
@@ -664,11 +636,39 @@
           <toExecutableBlockUID>Gc</toExecutableBlockUID>
         </edge>
         <edge>
+          <fromExecutableBlockUID>Gc</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Gc</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</toParameterUID>
+        </edge>
+        <edge>
           <fromParameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</fromParameterUID>
           <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>D[2]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>Gc</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</fromParameterUID>
+          <toExecutableBlockUID>Optimizer</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
@@ -876,38 +876,38 @@
   <architectureElements>
     <parameters>
       <initialGuessCouplingVariables>
-        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1">
-          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
-          <label>y1^{c0}</label>
-          <instanceID>1</instanceID>
-        </initialGuessCouplingVariable>
         <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2">
           <relatedParameterUID>/dataSchema/analyses/y2</relatedParameterUID>
           <label>y2^{c0}</label>
           <instanceID>1</instanceID>
         </initialGuessCouplingVariable>
+        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1">
+          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
+          <label>y1^{c0}</label>
+          <instanceID>1</instanceID>
+        </initialGuessCouplingVariable>
       </initialGuessCouplingVariables>
       <finalCouplingVariables>
-        <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y1">
-          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
-          <label>y1^{*}</label>
-          <instanceID>1</instanceID>
-        </finalCouplingVariable>
         <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y2">
           <relatedParameterUID>/dataSchema/analyses/y2</relatedParameterUID>
           <label>y2^{*}</label>
           <instanceID>1</instanceID>
         </finalCouplingVariable>
+        <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/analyses/y1">
+          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
+          <label>y1^{*}</label>
+          <instanceID>1</instanceID>
+        </finalCouplingVariable>
       </finalCouplingVariables>
       <couplingCopyVariables>
-        <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1">
-          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
-          <label>y1^{c}</label>
-          <instanceID>1</instanceID>
-        </couplingCopyVariable>
         <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2">
           <relatedParameterUID>/dataSchema/analyses/y2</relatedParameterUID>
           <label>y2^{c}</label>
+          <instanceID>1</instanceID>
+        </couplingCopyVariable>
+        <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1">
+          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
+          <label>y1^{c}</label>
           <instanceID>1</instanceID>
         </couplingCopyVariable>
       </couplingCopyVariables>
@@ -963,14 +963,14 @@
         </finalOutputVariable>
       </finalOutputVariables>
       <consistencyConstraintVariables>
-        <consistencyConstraintVariable uID="/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1">
-          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
-          <label>gc_y1</label>
-          <instanceID>1</instanceID>
-        </consistencyConstraintVariable>
         <consistencyConstraintVariable uID="/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2">
           <relatedParameterUID>/dataSchema/analyses/y2</relatedParameterUID>
           <label>gc_y2</label>
+          <instanceID>1</instanceID>
+        </consistencyConstraintVariable>
+        <consistencyConstraintVariable uID="/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1">
+          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
+          <label>gc_y1</label>
           <instanceID>1</instanceID>
         </consistencyConstraintVariable>
       </consistencyConstraintVariables>
@@ -1004,10 +1004,10 @@
               <designVariableUID>__desVar__/dataSchema/variables/z2</designVariableUID>
             </designVariable>
             <designVariable>
-              <designVariableUID>__desVar__/dataSchema/analyses/y1</designVariableUID>
+              <designVariableUID>__desVar__/dataSchema/analyses/y2</designVariableUID>
             </designVariable>
             <designVariable>
-              <designVariableUID>__desVar__/dataSchema/analyses/y2</designVariableUID>
+              <designVariableUID>__desVar__/dataSchema/analyses/y1</designVariableUID>
             </designVariable>
           </designVariables>
           <objectiveVariables>
@@ -1023,10 +1023,10 @@
               <constraintVariableUID>__conVar__/dataSchema/analyses/g2</constraintVariableUID>
             </constraintVariable>
             <constraintVariable>
-              <constraintVariableUID>__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</constraintVariableUID>
+              <constraintVariableUID>__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</constraintVariableUID>
             </constraintVariable>
             <constraintVariable>
-              <constraintVariableUID>__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y2</constraintVariableUID>
+              <constraintVariableUID>__conVar__/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</constraintVariableUID>
             </constraintVariable>
           </constraintVariables>
         </optimizer>

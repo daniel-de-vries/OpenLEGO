@@ -100,7 +100,8 @@ class AbstractDiscipline(object):
         # type: () -> string_types
         """Generate the template partials XML file for this discipline.
 
-        This method should be implemented to define for which inputs this discipline can provide the sensitivities.
+        This method should be implemented to define for which inputs this discipline can provide
+        the sensitivities.
 
         Returns
         -------
@@ -111,7 +112,8 @@ class AbstractDiscipline(object):
 
     def deploy(self):
         # type: () -> None
-        """Deploy this discipline's template in-/output, partials XML files and its information JSON file."""
+        """Deploy this discipline's template in-/output, partials XML files and its information
+        JSON file."""
         with open(self.in_file, 'wb') as f:
             f.write(self.generate_input_xml())
         with open(self.out_file, 'wb') as f:
@@ -140,10 +142,11 @@ class AbstractDiscipline(object):
     @staticmethod
     def linearize(in_file, partials_file):
         # type: (str, str) -> None
-        """Compute the sensitivities of a given input XML file and write them to a given partials XML file.
+        """Compute the sensitivities of a given input XML file and write them to a given partials
+        XML file.
 
-        This method should be implemented to define the linearization of a specific discipline. By default a discipline
-        is considered a 'black box', and no sensitivities are provided.
+        This method should be implemented to define the linearization of a specific discipline. By
+        default a discipline is considered a 'black box', and no sensitivities are provided.
 
         Parameters
         ----------

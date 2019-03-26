@@ -771,7 +771,6 @@ class CMDOWSObject(object):
             _process_step_numbers[uid] = self.process_info['step_numbers'][i]
         return _process_step_numbers
 
-    # TODO: Implement / use this function throughout code
     def get_source_functions(self, parameter_uid, filter_list=None):
         # type: (str, List[str]) -> List[str]
         """
@@ -797,8 +796,6 @@ class CMDOWSObject(object):
         else:
             return _srce_funcs
 
-
-    # TODO: Implement / use this function throughout code
     def get_target_functions(self, parameter_uid, filter_list=None):
         # type: (str, List[str]) -> List[str]
         """
@@ -824,7 +821,6 @@ class CMDOWSObject(object):
         else:
             return _trgt_funcs
 
-    # TODO: Implement / use this function throughout code
     def get_source_parameters(self, function_uid, filter_list=None):
         # type: (str) -> List[str]
         """
@@ -850,7 +846,6 @@ class CMDOWSObject(object):
         else:
             return _srce_parms
 
-    # TODO: Implement / use this function throughout code
     def get_target_parameters(self, function_uid, filter_list=None):
         # type: (str) -> List[str]
         """

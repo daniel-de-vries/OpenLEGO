@@ -64,9 +64,17 @@ def get_loop_items(analyze_mdao_definitions):
     return mdao_defs_loop
 
 
-def run_openlego(analyze_mdao_definitions):
+def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=None, data_folder=None,
+                 run_type='test', approx_totals=False):
     # Check and analyze inputs
     mdao_defs_loop = get_loop_items(analyze_mdao_definitions)
+    file_dir = os.path.dirname(__file__)
+    if not cmdows_dir:
+        cmdows_dir = os.path.join(file_dir, 'cmdows_files')
+    if not initial_file_path:
+        initial_file_path = os.path.join(file_dir, 'SSBJ-base.xml')
+    if not data_folder:
+        data_folder = ''
 
     for mdao_def in mdao_defs_loop:
         print('\n-----------------------------------------------')
@@ -75,57 +83,63 @@ def run_openlego(analyze_mdao_definitions):
         """Solve the SSBJ problem using the given CMDOWS file."""
 
         # 1. Create Problem
-        prob = LEGOProblem(cmdows_path=os.path.join('cmdows_files', 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
-                           kb_path='kb',  # Knowledge base path
-                           data_folder='',  # Output directory
+        prob = LEGOProblem(cmdows_path=os.path.join(cmdows_dir, 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
+                           kb_path=os.path.join(file_dir, 'kb'),  # Knowledge base path
+                           data_folder=data_folder,  # Output directory
                            base_xml_file='ssbj-output-{}.xml'.format(mdao_def))  # Output file
         prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
         prob.set_solver_print(0)  # Set printing of solver information
 
+        if approx_totals:
+            prob.model.approx_totals()
+
         # 2. Initialize the Problem and export N2 chart
         prob.store_model_view()
-        prob.initialize_from_xml('SSBJ-base.xml')  # Set the initial values from an XML file
+        prob.initialize_from_xml(initial_file_path)  # Set the initial values from an XML file
 
         # 3. Run the Problem
-        if mdao_def in ['CO', 'BLISS-2000']:
+        test_distributed = mdao_def in ['CO', 'BLISS-2000'] and run_type == 'test'
+        if test_distributed:
             prob.run_model()
         else:
             prob.run_driver()  # Run the driver (optimization, DOE, or convergence)
 
         # 4. Read out the case reader
-        if mdao_def not in ['CO', 'BLISS-2000']:
+        if not test_distributed:
             prob.collect_results()
 
-        # 5. Collect test results for test assertions
-        tc = prob['/dataSchema/aircraft/geometry/tc'][0]
-        h = prob['/dataSchema/reference/h'][0]
-        M = prob['/dataSchema/reference/M'][0]
-        AR = prob['/dataSchema/aircraft/geometry/AR'][0]
-        Lambda = prob['/dataSchema/aircraft/geometry/Lambda'][0]
-        Sref = prob['/dataSchema/aircraft/geometry/Sref'][0]
-        if mdao_def not in ['CO', 'BLISS-2000']:
-            lambda_ = prob['/dataSchema/aircraft/geometry/lambda'][0]
-            section = prob['/dataSchema/aircraft/geometry/section'][0]
-            Cf = prob['/dataSchema/aircraft/other/Cf'][0]
-            T = prob['/dataSchema/aircraft/other/T'][0]
-            R = prob['/dataSchema/scaledData/R/value'][0]
-            extra = prob['/dataSchema/aircraft/weight/WT'][0]
-        elif mdao_def == 'CO':
-            lambda_ = prob.model.SubOptimizer0.prob['/dataSchema/aircraft/geometry/lambda'][0]
-            section = prob.model.SubOptimizer0.prob['/dataSchema/aircraft/geometry/section'][0]
-            Cf = prob.model.SubOptimizer1.prob['/dataSchema/aircraft/other/Cf'][0]
-            T = prob.model.SubOptimizer2.prob['/dataSchema/aircraft/other/T'][0]
-            R = prob['/dataSchema/scaledData/R/value'][0]
-            extra = (prob['/dataSchema/distributedArchitectures/group0/objective'],
-                     prob['/dataSchema/distributedArchitectures/group1/objective'],
-                     prob['/dataSchema/distributedArchitectures/group2/objective'])
-        else:
-            lambda_, section, Cf, T, R, extra = None, None, None, None, None, None
+        if run_type == 'test':
+            # 5. Collect test results for test assertions
+            tc = prob['/dataSchema/aircraft/geometry/tc'][0]
+            h = prob['/dataSchema/reference/h'][0]
+            M = prob['/dataSchema/reference/M'][0]
+            AR = prob['/dataSchema/aircraft/geometry/AR'][0]
+            Lambda = prob['/dataSchema/aircraft/geometry/Lambda'][0]
+            Sref = prob['/dataSchema/aircraft/geometry/Sref'][0]
+            if mdao_def not in ['CO', 'BLISS-2000']:
+                lambda_ = prob['/dataSchema/aircraft/geometry/lambda'][0]
+                section = prob['/dataSchema/aircraft/geometry/section'][0]
+                Cf = prob['/dataSchema/aircraft/other/Cf'][0]
+                T = prob['/dataSchema/aircraft/other/T'][0]
+                R = prob['/dataSchema/scaledData/R/value'][0]
+                extra = prob['/dataSchema/aircraft/weight/WT'][0]
+            elif mdao_def == 'CO':
+                lambda_ = prob.model.SubOptimizer0.prob['/dataSchema/aircraft/geometry/lambda'][0]
+                section = prob.model.SubOptimizer0.prob['/dataSchema/aircraft/geometry/section'][0]
+                Cf = prob.model.SubOptimizer1.prob['/dataSchema/aircraft/other/Cf'][0]
+                T = prob.model.SubOptimizer2.prob['/dataSchema/aircraft/other/T'][0]
+                R = prob['/dataSchema/scaledData/R/value'][0]
+                extra = (prob['/dataSchema/distributedArchitectures/group0/objective'],
+                         prob['/dataSchema/distributedArchitectures/group1/objective'],
+                         prob['/dataSchema/distributedArchitectures/group2/objective'])
+            else:
+                lambda_, section, Cf, T, R, extra = None, None, None, None, None, None
 
-        # 6. Cleanup and invalidate the Problem afterwards
-        prob.invalidate()
-
-    return tc, h, M, AR, Lambda, Sref, lambda_, section, Cf, T, R, extra
+            # 6. Cleanup and invalidate the Problem afterwards
+            prob.invalidate()
+            return tc, h, M, AR, Lambda, Sref, lambda_, section, Cf, T, R, extra
+        elif run_type == 'validation':
+            return prob
 
 
 class TestSsbj(unittest.TestCase):

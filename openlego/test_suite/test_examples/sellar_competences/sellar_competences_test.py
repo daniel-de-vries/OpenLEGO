@@ -63,8 +63,8 @@ def get_loop_items(analyze_mdao_definitions):
     return mdao_defs_loop
 
 
-def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=None, data_folder=None,
-                 return_setting='test', approx_totals=False):
+def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=None,
+                 data_folder=None, run_type='test', approx_totals=False):
     # Check and analyze inputs
     mdao_defs_loop = get_loop_items(analyze_mdao_definitions)
     file_dir = os.path.dirname(__file__)
@@ -101,7 +101,7 @@ def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=No
         # 4. Read out the case reader
         prob.collect_results()
 
-        if return_setting == 'test':
+        if run_type == 'test':
             # 5. Collect test results for test assertions
             if '/dataSchema/variables/x0' in prob.model._outputs:
                 x = [prob['/dataSchema/variables/x0']]
@@ -121,7 +121,7 @@ def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=No
             # 6. Cleanup and invalidate the Problem afterwards
             prob.invalidate()
             return x, y, z, f, g
-        elif return_setting == 'validation':
+        elif run_type == 'validation':
             return prob
 
 

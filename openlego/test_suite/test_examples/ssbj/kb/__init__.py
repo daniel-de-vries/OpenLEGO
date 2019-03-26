@@ -44,13 +44,15 @@ def deploy():
 
     os.remove(os.path.join(dir_path, 'Constraints-input.xml'))
     os.remove(os.path.join(dir_path, 'Constraints-output.xml'))
+    os.remove(os.path.join(dir_path, 'Constraints-partials.xml'))
     os.remove(os.path.join(dir_path, 'Objective-input.xml'))
     os.remove(os.path.join(dir_path, 'Objective-output.xml'))
+    os.remove(os.path.join(dir_path, 'Objective-partials.xml'))
 
 
 def clean():
     for discipline in list_disciplines:
-        for pf in ['-input.xml', '-output.xml']:
+        for pf in ['-input.xml', '-output.xml', '-partials.xml']:
             os.remove(os.path.join(dir_path, discipline + pf))
     os.remove(os.path.join(dir_path, 'SSBJ-base.xml'))
 

@@ -547,9 +547,11 @@ class LEGOProblem(CMDOWSObject, Problem):
             var_design_vars = sorted(list(recorded_design_vars.keys()))
             var_constraints = sorted(list(recorded_constraints.keys()))
 
-            var_does = sorted([elem.text for elem in self.elem_arch_elems
-                              .findall('parameters/doeOutputSampleLists/doeOutputSampleList/'
-                                       'relatedParameterUID')])
+            var_does = []
+            if isinstance(self.driver, DOEDriver):
+                var_does = sorted([elem.text for elem in self.elem_arch_elems
+                                  .findall('parameters/doeOutputSampleLists/doeOutputSampleList/'
+                                           'relatedParameterUID')])
             var_convs = sorted([elem.text for elem in self.elem_problem_def
                                .findall('problemRoles/parameters/stateVariables/stateVariable/'
                                         'parameterUID')])
@@ -611,11 +613,12 @@ class LEGOProblem(CMDOWSObject, Problem):
             if var_does:
                 print_optional('\n    Quantities of interest', print_in_log)
                 for var_qoi in var_does:
-                    value = case.outputs[var_qoi]
-                    if len(value) == 1:
-                        value = value[0]
-                    print_optional('    {}: {}'.format(var_qoi, value), print_in_log)
-                    results = add_or_append_dict_entry(results, 'qois', var_qoi, value)
+                    if var_qoi in var_does:
+                        value = case.outputs[var_qoi]
+                        if len(value) == 1:
+                            value = value[0]
+                        print_optional('    {}: {}'.format(var_qoi, value), print_in_log)
+                        results = add_or_append_dict_entry(results, 'qois', var_qoi, value)
 
             # Print other quantities of interest
             title_not_printed = True

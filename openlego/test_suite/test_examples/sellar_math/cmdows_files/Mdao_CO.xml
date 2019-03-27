@@ -3,14 +3,14 @@
   <header>
     <creator>Imco van Gent</creator>
     <description>Mdao CMDOWS file of the well-known Sellar problem</description>
-    <timestamp>2019-03-26T17:02:06.346979</timestamp>
+    <timestamp>2019-03-27T12:57:40.975511</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2019-03-26T17:02:06.346979</timestamp>
+        <timestamp>2019-03-27T12:57:40.975511</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -47,90 +47,6 @@
   </header>
   <executableBlocks>
     <mathematicalFunctions>
-      <mathematicalFunction uID="H__i1">
-        <label>H^{i1}</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/variables/x0</parameterUID>
-            <equationLabel>x0</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/variables/x1__i1</parameterUID>
-            <equations uID="H__i1_equation">
-              <equation language="Python">x0</equation>
-            </equations>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="__J0__">
-        <label>J0</label>
-        <functionType>consistency</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/variables/z2</parameterUID>
-            <equationLabel>x0_0</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/z2</parameterUID>
-            <equationLabel>x0_1</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/scalers/variables/z2</parameterUID>
-            <equationLabel>x0_sc</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/variables/z1</parameterUID>
-            <equationLabel>x1_0</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/z1</parameterUID>
-            <equationLabel>x1_1</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/scalers/variables/z1</parameterUID>
-            <equationLabel>x1_sc</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/variables/x0</parameterUID>
-            <equationLabel>x2_0</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</parameterUID>
-            <equationLabel>x2_1</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/scalers/variables/x0</parameterUID>
-            <equationLabel>x2_sc</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/analyses/y1</parameterUID>
-            <equationLabel>x3_0</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1</parameterUID>
-            <equationLabel>x3_1</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/scalers/analyses/y1</parameterUID>
-            <equationLabel>x3_sc</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/distributedArchitectures/group0/objective</parameterUID>
-            <equations uID="__J0___equation">
-              <equation language="Python">(((x0_1-x0_0)/x0_sc)**2+((x1_1-x1_0)/x1_sc)**2+((x2_1-x2_0)/x2_sc)**2+((x3_1-x3_0)/x3_sc)**2)**0.5</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/distributedArchitectures/group0/objective</parameterUID>
-            <equationsUID>__J0___equation</equationsUID>
-          </output>
-        </outputs>
-      </mathematicalFunction>
       <mathematicalFunction uID="F">
         <label>F</label>
         <functionType>regular</functionType>
@@ -162,40 +78,6 @@
           <output>
             <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/analyses/f</parameterUID>
             <equationsUID>F_equation</equationsUID>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="ABC">
-        <label>ABC</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/settings/a</parameterUID>
-            <equationLabel>a</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/settings/c</parameterUID>
-            <equations uID="ABC_equation">
-              <equation language="Python">a</equation>
-            </equations>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="H">
-        <label>H</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</parameterUID>
-            <equationLabel>x0</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/variables/x1</parameterUID>
-            <equationsUID>H__i1_equation</equationsUID>
           </output>
         </outputs>
       </mathematicalFunction>
@@ -250,32 +132,6 @@
           <output>
             <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/distributedArchitectures/group1/objective</parameterUID>
             <equationsUID>__J1___equation</equationsUID>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="__Jtot__">
-        <label>Jtot</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/distributedArchitectures/group0/objective</parameterUID>
-            <equationLabel>J_0</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/distributedArchitectures/group1/objective</parameterUID>
-            <equationLabel>J_1</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/distributedArchitectures/groupTot/objective</parameterUID>
-            <equations uID="__Jtot___equation">
-              <equation language="Python">(J_0**2+J_1**2)**0.5</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/distributedArchitectures/groupTot/objective</parameterUID>
-            <equationsUID>__Jtot___equation</equationsUID>
           </output>
         </outputs>
       </mathematicalFunction>
@@ -384,6 +240,150 @@
             <equations uID="D[2]_equation">
               <equation language="Python">c*(abs(y1)**.5 + z1 + z2)</equation>
             </equations>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="ABC">
+        <label>ABC</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/settings/a</parameterUID>
+            <equationLabel>a</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/settings/c</parameterUID>
+            <equations uID="ABC_equation">
+              <equation language="Python">a</equation>
+            </equations>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="H">
+        <label>H</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</parameterUID>
+            <equationLabel>x0</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/variables/x1</parameterUID>
+            <equations uID="H_equation">
+              <equation language="Python">x0</equation>
+            </equations>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="H__i1">
+        <label>H^{i1}</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/variables/x0</parameterUID>
+            <equationLabel>x0</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/variables/x1__i1</parameterUID>
+            <equationsUID>H_equation</equationsUID>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="__J0__">
+        <label>J0</label>
+        <functionType>consistency</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/variables/z2</parameterUID>
+            <equationLabel>x0_0</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/z2</parameterUID>
+            <equationLabel>x0_1</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/scalers/variables/z2</parameterUID>
+            <equationLabel>x0_sc</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/variables/z1</parameterUID>
+            <equationLabel>x1_0</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/z1</parameterUID>
+            <equationLabel>x1_1</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/scalers/variables/z1</parameterUID>
+            <equationLabel>x1_sc</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/variables/x0</parameterUID>
+            <equationLabel>x2_0</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</parameterUID>
+            <equationLabel>x2_1</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/scalers/variables/x0</parameterUID>
+            <equationLabel>x2_sc</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/analyses/y1</parameterUID>
+            <equationLabel>x3_0</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1</parameterUID>
+            <equationLabel>x3_1</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/scalers/analyses/y1</parameterUID>
+            <equationLabel>x3_sc</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/distributedArchitectures/group0/objective</parameterUID>
+            <equations uID="__J0___equation">
+              <equation language="Python">(((x0_1-x0_0)/x0_sc)**2+((x1_1-x1_0)/x1_sc)**2+((x2_1-x2_0)/x2_sc)**2+((x3_1-x3_0)/x3_sc)**2)**0.5</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/distributedArchitectures/group0/objective</parameterUID>
+            <equationsUID>__J0___equation</equationsUID>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="__Jtot__">
+        <label>Jtot</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/distributedArchitectures/group0/objective</parameterUID>
+            <equationLabel>J_0</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/distributedArchitectures/group1/objective</parameterUID>
+            <equationLabel>J_1</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/distributedArchitectures/groupTot/objective</parameterUID>
+            <equations uID="__Jtot___equation">
+              <equation language="Python">(J_0**2+J_1**2)**0.5</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/distributedArchitectures/groupTot/objective</parameterUID>
+            <equationsUID>__Jtot___equation</equationsUID>
           </output>
         </outputs>
       </mathematicalFunction>
@@ -802,7 +802,11 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z2</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
@@ -810,15 +814,11 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
           <toParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z2</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
@@ -1062,11 +1062,19 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Sys-Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</toParameterUID>
+          <toParameterUID>/dataSchema/variables/z1</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Sys-Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Sys-Optimizer</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/variables/z2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Sys-Optimizer</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z2</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Sys-Optimizer</fromExecutableBlockUID>
@@ -1078,14 +1086,6 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Sys-Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/variables/z1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Sys-Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Sys-Optimizer</fromExecutableBlockUID>
           <toParameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1</toParameterUID>
         </edge>
         <edge>
@@ -1094,18 +1094,26 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Sys-Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/variables/z2</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Sys-Optimizer</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z2</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</fromParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z1</fromParameterUID>
           <toExecutableBlockUID>Sys-Optimizer</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</fromParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z1</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z2</fromParameterUID>
+          <toExecutableBlockUID>Sys-Optimizer</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z2</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
@@ -1117,14 +1125,6 @@
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z1</fromParameterUID>
-          <toExecutableBlockUID>Sys-Optimizer</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z1</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
           <fromParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
           <toExecutableBlockUID>Sys-Optimizer</toExecutableBlockUID>
         </edge>
@@ -1133,11 +1133,11 @@
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z2</fromParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</fromParameterUID>
           <toExecutableBlockUID>Sys-Optimizer</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z2</fromParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
@@ -1417,9 +1417,14 @@
           <label>z2^{0}</label>
           <instanceID>1</instanceID>
         </initialGuessDesignVariable>
-        <initialGuessDesignVariable uID="/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0">
-          <relatedParameterUID>/dataSchema/variables/x0</relatedParameterUID>
-          <label>x0^{c,0}</label>
+        <initialGuessDesignVariable uID="/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z1">
+          <relatedParameterUID>/dataSchema/variables/z1</relatedParameterUID>
+          <label>z1^{0}</label>
+          <instanceID>1</instanceID>
+        </initialGuessDesignVariable>
+        <initialGuessDesignVariable uID="/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z2">
+          <relatedParameterUID>/dataSchema/variables/z2</relatedParameterUID>
+          <label>z2^{0}</label>
           <instanceID>1</instanceID>
         </initialGuessDesignVariable>
         <initialGuessDesignVariable uID="/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y2">
@@ -1427,19 +1432,14 @@
           <label>y2^{c,0}</label>
           <instanceID>1</instanceID>
         </initialGuessDesignVariable>
-        <initialGuessDesignVariable uID="/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z1">
-          <relatedParameterUID>/dataSchema/variables/z1</relatedParameterUID>
-          <label>z1^{0}</label>
-          <instanceID>1</instanceID>
-        </initialGuessDesignVariable>
         <initialGuessDesignVariable uID="/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1">
           <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
           <label>y1^{c,0}</label>
           <instanceID>1</instanceID>
         </initialGuessDesignVariable>
-        <initialGuessDesignVariable uID="/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/variables/z2">
-          <relatedParameterUID>/dataSchema/variables/z2</relatedParameterUID>
-          <label>z2^{0}</label>
+        <initialGuessDesignVariable uID="/dataSchema/architectureNodes/initialGuessDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0">
+          <relatedParameterUID>/dataSchema/variables/x0</relatedParameterUID>
+          <label>x0^{c,0}</label>
           <instanceID>1</instanceID>
         </initialGuessDesignVariable>
       </initialGuessDesignVariables>
@@ -1469,9 +1469,14 @@
           <label>z2^{*}</label>
           <instanceID>1</instanceID>
         </finalDesignVariable>
-        <finalDesignVariable uID="/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0">
-          <relatedParameterUID>/dataSchema/variables/x0</relatedParameterUID>
-          <label>x0^{c,*}</label>
+        <finalDesignVariable uID="/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z1">
+          <relatedParameterUID>/dataSchema/variables/z1</relatedParameterUID>
+          <label>z1^{*}</label>
+          <instanceID>1</instanceID>
+        </finalDesignVariable>
+        <finalDesignVariable uID="/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z2">
+          <relatedParameterUID>/dataSchema/variables/z2</relatedParameterUID>
+          <label>z2^{*}</label>
           <instanceID>1</instanceID>
         </finalDesignVariable>
         <finalDesignVariable uID="/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y2">
@@ -1479,19 +1484,14 @@
           <label>y2^{c,*}</label>
           <instanceID>1</instanceID>
         </finalDesignVariable>
-        <finalDesignVariable uID="/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z1">
-          <relatedParameterUID>/dataSchema/variables/z1</relatedParameterUID>
-          <label>z1^{*}</label>
-          <instanceID>1</instanceID>
-        </finalDesignVariable>
         <finalDesignVariable uID="/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1">
           <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
           <label>y1^{c,*}</label>
           <instanceID>1</instanceID>
         </finalDesignVariable>
-        <finalDesignVariable uID="/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/variables/z2">
-          <relatedParameterUID>/dataSchema/variables/z2</relatedParameterUID>
-          <label>z2^{*}</label>
+        <finalDesignVariable uID="/dataSchema/architectureNodes/finalDesignVariables/dataSchemaCopy/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0">
+          <relatedParameterUID>/dataSchema/variables/x0</relatedParameterUID>
+          <label>x0^{c,*}</label>
           <instanceID>1</instanceID>
         </finalDesignVariable>
       </finalDesignVariables>
@@ -1648,19 +1648,19 @@
           </settings>
           <designVariables>
             <designVariable>
-              <designVariableUID>__desVar__/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</designVariableUID>
+              <designVariableUID>__desVar__/dataSchema/variables/z1</designVariableUID>
+            </designVariable>
+            <designVariable>
+              <designVariableUID>__desVar__/dataSchema/variables/z2</designVariableUID>
             </designVariable>
             <designVariable>
               <designVariableUID>__desVar__/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y2</designVariableUID>
             </designVariable>
             <designVariable>
-              <designVariableUID>__desVar__/dataSchema/variables/z1</designVariableUID>
-            </designVariable>
-            <designVariable>
               <designVariableUID>__desVar__/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/analyses/y1</designVariableUID>
             </designVariable>
             <designVariable>
-              <designVariableUID>__desVar__/dataSchema/variables/z2</designVariableUID>
+              <designVariableUID>__desVar__/dataSchema/architectureNodes/copyDesignVariables/dataSchemaCopy/variables/x0</designVariableUID>
             </designVariable>
           </designVariables>
           <objectiveVariables>

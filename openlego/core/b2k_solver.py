@@ -518,7 +518,7 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                         error_y_minus.append(abs(val_lb[l] - val_opt[l]))
                     else:
                         error_y_minus.append(0.)
-            trace = go.Scatter(x=range(len(val_opt)), y=val_opt, mode='markers', name=legend_name,
+            trace = go.Scatter(x=list(range(len(val_opt))), y=val_opt, mode='markers', name=legend_name,
                                error_y=dict(type='data', symmetric=False, array=error_y,
                                             arrayminus=error_y_minus),
                                marker=dict(size=12))
@@ -577,7 +577,7 @@ def create_plotly_plot(dct, plot_title, filename,
     legend_entries = ['/'.join(x.split('/')[-2:]) for x in var_names]
     for var_name, legend_name in zip(var_names, legend_entries):
         values = [float(val) for val in dct[var_name]]
-        trace = go.Scatter(x=range(len(values)), y=values, mode='markers', name=legend_name,
+        trace = go.Scatter(x=list(range(len(values))), y=values, mode='markers', name=legend_name,
                            marker=dict(size=12))
         traces.append(trace)
     layout_cons = go.Layout(title=plot_title,

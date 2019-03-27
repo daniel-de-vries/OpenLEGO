@@ -3,14 +3,14 @@
   <header>
     <creator>Imco van Gent</creator>
     <description>Mdao CMDOWS file of the well-known Sellar problem</description>
-    <timestamp>2019-03-26T17:02:06.346979</timestamp>
+    <timestamp>2019-03-27T12:57:40.975511</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2019-03-26T17:02:06.346979</timestamp>
+        <timestamp>2019-03-27T12:57:40.975511</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -76,43 +76,6 @@
           <generalInfo>
             <status>Available</status>
             <description>F discipline of the Sellar tool set.</description>
-            <owner>
-              <contactUID>imcovangent</contactUID>
-            </owner>
-            <creator>
-              <contactUID>imcovangent</contactUID>
-            </creator>
-            <operator>
-              <contactUID>imcovangent</contactUID>
-            </operator>
-            <licensing>
-              <licenseType>open-source</licenseType>
-              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
-              <licenseSpecification>Apache License 2.0</licenseSpecification>
-            </licensing>
-          </generalInfo>
-        </metadata>
-      </designCompetence>
-      <designCompetence uID="H">
-        <label>H</label>
-        <instanceID>1</instanceID>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/variables/x0</parameterUID>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/variables/x1</parameterUID>
-          </output>
-        </outputs>
-        <ID>H</ID>
-        <modeID>main</modeID>
-        <version>1.0</version>
-        <metadata>
-          <generalInfo>
-            <status>Available</status>
-            <description>H discipline of the Sellar tool set.</description>
             <owner>
               <contactUID>imcovangent</contactUID>
             </owner>
@@ -311,8 +274,63 @@
           </generalInfo>
         </metadata>
       </designCompetence>
+      <designCompetence uID="H">
+        <label>H</label>
+        <instanceID>1</instanceID>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/variables/x0</parameterUID>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/variables/x1</parameterUID>
+          </output>
+        </outputs>
+        <ID>H</ID>
+        <modeID>main</modeID>
+        <version>1.0</version>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>H discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>imcovangent</contactUID>
+            </owner>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
     </designCompetences>
     <mathematicalFunctions>
+      <mathematicalFunction uID="ABC">
+        <label>ABC</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/settings/a</parameterUID>
+            <equationLabel>a</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/settings/c</parameterUID>
+            <equations uID="ABC_equation">
+              <equation language="Python">a</equation>
+            </equations>
+          </output>
+        </outputs>
+      </mathematicalFunction>
       <mathematicalFunction uID="Gc">
         <label>Gc</label>
         <functionType>consistency</functionType>
@@ -345,24 +363,6 @@
             <parameterUID>/dataSchema/architectureNodes/consistencyConstraintVariables/dataSchemaCopy/analyses/gc_y1</parameterUID>
             <equations uID="Gc_equation_1">
               <equation language="Python">y1-y1c</equation>
-            </equations>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="ABC">
-        <label>ABC</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/settings/a</parameterUID>
-            <equationLabel>a</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/settings/c</parameterUID>
-            <equations uID="ABC_equation">
-              <equation language="Python">a</equation>
             </equations>
           </output>
         </outputs>

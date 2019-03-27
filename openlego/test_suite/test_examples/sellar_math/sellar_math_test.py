@@ -64,8 +64,8 @@ def get_loop_items(analyze_mdao_definitions):
     return mdao_defs_loop
 
 
-def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=None, data_folder=None,
-                 run_type='test', approx_totals=False):
+def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=None,
+                 data_folder=None, run_type='test', approx_totals=False, driver_debug_print=False):
     # Check and analyze inputs
     mdao_defs_loop = get_loop_items(analyze_mdao_definitions)
     file_dir = os.path.dirname(__file__)
@@ -87,8 +87,9 @@ def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=No
                            kb_path='',
                            data_folder=data_folder,  # Output directory
                            base_xml_file='sellar-output.xml')  # Output file
-        #prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
-        #prob.set_solver_print(0)  # Set printing of solver information
+        if driver_debug_print:
+            prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']
+        prob.set_solver_print(0)  # Set printing of solver information
         if approx_totals:
             prob.model.approx_totals()
 
@@ -135,8 +136,8 @@ class TestSellarMath(unittest.TestCase):
 
     def assertion_con_mda(self, x, y, z, f, g):
         self.assertAlmostEqual(x[0], 4.00, 2)
-        self.assertAlmostEqual(float(y[0]), get_couplings(z[0], z[1], x[0])[0], 2)
-        self.assertAlmostEqual(float(y[1]), get_couplings(z[0], z[1], x[0])[1], 2)
+        self.assertAlmostEqual(float(y[0]), float(get_couplings(z[0], z[1], x[0])[0]), 2)
+        self.assertAlmostEqual(float(y[1]), float(get_couplings(z[0], z[1], x[0])[1]), 2)
         self.assertAlmostEqual(z[0], 1.00, 2)
         self.assertAlmostEqual(z[1], 5.00, 2)
         self.assertAlmostEqual(float(f[0]), get_objective(x[0], z[1], y[0], y[1]), 2)

@@ -444,7 +444,7 @@ class LEGOProblem(CMDOWSObject, Problem):
                     raise AssertionError('The failed experiments of {} are not consistent in the '
                                          'training data.'
                                          .format(vector_name))
-            return np.array(filter(lambda x: not np.isnan(x), vector)), failed_experiments
+            return np.array(list(filter(lambda x: not np.isnan(x), vector))), failed_experiments
         else:
             raise AssertionError('Could not determine the vector type for vector_name: {}.'
                                  .format(vector_name))

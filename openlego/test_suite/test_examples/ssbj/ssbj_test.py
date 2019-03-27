@@ -56,16 +56,16 @@ def get_loop_items(analyze_mdao_definitions):
         if analyze_mdao_definitions == 'all':
             mdao_defs_loop = mdao_definitions
         else:
-            raise ValueError(
-                'String value {} is not allowed for analyze_mdao_definitions.'.format(analyze_mdao_definitions))
+            raise ValueError('String value {} is not allowed for analyze_mdao_definitions.'
+                             .format(analyze_mdao_definitions))
     else:
-        raise IOError(
-            'Invalid input {} provided of type {}.'.format(analyze_mdao_definitions, type(analyze_mdao_definitions)))
+        raise IOError('Invalid input {} provided of type {}.'
+                      .format(analyze_mdao_definitions, type(analyze_mdao_definitions)))
     return mdao_defs_loop
 
 
-def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=None, data_folder=None,
-                 run_type='test', approx_totals=False):
+def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=None,
+                 data_folder=None, run_type='test', approx_totals=False, driver_debug_print=False):
     # Check and analyze inputs
     mdao_defs_loop = get_loop_items(analyze_mdao_definitions)
     file_dir = os.path.dirname(__file__)
@@ -83,11 +83,13 @@ def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=No
         """Solve the SSBJ problem using the given CMDOWS file."""
 
         # 1. Create Problem
-        prob = LEGOProblem(cmdows_path=os.path.join(cmdows_dir, 'Mdao_{}.xml'.format(mdao_def)),  # CMDOWS file
+        prob = LEGOProblem(cmdows_path=os.path.join(cmdows_dir, 'Mdao_{}.xml'.format(mdao_def)),
                            kb_path=os.path.join(file_dir, 'kb'),  # Knowledge base path
                            data_folder=data_folder,  # Output directory
-                           base_xml_file='ssbj-output-{}.xml'.format(mdao_def))  # Output file
-        prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']  # Set printing of debug info
+                           base_xml_file=os.path.join(data_folder,
+                                                      'ssbj-output-{}.xml'.format(mdao_def)))
+        if driver_debug_print:
+            prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'ln_cons', 'objs']
         prob.set_solver_print(0)  # Set printing of solver information
 
         if approx_totals:
@@ -317,7 +319,8 @@ class TestSsbj(unittest.TestCase):
 
     def __del__(self):
         kb.clean()
-        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'ssbj-output-', 'SLSQP.out', 'ssbj_b2k_'])
+        clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'ssbj-output-',
+                                                       'SLSQP.out', 'ssbj_b2k_'])
 
 
 if __name__ == '__main__':

@@ -424,19 +424,19 @@ class CMDOWSObject(object):
                     driver_key = None
                     for idx, subworkflow in enumerate(item[loop_el]):
                         if not driver_uid_is_sub_driver:
-                            if subworkflow.keys()[0] == self.driver_uid:
+                            if list(subworkflow)[0] == self.driver_uid:
                                 wf_to_append = subworkflow[self.driver_uid]
                                 driver_key = self.driver_uid
                                 break
-                            elif subworkflow.keys()[0] in self._super_driver_components:
+                            elif list(subworkflow)[0] in self._super_driver_components:
                                 driver_key = loop_el
-                                wf_to_append.append(subworkflow.keys()[0])
+                                wf_to_append.append(list(subworkflow)[0])
                         else:
-                            entry_to_check = subworkflow[subworkflow.keys()[0]][0]
+                            entry_to_check = subworkflow[list(subworkflow)[0]][0]
                             if isinstance(entry_to_check, dict) and \
-                                    entry_to_check.keys()[0] == self.driver_uid:
-                                wf_to_append = subworkflow[subworkflow.keys()[0]]
-                                driver_key = self.SUPERDRIVER_PREFIX + subworkflow.keys()[0]
+                                    list(entry_to_check)[0] == self.driver_uid:
+                                wf_to_append = subworkflow[list(subworkflow)[0]]
+                                driver_key = self.SUPERDRIVER_PREFIX + list(subworkflow)[0]
                                 break
                     if wf_to_append is None or driver_key is None:
                         raise AssertionError('Could not match the right subworkflow for '
@@ -687,7 +687,7 @@ class CMDOWSObject(object):
         _sm_parameters = {}
         for elem_sm in self.elem_cmdows.iter('surrogateModel'):
             sm_uid = elem_sm.attrib['uID']
-            if sm_uid not in _sm_parameters.keys():
+            if sm_uid not in list(_sm_parameters):
                 _sm_parameters[sm_uid] = set()
             for el_parameter in elem_sm.iterfind(xpath):
                 _sm_parameters[sm_uid].update([el_parameter.text])

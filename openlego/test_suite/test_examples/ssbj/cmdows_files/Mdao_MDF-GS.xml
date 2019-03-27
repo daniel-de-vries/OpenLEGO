@@ -3,14 +3,14 @@
   <header>
     <creator>Imco van Gent</creator>
     <description>CMDOWS file of the SSBJ test case solution strategy</description>
-    <timestamp>2019-03-26T17:02:06.346979</timestamp>
+    <timestamp>2019-03-27T12:57:40.975511</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2019-03-26T17:02:06.346979</timestamp>
+        <timestamp>2019-03-27T12:57:40.975511</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -64,34 +64,10 @@
   </header>
   <executableBlocks>
     <designCompetences>
-      <designCompetence uID="AeroAnalysis">
-        <label>AeroAnalysis</label>
+      <designCompetence uID="PropulsionAnalysis">
+        <label>PropulsionAnalysis</label>
         <instanceID>1</instanceID>
         <inputs>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/tc</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/AR</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/Lambda</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/Sref</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/Theta</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/weight/WT</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/other/Cf</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/other/CDmin</parameterUID>
-          </input>
           <input>
             <parameterUID>/dataSchema/reference/h</parameterUID>
           </input>
@@ -99,32 +75,44 @@
             <parameterUID>/dataSchema/reference/M</parameterUID>
           </input>
           <input>
-            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/reference/ESF</parameterUID>
+            <parameterUID>/dataSchema/aircraft/other/T</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/other/D</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/weight/WBE</parameterUID>
           </input>
         </inputs>
         <outputs>
           <output>
-            <parameterUID>/dataSchema/aircraft/other/L</parameterUID>
+            <parameterUID>/dataSchema/reference/Temp</parameterUID>
           </output>
           <output>
-            <parameterUID>/dataSchema/aircraft/other/D</parameterUID>
+            <parameterUID>/dataSchema/reference/ESF</parameterUID>
           </output>
           <output>
-            <parameterUID>/dataSchema/aircraft/other/fin</parameterUID>
+            <parameterUID>/dataSchema/aircraft/other/SFC</parameterUID>
           </output>
           <output>
-            <parameterUID>/dataSchema/aircraft/other/dpdx</parameterUID>
+            <parameterUID>/dataSchema/aircraft/other/DT</parameterUID>
           </output>
           <output>
-            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/other/L</parameterUID>
+            <parameterUID>/dataSchema/aircraft/weight/WE</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WE</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/reference/ESF</parameterUID>
           </output>
         </outputs>
-        <ID>AeroAnalysis</ID>
+        <ID>PropulsionAnalysis</ID>
         <modeID>main</modeID>
         <version>1.0</version>
         <metadata>
           <generalInfo>
-            <description>AeroAnalysis discipline of the SSBJ tool set.</description>
+            <description>PropulsionAnalysis discipline of the SSBJ tool set.</description>
             <status>Available</status>
             <owner>
               <contactUID>remilafage</contactUID>
@@ -154,8 +142,8 @@
               <executionDetails>
                 <operatingSystem>Windows</operatingSystem>
                 <integrationPlatform>Optimus</integrationPlatform>
-                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\aeroanalysis\AeroAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
-                <description>Details for the command line execution of the AeroAnalysis Python tool in Windows using an Optimus integration.</description>
+                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\propulsionanalysis\PropulsionAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
+                <description>Details for the command line execution of the PropulsionAnalysis Python tool in Windows using an Optimus integration.</description>
                 <softwareRequirements>
                   <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
                   <softwareRequirement>kadmos Python package version 0.8 or higher installed</softwareRequirement>
@@ -275,6 +263,107 @@
           </executionInfo>
         </metadata>
       </designCompetence>
+      <designCompetence uID="AeroAnalysis">
+        <label>AeroAnalysis</label>
+        <instanceID>1</instanceID>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/tc</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/AR</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/Lambda</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/Sref</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/Theta</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/weight/WT</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/other/Cf</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/other/CDmin</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/reference/h</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/reference/M</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/reference/ESF</parameterUID>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/aircraft/other/L</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/aircraft/other/D</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/aircraft/other/fin</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/aircraft/other/dpdx</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/other/L</parameterUID>
+          </output>
+        </outputs>
+        <ID>AeroAnalysis</ID>
+        <modeID>main</modeID>
+        <version>1.0</version>
+        <metadata>
+          <generalInfo>
+            <description>AeroAnalysis discipline of the SSBJ tool set.</description>
+            <status>Available</status>
+            <owner>
+              <contactUID>remilafage</contactUID>
+            </owner>
+            <creator>
+              <contactUID>sylvaindubreuil</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+            </licensing>
+            <sources>
+              <repositoryLink>https://bitbucket.org/imcovangent/ssbj-kadmos/src/master/</repositoryLink>
+              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
+              <references>
+                <reference>ONERA SSBJ-OpenMDAO GitHub repository: https://github.com/OneraHub/SSBJ-OpenMDAO</reference>
+                <reference>NASA report using SSBJ: https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19980234657.pdf</reference>
+              </references>
+            </sources>
+          </generalInfo>
+          <executionInfo>
+            <localComponentInfo>
+              <executionDetails>
+                <operatingSystem>Windows</operatingSystem>
+                <integrationPlatform>Optimus</integrationPlatform>
+                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\aeroanalysis\AeroAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
+                <description>Details for the command line execution of the AeroAnalysis Python tool in Windows using an Optimus integration.</description>
+                <softwareRequirements>
+                  <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
+                  <softwareRequirement>kadmos Python package version 0.8 or higher installed</softwareRequirement>
+                </softwareRequirements>
+              </executionDetails>
+            </localComponentInfo>
+          </executionInfo>
+        </metadata>
+      </designCompetence>
       <designCompetence uID="PerformanceAnalysis">
         <label>PerformanceAnalysis</label>
         <instanceID>1</instanceID>
@@ -349,95 +438,6 @@
           </executionInfo>
         </metadata>
       </designCompetence>
-      <designCompetence uID="PropulsionAnalysis">
-        <label>PropulsionAnalysis</label>
-        <instanceID>1</instanceID>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/reference/h</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/reference/M</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/other/T</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/other/D</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/weight/WBE</parameterUID>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/reference/Temp</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/reference/ESF</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/other/SFC</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/other/DT</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/weight/WE</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WE</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/reference/ESF</parameterUID>
-          </output>
-        </outputs>
-        <ID>PropulsionAnalysis</ID>
-        <modeID>main</modeID>
-        <version>1.0</version>
-        <metadata>
-          <generalInfo>
-            <description>PropulsionAnalysis discipline of the SSBJ tool set.</description>
-            <status>Available</status>
-            <owner>
-              <contactUID>remilafage</contactUID>
-            </owner>
-            <creator>
-              <contactUID>sylvaindubreuil</contactUID>
-            </creator>
-            <operator>
-              <contactUID>imcovangent</contactUID>
-            </operator>
-            <licensing>
-              <licenseType>open-source</licenseType>
-              <licenseSpecification>Apache License 2.0</licenseSpecification>
-              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
-            </licensing>
-            <sources>
-              <repositoryLink>https://bitbucket.org/imcovangent/ssbj-kadmos/src/master/</repositoryLink>
-              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
-              <references>
-                <reference>ONERA SSBJ-OpenMDAO GitHub repository: https://github.com/OneraHub/SSBJ-OpenMDAO</reference>
-                <reference>NASA report using SSBJ: https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19980234657.pdf</reference>
-              </references>
-            </sources>
-          </generalInfo>
-          <executionInfo>
-            <localComponentInfo>
-              <executionDetails>
-                <operatingSystem>Windows</operatingSystem>
-                <integrationPlatform>Optimus</integrationPlatform>
-                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\propulsionanalysis\PropulsionAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
-                <description>Details for the command line execution of the PropulsionAnalysis Python tool in Windows using an Optimus integration.</description>
-                <softwareRequirements>
-                  <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
-                  <softwareRequirement>kadmos Python package version 0.8 or higher installed</softwareRequirement>
-                </softwareRequirements>
-              </executionDetails>
-            </localComponentInfo>
-          </executionInfo>
-        </metadata>
-      </designCompetence>
     </designCompetences>
     <mathematicalFunctions>
       <mathematicalFunction uID="C[Theta]">
@@ -459,82 +459,6 @@
           <output>
             <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/scaledData/Theta/value</parameterUID>
             <equationsUID>C[Theta]_equation</equationsUID>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="F[R]">
-        <label>F[R]</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/aircraft/other/R</parameterUID>
-            <equationLabel>R</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/scaledData/R/scaler</parameterUID>
-            <equationLabel>R_scaler</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/scaledData/R/value</parameterUID>
-            <equations uID="F[R]_equation">
-              <equation language="Python">-R/R_scaler</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/scaledData/R/value</parameterUID>
-            <equationsUID>F[R]_equation</equationsUID>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="C[prop]">
-        <label>C[prop]</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/reference/ESF</parameterUID>
-            <equationLabel>ESF</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/reference/Temp</parameterUID>
-            <equationLabel>Temp</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/other/DT</parameterUID>
-            <equationLabel>DT</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/scaledData/ESF/value</parameterUID>
-            <equations uID="C[prop]_equation">
-              <equation language="Python">ESF-1.5</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/scaledData/DT/value</parameterUID>
-            <equations uID="C[prop]_equation_1">
-              <equation language="Python">DT</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/scaledData/Temp/value</parameterUID>
-            <equations uID="C[prop]_equation_2">
-              <equation language="Python">Temp-1.02</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/scaledData/ESF/value</parameterUID>
-            <equationsUID>C[prop]_equation</equationsUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/scaledData/DT/value</parameterUID>
-            <equationsUID>C[prop]_equation_1</equationsUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/scaledData/Temp/value</parameterUID>
-            <equationsUID>C[prop]_equation_2</equationsUID>
           </output>
         </outputs>
       </mathematicalFunction>
@@ -635,6 +559,82 @@
           <output>
             <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/scaledData/sigma5/value</parameterUID>
             <equationsUID>C[sigmas]_equation_4</equationsUID>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="C[prop]">
+        <label>C[prop]</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/reference/ESF</parameterUID>
+            <equationLabel>ESF</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/reference/Temp</parameterUID>
+            <equationLabel>Temp</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/other/DT</parameterUID>
+            <equationLabel>DT</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/scaledData/ESF/value</parameterUID>
+            <equations uID="C[prop]_equation">
+              <equation language="Python">ESF-1.5</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/scaledData/DT/value</parameterUID>
+            <equations uID="C[prop]_equation_1">
+              <equation language="Python">DT</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/scaledData/Temp/value</parameterUID>
+            <equations uID="C[prop]_equation_2">
+              <equation language="Python">Temp-1.02</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/scaledData/ESF/value</parameterUID>
+            <equationsUID>C[prop]_equation</equationsUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/scaledData/DT/value</parameterUID>
+            <equationsUID>C[prop]_equation_1</equationsUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/scaledData/Temp/value</parameterUID>
+            <equationsUID>C[prop]_equation_2</equationsUID>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="F[R]">
+        <label>F[R]</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/aircraft/other/R</parameterUID>
+            <equationLabel>R</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/scaledData/R/scaler</parameterUID>
+            <equationLabel>R_scaler</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/scaledData/R/value</parameterUID>
+            <equations uID="F[R]_equation">
+              <equation language="Python">-R/R_scaler</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalOutputVariables/dataSchemaCopy/scaledData/R/value</parameterUID>
+            <equationsUID>F[R]_equation</equationsUID>
           </output>
         </outputs>
       </mathematicalFunction>

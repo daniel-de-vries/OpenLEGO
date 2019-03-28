@@ -320,7 +320,7 @@ class TestSsbj(unittest.TestCase):
     def __del__(self):
         kb.clean()
         clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_Mdao_', 'ssbj-output-',
-                                                       'SLSQP.out', 'ssbj_b2k_'])
+                                                       'SLSQP.out', 'b2k_'])
 
 
 if __name__ == '__main__':

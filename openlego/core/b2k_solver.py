@@ -1,4 +1,5 @@
 import copy
+import pickle
 
 import numpy as np
 import os
@@ -406,6 +407,10 @@ class NonlinearB2kSolver(NonlinearBlockGS):
         prob = self.system_optimizer_prob
 
         # Save design variables and bounds
+        local_bounds = self.LOCAL_BOUNDS
+        opt_dv_values = self.OPT_DV_VALUES
+        ref0_values = self.REF0_VALUES
+        ref_values = self.REF_VALUES
         for var_name, attrbs in prob.model._design_vars.items():
 
             # Initialize variables
@@ -416,11 +421,6 @@ class NonlinearB2kSolver(NonlinearBlockGS):
             def scaled(x):
                 return scale_value(x, adder, scaler)
             val_opt = scaled(format_as_float_or_array('optimum', copy.deepcopy(prob[var_name])))
-
-            local_bounds = self.LOCAL_BOUNDS
-            opt_dv_values = self.OPT_DV_VALUES
-            ref0_values = self.REF0_VALUES
-            ref_values = self.REF_VALUES
 
             if var_name not in local_bounds:
                 local_bounds[var_name] = [(val_lb, val_ub)]
@@ -452,6 +452,19 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                 attrbs_con_values[var_name] = attrbs
             else:
                 opt_con_values[var_name].append(val_con)
+
+        # Pickle all output
+        history = dict(local_bounds=local_bounds,
+                       opt_dv_values=opt_dv_values,
+                       ref0_values=ref0_values,
+                       ref_values=ref_values,
+                       opt_obj_values=opt_obj_values,
+                       opt_con_values=opt_con_values,
+                       attrbs_con_values=attrbs_con_values)
+        output_folder = prob.model.data_folder
+        output_case_str = prob.output_case_string
+        output_file_path = os.path.join(output_folder, 'b2k_history_{}.p'.format(output_case_str))
+        pickle.dump(history, open(output_file_path, 'wb'))
 
     def _print_last_iteration(self):
         # type: () -> None
@@ -518,7 +531,8 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                         error_y_minus.append(abs(val_lb[l] - val_opt[l]))
                     else:
                         error_y_minus.append(0.)
-            trace = go.Scatter(x=list(range(len(val_opt))), y=val_opt, mode='markers', name=legend_name,
+            trace = go.Scatter(x=list(range(len(val_opt))), y=val_opt, mode='markers',
+                               name=legend_name,
                                error_y=dict(type='data', symmetric=False, array=error_y,
                                             arrayminus=error_y_minus),
                                marker=dict(size=12))
@@ -529,20 +543,23 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                                     yaxis=dict(title='value'))
         fig_des_vars = go.Figure(data=traces_des_vars, layout=layout_des_vars)
         output_folder = self.system_optimizer_prob.model.data_folder
+        output_case_str = self.system_optimizer_prob.output_case_string
         plotly.offline.plot(fig_des_vars,
-                            filename=os.path.join(output_folder, 'ssbj_b2k_des_vars.html'),
+                            filename=os.path.join(output_folder,
+                                                  'b2k_des_vars_{}.html'
+                                                  .format(output_case_str)),
                             auto_open=False)
 
         # Plot constraints
         create_plotly_plot(self.OPT_CON_VALUES,
                            'Constraints of top-level system optimization',
-                           'ssbj_b2k_cons.html',
+                           'b2k_cons_{}.html'.format(output_case_str),
                            folder=output_folder)
 
         # Plot objective value(s)
         create_plotly_plot(self.OPT_OBJ_VALUES,
                            'Objective(s) of top-level system optimization',
-                           'ssbj_b2k_obj.html',
+                           'b2k_obj_{}.html'.format(output_case_str),
                            folder=output_folder)
 
 

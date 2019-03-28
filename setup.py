@@ -59,7 +59,8 @@ setup(
         'ssbjkadmos>=0.1.9',
         'cached-property',
         'plotly',
-        'six'
+        'six',
+        'typing'
     ],
     include_package_data=True,
     zip_safe=False

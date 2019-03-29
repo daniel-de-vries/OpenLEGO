@@ -22,15 +22,18 @@ from openmdao.recorders.recording_iteration_stack import Recording
 class NonlinearB2kSolver(NonlinearBlockGS):
     SOLVER = 'NL: BLISS-2000'
 
-    # Dictionaries used to store results
-    GLOBAL_BOUNDS = {}
-    LOCAL_BOUNDS = {}
-    OPT_DV_VALUES = {}
-    REF0_VALUES = {}
-    REF_VALUES = {}
-    OPT_OBJ_VALUES = {}
-    OPT_CON_VALUES = {}
-    ATTRBS_CON_VALUES = {}
+    def __init__(self, **kwargs):
+        super(NonlinearB2kSolver, self).__init__(**kwargs)
+
+        # Dictionaries used to store results
+        self.GLOBAL_BOUNDS = {}
+        self.LOCAL_BOUNDS = {}
+        self.OPT_DV_VALUES = {}
+        self.REF0_VALUES = {}
+        self.REF_VALUES = {}
+        self.OPT_OBJ_VALUES = {}
+        self.OPT_CON_VALUES = {}
+        self.ATTRBS_CON_VALUES = {}
 
     @property
     def system_optimizer_name(self):

@@ -1,29 +1,94 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright 2019 I. van Gent
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+This file contains the definition the `B2kSolver` class.
+"""
 import copy
+import os
 import pickle
+from math import isnan as isnan
+from typing import List
 
 import numpy as np
-import os
-
-from math import isnan as isnan
-
 import plotly
 import plotly.graph_objs as go
 
+from openmdao.api import NonlinearBlockGS
+from openmdao.core.analysis_error import AnalysisError
+from openmdao.recorders.recording_iteration_stack import Recording
 from openmdao.utils.general_utils import format_as_float_or_array
 
 from openlego.utils.general_utils import str_to_valid_sys_name, unscale_value, scale_value
 from openlego.utils.xml_utils import param_to_xpath
-from openmdao.core.analysis_error import AnalysisError
-
-from openmdao.api import NonlinearBlockGS
-from openmdao.recorders.recording_iteration_stack import Recording
 
 
-class NonlinearB2kSolver(NonlinearBlockGS):
+class B2kSolver(NonlinearBlockGS):
+    """Implements a special solver for the BLISS-2000 (B2k) MDO architecture. This solver acts like
+       a NonlinearBlockGS solver in terms of executing the system, but assesses convergence
+       differently (based on the objective value of the system optimizer in the B2k system) and
+       after each system-level optimization, the solver adjusts the bounds of the design variables
+       based on the optimum found by the system-level optimization.
+
+       In addition, the class provides specialized outputs (log statements and plotly plots)
+       to inspect the optimization during execution.
+
+        Parameters
+        ----------
+            maxiter : int, optional
+                Maximum amount of iterations
+
+            atol : float, optional
+                Absolute error tolerance
+
+            rtol : float, optional
+                Relative error tolerance
+
+            iprint : int, optional
+                Output printing setting for standard OpenMDAO output
+
+            f_k_red : float, optional
+                K-factor reduction for design variables
+
+            f_int_inc : float, optional
+                Percentage of interval increase if design variable bound is hit
+
+            f_int_inc_abs : float, optional
+                Absolute interval increase, minimum increase if percentual increase is too small
+
+            f_int_range : float, optional
+                Minimal range of the design variable interval
+
+            print_last_iteration : bool, optional
+                Set to True to print the last iteration information in log
+
+            plot_history : bool, optional
+                Set to True to plot history of optimizer with plotly
+
+        Returns
+        -------
+            B2kSolver
+        """
+
     SOLVER = 'NL: BLISS-2000'
 
     def __init__(self, **kwargs):
-        super(NonlinearB2kSolver, self).__init__(**kwargs)
+        # type: () -> None
+        """Initialize the solver and create dictionaries to store results."""
+        super(B2kSolver, self).__init__(**kwargs)
 
         # Dictionaries used to store results
         self.GLOBAL_BOUNDS = {}
@@ -37,6 +102,8 @@ class NonlinearB2kSolver(NonlinearBlockGS):
 
     @property
     def system_optimizer_name(self):
+        # type: () -> str
+        """Get the name of the system-level optimizer."""
         sys = self._system
         for sd in sys.super_drivers:
             if sys.loop_element_details[sd] == 'optimizer':
@@ -44,10 +111,14 @@ class NonlinearB2kSolver(NonlinearBlockGS):
 
     @property
     def system_optimizer_prob(self):
+        # type: () -> LEGOProblem
+        """Get the system-level optimizer object."""
         return getattr(self._system, str_to_valid_sys_name(self.system_optimizer_name)).prob
 
     @property
     def system_doe_names(self):
+        # type: () -> set
+        """Get the system-level DOEs."""
         _system_does = set()
         sys = self._system
         for sd in sys.super_drivers:
@@ -57,13 +128,15 @@ class NonlinearB2kSolver(NonlinearBlockGS):
 
     @property
     def system_doe_probs(self):
+        # type: () -> List[LEGOProblem]
+        """Get the system-level DOE LEGOProblem objects"""
         return [getattr(self._system, str_to_valid_sys_name(x)).prob for x in self.system_doe_names]
 
     def _declare_options(self):
+        # type: () -> None
+        """Declare options before kwargs are processed in the init method.
         """
-        Declare options before kwargs are processed in the init method.
-        """
-        super(NonlinearB2kSolver, self)._declare_options()
+        super(B2kSolver, self)._declare_options()
 
         self.options.declare('print_last_iteration', types=bool, default=True,
                              desc='set to True to print last iteration information in log')
@@ -80,6 +153,7 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                              desc='Minimal range of the design variable interval')
 
     def _iter_initialize(self):
+        # type: () -> (float, float)
         """
         Perform any necessary pre-processing operations.
 
@@ -97,13 +171,15 @@ class NonlinearB2kSolver(NonlinearBlockGS):
         return float('nan'), float('nan')
 
     def _run_apply(self):
+        # type: () -> None
         """
         Run the appropriate apply method on the system.
         """
         print('Run_apply for B2k solver')
-        super(NonlinearB2kSolver, self)._run_apply()
+        super(B2kSolver, self)._run_apply()
 
     def _solve(self):
+        # type: () -> None
         """
         Run the iterative solver.
         """
@@ -164,6 +240,7 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                 print(prefix + ' Converged')
 
     def _iter_get_norm(self):
+        # type: () -> (float, float)
         """
         Return the norm of the residual.
 
@@ -189,6 +266,7 @@ class NonlinearB2kSolver(NonlinearBlockGS):
             return float('nan'), float('nan')
 
     def _iter_apply_new_bounds(self):
+        # type: () -> None
         """Apply new bounds on the design variables and set up the models again."""
         prob = self.system_optimizer_prob
         # Get design variables
@@ -425,36 +503,24 @@ class NonlinearB2kSolver(NonlinearBlockGS):
                 return scale_value(x, adder, scaler)
             val_opt = scaled(format_as_float_or_array('optimum', copy.deepcopy(prob[var_name])))
 
-            if var_name not in local_bounds:
-                local_bounds[var_name] = [(val_lb, val_ub)]
-                ref0_values[var_name] = [val_ref0]
-                ref_values[var_name] = [val_ref]
-                opt_dv_values[var_name] = [val_opt]
-            else:
-                local_bounds[var_name].append((val_lb, val_ub))
-                ref0_values[var_name].append(val_ref0)
-                ref_values[var_name].append(val_ref)
-                opt_dv_values[var_name].append(val_opt)
+            local_bounds.setdefault(var_name, []).append((val_lb, val_ub))
+            ref0_values.setdefault(var_name, []).append(val_ref0)
+            ref_values.setdefault(var_name, []).append(val_ref)
+            opt_dv_values.setdefault(var_name, []).append(val_opt)
 
         # Save objective value
         var_name = prob.model.objective
         opt_obj_values = self.OPT_OBJ_VALUES
         val_obj = copy.deepcopy(prob[var_name])
-        if var_name not in opt_obj_values:
-            opt_obj_values[var_name] = [val_obj]
-        else:
-            opt_obj_values[var_name].append(val_obj)
+        opt_obj_values.setdefault(var_name, []).append(val_obj)
 
         # Save constraint values
         opt_con_values = self.OPT_CON_VALUES
         attrbs_con_values = self.ATTRBS_CON_VALUES
         for var_name, attrbs in prob.model.constraints.items():
             val_con = copy.deepcopy(prob[var_name])
-            if var_name not in opt_con_values:
-                opt_con_values[var_name] = [val_con]
-                attrbs_con_values[var_name] = attrbs
-            else:
-                opt_con_values[var_name].append(val_con)
+            opt_con_values.setdefault(var_name, []).append(val_con)
+            attrbs_con_values[var_name] = attrbs  # Overwrite allowed: constant for each iteration
 
         # Pickle all output
         history = dict(local_bounds=local_bounds,
@@ -472,7 +538,6 @@ class NonlinearB2kSolver(NonlinearBlockGS):
     def _print_last_iteration(self):
         # type: () -> None
         """Print the results of the last B2k iteration in the log."""
-
         i = self._iter_count - 1
         print('HISTORY OF LOOP {}'.format(i))
         # Design variables

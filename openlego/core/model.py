@@ -40,7 +40,7 @@ from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, L
 from openmdao.utils.general_utils import format_as_float_or_array, determine_adder_scaler
 from openmdao import INF_BOUND as INF_BOUND
 
-from openlego.core.b2k_solver import NonlinearB2kSolver
+from openlego.core.b2k_solver import B2kSolver
 from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid, \
     get_loop_nesting_obj, get_surrogate_model_setting_safe
 from openlego.utils.general_utils import parse_cmdows_value, str_to_valid_sys_name, parse_string
@@ -1205,7 +1205,7 @@ class LEGOModel(CMDOWSObject, Group):
             method = dsv_elem.findtext('settings/method')
             if method == 'BLISS-2000':
                 self.linear_solver = LinearRunOnce()
-                self.nonlinear_solver = NonlinearB2kSolver()
+                self.nonlinear_solver = B2kSolver()
             else:
                 raise AssertionError('Method {} for distributed system converger is not supported.'
                                      .format(method))

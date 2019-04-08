@@ -18,34 +18,57 @@ limitations under the License.
 This file contains the definition the `SubDriverComponent` class.
 """
 import os
-import pickle
 
 import numpy as np
-from openmdao.recorders.sqlite_recorder import SqliteRecorder
+from cached_property import cached_property
 
 from openmdao.api import ExplicitComponent, CaseReader
+from openmdao.recorders.sqlite_recorder import SqliteRecorder
+from openmdao.vectors.vector import Vector
 
-
+from openlego.core.problem import LEGOProblem
 from openlego.utils.general_utils import str_to_valid_sys_name, warn_about_failed_experiments, \
     unscale_value
 
 
 class SubDriverComponent(ExplicitComponent):
-    """Abstract base class exposing an interface to use subdriver (or nested) drivers within an
-    OpenMDAO model. This nested subdriver appears as an ExplicitComponent in the top-level
-    hierarchy, but configures and executes its own LEGOProblem() and LEGOModel() instances inside.
+    """Class exposing an interface to use subdriver (or nested) drivers within an OpenMDAO model.
+    This nested subdriver appears as an ExplicitComponent in the top-level hierarchy, but configures
+    and executes its own LEGOProblem() and LEGOModel() instances inside.
 
-    Attributes
+    Parameters
     ----------
-        driver_uid
-        cmdows_path
-        kb_path
-        data_folder
-        base_xml_file
-        show_model
+        driver_uid : str
+            UID of the main driver under consideration.
+
+        cmdows_path : str
+            Path to the CMDOWS file.
+
+        kb_path : str
+            Path to the knowledge base.
+
+        data_folder : str
+            Path to the data folder in which to store all files and output from the problem.
+
+        base_xml_file : str
+            Path to a base XML file to be updated with the problem data.
+
+        super_driver_type : str, optional
+            Setting whether the component has a superdriver (used to correctly connect full system)
+
+        create_model_view : bool, optional
+            Whether or not to create the model view of the subdriver constructed
+
+        open_model_view : bool, optional
+            Whether or not to open the model view automatically if it is created
+
+    Returns
+    -------
+        SubDriverComponent
     """
 
     def __init__(self, **kwargs):
+        # type: () -> None
         """
         Store some bound methods so we can detect runtime overrides.
 
@@ -58,6 +81,7 @@ class SubDriverComponent(ExplicitComponent):
         self._run_count = 0
 
     def initialize(self):
+        # type: () -> None
         """Initialization of the object with the declaration of settings."""
         self.options.declare('driver_uid')
         self.options.declare('cmdows_path')
@@ -69,21 +93,29 @@ class SubDriverComponent(ExplicitComponent):
         self.options.declare('open_model_view', default=False)
 
     def _add_run_count(self):
+        # type: () -> None
+        """Update the run counter of the component (used for profiling)."""
         self._run_count += 1
 
+    @cached_property
+    def prob(self):
+        # type: () -> LEGOProblem
+        """Create the problem instance of the subdriver component."""
+        return LEGOProblem(cmdows_path=self.options['cmdows_path'],
+                                    kb_path=self.options['kb_path'],
+                                    data_folder=self.options['data_folder'],  # Output directory
+                                    base_xml_file=self.options['base_xml_file'],
+                                    driver_uid=self.options['driver_uid'])
+
     def setup(self):
-        """Setup of the explicit component object with a nested LEGOProblem as subdriver."""
+        # type: () -> None
+        """Set up of the explicit component object with a nested LEGOProblem as subdriver."""
 
         # Load settings for superdriver case
         super_driver_type = self.options['super_driver_type']
 
         # Set subproblem
-        from openlego.core.problem import LEGOProblem
-        p = self.prob = LEGOProblem(cmdows_path=self.options['cmdows_path'],
-                                    kb_path=self.options['kb_path'],
-                                    data_folder=self.options['data_folder'],  # Output directory
-                                    base_xml_file=self.options['base_xml_file'],
-                                    driver_uid=self.options['driver_uid'])
+        p = self.prob
 
         # Add inputs/outputs
         for input_name, shape in p.model.model_constants.items():
@@ -111,6 +143,7 @@ class SubDriverComponent(ExplicitComponent):
             p.store_model_view(open_in_browser=self.options['open_model_view'])
 
     def compute(self, inputs, outputs):
+        # type: (Vector, Vector) -> None
         """Computation performed by the component.
 
         Parameters
@@ -182,6 +215,7 @@ class SubDriverComponent(ExplicitComponent):
             print('Driver run failed!')
             p.clean_driver_after_failure()
 
+        # Provide DOE output vectors as output of the component, if this is expected
         if doe_out_vecs:
             # First read out the case reader
             cr = CaseReader(case_reader_filename)

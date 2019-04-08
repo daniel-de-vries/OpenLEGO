@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Copyright 2018 I. van Gent and D. de Vries
+Copyright 2019 I. van Gent and D. de Vries
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,27 +19,27 @@ This file contains the definition of the `LEGOProblem` class.
 """
 from __future__ import absolute_import, division, print_function
 
+from cached_property import cached_property
 import datetime
+from lxml.etree import _Element, _ElementTree
 import os
 import numpy as np
+from typing import Optional, Any, Union, Dict
 import warnings
 
-from cached_property import cached_property
-from lxml.etree import _Element, _ElementTree
 
-from openlego.utils.xml_utils import xml_to_dict, xpath_to_param
 from openmdao.api import Problem, ScipyOptimizeDriver, DOEDriver, UniformGenerator, \
     FullFactorialGenerator, BoxBehnkenGenerator, LatinHypercubeGenerator, ListGenerator, \
     view_model, SqliteRecorder, CaseReader
 from openmdao.core.driver import Driver
-from typing import Optional, Any, Union, Dict
 
-from openlego.api import LEGOModel
+from openlego.core.model import LEGOModel
 from openlego.core.cmdows import CMDOWSObject
 from openlego.utils.cmdows_utils import get_element_by_uid, get_opt_setting_safe, \
     get_doe_setting_safe
 from openlego.utils.general_utils import print_optional, add_or_append_dict_entry, \
     PyOptSparseImportError
+from openlego.utils.xml_utils import xml_to_dict, xpath_to_param
 
 
 class LEGOProblem(CMDOWSObject, Problem):
@@ -52,33 +52,8 @@ class LEGOProblem(CMDOWSObject, Problem):
     different instance of Problem in place of this, because the correspondence between the CMDOWS
     file and the Problem can then no longer be guaranteed.
 
-    Attributes
+    Parameters
     ----------
-        cmdows_path
-        kb_path
-        driver_uid
-        case_reader_path
-        model_view_path
-        drivers
-        driver_type
-        model
-        driver
-
-        output_case_string : str, optional
-            A string indicating the naming for output files such as N2 views and recorders.
-    """
-
-    def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None,
-                 base_xml_file=None, output_case_str=None, **kwargs):
-        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
-        """Initialize a CMDOWS Problem from a given CMDOWS file, knowledge base (optional) and
-        driver UID (optional).
-
-        It is also possible to specify where (temporary) data should be stored, and if a base XML
-        file should be kept up-to-date.
-
-        Parameters
-        ----------
         cmdows_path : str, optional
             Path to the CMDOWS file.
 
@@ -92,10 +67,24 @@ class LEGOProblem(CMDOWSObject, Problem):
             Path to the data folder in which to store all files and output from the problem.
 
         base_xml_file : str, optional
-            Path to a base XML file to update with the problem data.
+            Path to a base XML file to be updated with the problem data.
 
         output_case_str : str, optional
-            A string indicating the naming for output files such as N2 views and recorders.
+            A string used for naming for output files such as N2 (model) views and recorders.
+
+    Returns
+    -------
+        LEGOProblem
+    """
+
+    def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None,
+                 base_xml_file=None, output_case_str=None, **kwargs):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
+        """Initialize a CMDOWS Problem from a given CMDOWS file, knowledge base (optional) and
+        driver UID (optional).
+
+        It is also possible to specify where (temporary) data should be stored, and if a base XML
+        file should be kept up-to-date.
         """
         if output_case_str:
             self.output_case_string = output_case_str
@@ -476,7 +465,7 @@ class LEGOProblem(CMDOWSObject, Problem):
         Parameters
         ----------
             cases_to_collect : str or list
-                Setting on which cases should be print (e.g. 'last', 'all', 'default', [2, 3, 5]
+                Setting on which cases should be print (e.g. 'last', 'all', 'default', [2, 3, 5])
 
             print_in_log : bool
                 Setting on whether the results should also be printed in the log

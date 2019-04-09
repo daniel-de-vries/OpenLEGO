@@ -129,7 +129,7 @@ class SubDriverComponent(ExplicitComponent):
 
         # Declare partials
         if p.model.model_super_outputs and not super_driver_type:
-            input_names = p.model.model_super_inputs.keys()
+            input_names = list(p.model.model_super_inputs.keys())
             for output_name in p.model.model_super_outputs.keys():
                 self.declare_partials(output_name, input_names,
                                       method='fd', step=1e-6, step_calc='abs')

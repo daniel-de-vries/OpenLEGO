@@ -23,6 +23,8 @@ import os
 import logging
 import unittest
 
+from typing import Union, Optional, List
+
 from openlego.core.problem import LEGOProblem
 import openlego.test_suite.test_examples.ssbj.kb as kb
 from openlego.utils.general_utils import clean_dir_filtered, pyoptsparse_installed
@@ -48,6 +50,19 @@ mdao_definitions = ['unconverged-MDA-GS',     # 0
 
 
 def get_loop_items(analyze_mdao_definitions):
+    # type: (Union(int, list, str)) -> List[str]
+    """Retrieve the list of MDAO definitions to be analyzed based on different input settings.
+
+    Parameters
+    ----------
+        analyze_mdao_definitions : Union[int, list, str]
+            Indicator for the definitions to be analyzed. Can be an int, a list, or the string 'all'
+
+    Returns
+    -------
+        mdao_defs_loop : List[str]
+            List containing the MDAO definition to be analyzed
+    """
     if isinstance(analyze_mdao_definitions, int):
         mdao_defs_loop = [mdao_definitions[analyze_mdao_definitions]]
     elif isinstance(analyze_mdao_definitions, list):
@@ -66,6 +81,36 @@ def get_loop_items(analyze_mdao_definitions):
 
 def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=None,
                  data_folder=None, run_type='test', approx_totals=False, driver_debug_print=False):
+    # type: (Union[int, list, str], Optional[str], Optional[str], Optional[str], Optional[str], Optional[bool], Optional[bool]) -> Union[tuple, LEGOProblem]
+    """Run OpenLEGO for a list of MDAO definitions.
+
+    Parameters
+    ----------
+    analyze_mdao_definitions : list
+        List of MDAO definitions to be analyzed.
+
+    cmdows_dir : str
+        Path to directory with CMDOWS files
+
+    initial_file_path : str
+        Path to file containing initial values
+
+    data_folder : str
+        Path to directory where results will be stored
+
+    run_type : str
+        Option to indicate the type of run, as this changes the return statement used
+
+    approx_totals : bool
+        Setting on whether to use approx_totals on the model
+
+    driver_debug_print : bool
+        Setting on whether to print debug information in the log
+
+    Returns
+    -------
+        Union[Tuple[float], LEGOProblem]
+    """
     # Check and analyze inputs
     mdao_defs_loop = get_loop_items(analyze_mdao_definitions)
     file_dir = os.path.dirname(__file__)
@@ -76,6 +121,7 @@ def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=No
     if not data_folder:
         data_folder = ''
 
+    # Run the
     for mdao_def in mdao_defs_loop:
         print('\n-----------------------------------------------')
         print('Running the OpenLEGO of Mdao_{}.xml...'.format(mdao_def))
@@ -142,10 +188,13 @@ def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=No
             return tc, h, M, AR, Lambda, Sref, lambda_, section, Cf, T, R, extra
         elif run_type == 'validation':
             return prob
+        else:
+            prob.invalidate()
 
 
 class TestSsbj(unittest.TestCase):
-
+    """Test class to run the SSBJ test case for a range of architectures.
+    """
     def __call__(self, *args, **kwargs):
         kb.deploy()
         super(TestSsbj, self).__call__(*args, **kwargs)
@@ -283,11 +332,11 @@ class TestSsbj(unittest.TestCase):
 
     def test_con_doe_gs_lh(self):
         """Solve multiple (DOE) SSBJ systems (converged) in sequence based on a latin hypercube sampling."""
-        run_openlego(8)
+        run_openlego(8)  # Note: this test is not asserted as the DOE choose a random experiments
 
     def test_con_doe_gs_mc(self):
         """Solve multiple (DOE) SSBJ systems (converged) in sequence based on a Monte Carlo sampling."""
-        run_openlego(9)
+        run_openlego(9)  # Note: this test is not asserted as the DOE chooses random experiments
 
     def test_mdf_gs(self):
         """Solve the SSBJ problem using the MDF architecture and a Gauss-Seidel convergence scheme."""

@@ -274,8 +274,6 @@ class B2kSolver(NonlinearBlockGS):
             attrbs_new = self._get_new_bounds(des_var_name, attrbs)
             self._apply_new_bounds(des_var_name, attrbs_new)
         prob.final_setup()
-        # TODO: Consider use of prob.driver._update_voi_met(prob.model)
-        # TODO: -> see final_setup() in problem.py
         for doe_prob in self.system_doe_probs:
             doe_prob.final_setup()
 

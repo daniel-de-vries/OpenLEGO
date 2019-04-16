@@ -2,15 +2,15 @@
 <cmdows xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://bitbucket.org/imcovangent/cmdows/raw/master/schema/0.9/cmdows.xsd">
   <header>
     <creator>Imco van Gent</creator>
-    <description>Mdao CMDOWS file of the super-sonic business jet test case optimization problem</description>
-    <timestamp>2018-08-21T14:14:28.234958</timestamp>
+    <description>CMDOWS file of the SSBJ test case solution strategy</description>
+    <timestamp>2019-03-27T12:57:40.975511</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2018-08-21T14:14:28.234958</timestamp>
+        <timestamp>2019-03-27T12:57:40.975511</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -18,26 +18,26 @@
     <organization>
       <contacts>
         <contact uID="imcovangent">
-          <function>PhD Student</function>
           <name>Imco van Gent</name>
-          <country>The Netherlands</country>
-          <company>TU Delft</company>
-          <telephone>0031 6 53 89 42 75</telephone>
-          <address>Kluyverweg 1, 2629 HS, Delft</address>
-          <department>Flight Performance and Propulsion</department>
           <email>i.vangent@tudelft.nl</email>
+          <company>TU Delft</company>
+          <department>Flight Performance and Propulsion</department>
+          <function>PhD Student</function>
+          <address>Kluyverweg 1, 2629 HS, Delft</address>
+          <telephone>0031 6 53 89 42 75</telephone>
+          <country>The Netherlands</country>
         </contact>
         <contact uID="remilafage">
           <name>Remi Lafage</name>
-          <country>France</country>
-          <company>ONERA - French Aerospace Lab</company>
           <email>Remi.Lafage@onera.fr</email>
+          <company>ONERA - French Aerospace Lab</company>
+          <country>France</country>
         </contact>
         <contact uID="sylvaindubreuil">
           <name>Sylvain Dubreuil</name>
-          <country>France</country>
-          <company>ONERA - French Aerospace Lab</company>
           <email>Sylvain.Dubreuil@onera.fr</email>
+          <company>ONERA - French Aerospace Lab</company>
+          <country>France</country>
         </contact>
       </contacts>
       <organigram>
@@ -64,160 +64,44 @@
   </header>
   <executableBlocks>
     <designCompetences>
-      <designCompetence uID="StructuralAnalysis">
-        <label>StructuralAnalysis</label>
-        <instanceID>1</instanceID>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/lambda</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WE</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/tc</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/Lambda</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/other/L</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/Sref</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/weight/WO</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/weight/WFO</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/AR</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/other/Nz</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/section</parameterUID>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/aircraft/weight/WT</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/other/sigma5</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/other/sigma4</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/other/sigma1</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/other/sigma3</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/other/sigma2</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/weight/WF</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/geometry/Theta</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/geometry/Theta</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WT</parameterUID>
-          </output>
-        </outputs>
-        <ID>StructuralAnalysis</ID>
-        <modeID>main</modeID>
-        <version>1.0</version>
-        <metadata>
-          <generalInfo>
-            <status>Available</status>
-            <description>StructuralAnalysis discipline of the SSBJ tool set.</description>
-            <creator>
-              <contactUID>sylvaindubreuil</contactUID>
-            </creator>
-            <owner>
-              <contactUID>remilafage</contactUID>
-            </owner>
-            <sources>
-              <repositoryLink>https://bitbucket.org/imcovangent/ssbj-kadmos/src/master/</repositoryLink>
-              <references>
-                <reference>ONERA SSBJ-OpenMDAO GitHub repository: https://github.com/OneraHub/SSBJ-OpenMDAO</reference>
-                <reference>NASA report using SSBJ: https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19980234657.pdf</reference>
-              </references>
-              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
-            </sources>
-            <licensing>
-              <licenseType>open-source</licenseType>
-              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
-              <licenseSpecification>Apache License 2.0</licenseSpecification>
-            </licensing>
-            <operator>
-              <contactUID>imcovangent</contactUID>
-            </operator>
-          </generalInfo>
-          <executionInfo>
-            <localComponentInfo>
-              <executionDetails>
-                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\structuralanalysis\StructuralAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
-                <operatingSystem>Windows</operatingSystem>
-                <integrationPlatform>Optimus</integrationPlatform>
-                <description>Details for the command line execution of the StructuralAnalysis Python tool in Windows using an Optimus integration.</description>
-                <softwareRequirements>
-                  <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
-                  <softwareRequirement>kadmos Python package version 0.8 or higher installed</softwareRequirement>
-                </softwareRequirements>
-              </executionDetails>
-            </localComponentInfo>
-          </executionInfo>
-        </metadata>
-      </designCompetence>
       <designCompetence uID="PropulsionAnalysis">
         <label>PropulsionAnalysis</label>
         <instanceID>1</instanceID>
         <inputs>
           <input>
-            <parameterUID>/dataSchema/aircraft/weight/WBE</parameterUID>
-          </input>
-          <input>
             <parameterUID>/dataSchema/reference/h</parameterUID>
           </input>
           <input>
-            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/other/D</parameterUID>
+            <parameterUID>/dataSchema/reference/M</parameterUID>
           </input>
           <input>
             <parameterUID>/dataSchema/aircraft/other/T</parameterUID>
           </input>
           <input>
-            <parameterUID>/dataSchema/reference/M</parameterUID>
+            <parameterUID>/dataSchema/aircraft/weight/WBE</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/other/D</parameterUID>
           </input>
         </inputs>
         <outputs>
           <output>
-            <parameterUID>/dataSchema/aircraft/other/DT</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WE</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/weight/WE</parameterUID>
+            <parameterUID>/dataSchema/reference/Temp</parameterUID>
           </output>
           <output>
             <parameterUID>/dataSchema/reference/ESF</parameterUID>
           </output>
           <output>
-            <parameterUID>/dataSchema/reference/Temp</parameterUID>
+            <parameterUID>/dataSchema/aircraft/other/SFC</parameterUID>
           </output>
           <output>
-            <parameterUID>/dataSchema/aircraft/other/SFC</parameterUID>
+            <parameterUID>/dataSchema/aircraft/other/DT</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/aircraft/weight/WE</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WE</parameterUID>
           </output>
           <output>
             <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/reference/ESF</parameterUID>
@@ -228,38 +112,154 @@
         <version>1.0</version>
         <metadata>
           <generalInfo>
-            <status>Available</status>
             <description>PropulsionAnalysis discipline of the SSBJ tool set.</description>
-            <creator>
-              <contactUID>sylvaindubreuil</contactUID>
-            </creator>
+            <status>Available</status>
             <owner>
               <contactUID>remilafage</contactUID>
             </owner>
+            <creator>
+              <contactUID>sylvaindubreuil</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+            </licensing>
             <sources>
               <repositoryLink>https://bitbucket.org/imcovangent/ssbj-kadmos/src/master/</repositoryLink>
+              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
               <references>
                 <reference>ONERA SSBJ-OpenMDAO GitHub repository: https://github.com/OneraHub/SSBJ-OpenMDAO</reference>
                 <reference>NASA report using SSBJ: https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19980234657.pdf</reference>
               </references>
-              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
             </sources>
-            <licensing>
-              <licenseType>open-source</licenseType>
-              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
-              <licenseSpecification>Apache License 2.0</licenseSpecification>
-            </licensing>
-            <operator>
-              <contactUID>imcovangent</contactUID>
-            </operator>
           </generalInfo>
           <executionInfo>
             <localComponentInfo>
               <executionDetails>
-                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\propulsionanalysis\PropulsionAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
                 <operatingSystem>Windows</operatingSystem>
                 <integrationPlatform>Optimus</integrationPlatform>
+                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\propulsionanalysis\PropulsionAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
                 <description>Details for the command line execution of the PropulsionAnalysis Python tool in Windows using an Optimus integration.</description>
+                <softwareRequirements>
+                  <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
+                  <softwareRequirement>kadmos Python package version 0.8 or higher installed</softwareRequirement>
+                </softwareRequirements>
+              </executionDetails>
+            </localComponentInfo>
+          </executionInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="StructuralAnalysis">
+        <label>StructuralAnalysis</label>
+        <instanceID>1</instanceID>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/tc</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/AR</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/Lambda</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/Sref</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/lambda</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/section</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/weight/WO</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/weight/WFO</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/other/Nz</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/other/L</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WE</parameterUID>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/aircraft/weight/WT</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/aircraft/weight/WF</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/aircraft/other/sigma1</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/aircraft/other/sigma2</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/aircraft/other/sigma3</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/aircraft/other/sigma4</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/aircraft/other/sigma5</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/aircraft/geometry/Theta</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/geometry/Theta</parameterUID>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WT</parameterUID>
+          </output>
+        </outputs>
+        <ID>StructuralAnalysis</ID>
+        <modeID>main</modeID>
+        <version>1.0</version>
+        <metadata>
+          <generalInfo>
+            <description>StructuralAnalysis discipline of the SSBJ tool set.</description>
+            <status>Available</status>
+            <owner>
+              <contactUID>remilafage</contactUID>
+            </owner>
+            <creator>
+              <contactUID>sylvaindubreuil</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+            </licensing>
+            <sources>
+              <repositoryLink>https://bitbucket.org/imcovangent/ssbj-kadmos/src/master/</repositoryLink>
+              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
+              <references>
+                <reference>ONERA SSBJ-OpenMDAO GitHub repository: https://github.com/OneraHub/SSBJ-OpenMDAO</reference>
+                <reference>NASA report using SSBJ: https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19980234657.pdf</reference>
+              </references>
+            </sources>
+          </generalInfo>
+          <executionInfo>
+            <localComponentInfo>
+              <executionDetails>
+                <operatingSystem>Windows</operatingSystem>
+                <integrationPlatform>Optimus</integrationPlatform>
+                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\structuralanalysis\StructuralAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
+                <description>Details for the command line execution of the StructuralAnalysis Python tool in Windows using an Optimus integration.</description>
                 <softwareRequirements>
                   <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
                   <softwareRequirement>kadmos Python package version 0.8 or higher installed</softwareRequirement>
@@ -274,54 +274,54 @@
         <instanceID>1</instanceID>
         <inputs>
           <input>
-            <parameterUID>/dataSchema/aircraft/other/Cf</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/reference/ESF</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/reference/h</parameterUID>
-          </input>
-          <input>
             <parameterUID>/dataSchema/aircraft/geometry/tc</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/reference/M</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/Lambda</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WT</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/geometry/Sref</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/geometry/Theta</parameterUID>
           </input>
           <input>
             <parameterUID>/dataSchema/aircraft/geometry/AR</parameterUID>
           </input>
           <input>
+            <parameterUID>/dataSchema/aircraft/geometry/Lambda</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/geometry/Sref</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/other/Cf</parameterUID>
+          </input>
+          <input>
             <parameterUID>/dataSchema/aircraft/other/CDmin</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/reference/h</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/reference/M</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/geometry/Theta</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WT</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/reference/ESF</parameterUID>
           </input>
         </inputs>
         <outputs>
           <output>
+            <parameterUID>/dataSchema/aircraft/other/L</parameterUID>
+          </output>
+          <output>
             <parameterUID>/dataSchema/aircraft/other/D</parameterUID>
           </output>
           <output>
-            <parameterUID>/dataSchema/aircraft/other/L</parameterUID>
+            <parameterUID>/dataSchema/aircraft/other/fin</parameterUID>
           </output>
           <output>
             <parameterUID>/dataSchema/aircraft/other/dpdx</parameterUID>
           </output>
           <output>
             <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/other/L</parameterUID>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/aircraft/other/fin</parameterUID>
           </output>
           <output>
             <parameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/other/D</parameterUID>
@@ -332,37 +332,37 @@
         <version>1.0</version>
         <metadata>
           <generalInfo>
-            <status>Available</status>
             <description>AeroAnalysis discipline of the SSBJ tool set.</description>
-            <creator>
-              <contactUID>sylvaindubreuil</contactUID>
-            </creator>
+            <status>Available</status>
             <owner>
               <contactUID>remilafage</contactUID>
             </owner>
+            <creator>
+              <contactUID>sylvaindubreuil</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+            </licensing>
             <sources>
               <repositoryLink>https://bitbucket.org/imcovangent/ssbj-kadmos/src/master/</repositoryLink>
+              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
               <references>
                 <reference>ONERA SSBJ-OpenMDAO GitHub repository: https://github.com/OneraHub/SSBJ-OpenMDAO</reference>
                 <reference>NASA report using SSBJ: https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19980234657.pdf</reference>
               </references>
-              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
             </sources>
-            <licensing>
-              <licenseType>open-source</licenseType>
-              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
-              <licenseSpecification>Apache License 2.0</licenseSpecification>
-            </licensing>
-            <operator>
-              <contactUID>imcovangent</contactUID>
-            </operator>
           </generalInfo>
           <executionInfo>
             <localComponentInfo>
               <executionDetails>
-                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\aeroanalysis\AeroAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
                 <operatingSystem>Windows</operatingSystem>
                 <integrationPlatform>Optimus</integrationPlatform>
+                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\aeroanalysis\AeroAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
                 <description>Details for the command line execution of the AeroAnalysis Python tool in Windows using an Optimus integration.</description>
                 <softwareRequirements>
                   <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
@@ -387,13 +387,13 @@
             <parameterUID>/dataSchema/reference/M</parameterUID>
           </input>
           <input>
-            <parameterUID>/dataSchema/aircraft/weight/WF</parameterUID>
-          </input>
-          <input>
             <parameterUID>/dataSchema/aircraft/other/fin</parameterUID>
           </input>
           <input>
             <parameterUID>/dataSchema/aircraft/other/SFC</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/weight/WF</parameterUID>
           </input>
         </inputs>
         <outputs>
@@ -406,37 +406,37 @@
         <version>1.0</version>
         <metadata>
           <generalInfo>
-            <status>Available</status>
             <description>PerformanceAnalysis discipline of the SSBJ tool set.</description>
-            <creator>
-              <contactUID>sylvaindubreuil</contactUID>
-            </creator>
+            <status>Available</status>
             <owner>
               <contactUID>remilafage</contactUID>
             </owner>
+            <creator>
+              <contactUID>sylvaindubreuil</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+            </licensing>
             <sources>
               <repositoryLink>https://bitbucket.org/imcovangent/ssbj-kadmos/src/master/</repositoryLink>
+              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
               <references>
                 <reference>ONERA SSBJ-OpenMDAO GitHub repository: https://github.com/OneraHub/SSBJ-OpenMDAO</reference>
                 <reference>NASA report using SSBJ: https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19980234657.pdf</reference>
               </references>
-              <downloadLink>https://bitbucket.org/imcovangent/ssbj-kadmos/downloads/</downloadLink>
             </sources>
-            <licensing>
-              <licenseType>open-source</licenseType>
-              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
-              <licenseSpecification>Apache License 2.0</licenseSpecification>
-            </licensing>
-            <operator>
-              <contactUID>imcovangent</contactUID>
-            </operator>
           </generalInfo>
           <executionInfo>
             <localComponentInfo>
               <executionDetails>
-                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\performanceanalysis\PerformanceAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
                 <operatingSystem>Windows</operatingSystem>
                 <integrationPlatform>Optimus</integrationPlatform>
+                <command>cd %PROJECTDIR%\SSBJ\n"ssbjkadmos\tools\performanceanalysis\PerformanceAnalysis.py"  -i "cpacsInputUpdated.xml" -o "cpacsOutput.xml"\necho doing some analysis\ncopy %PROJECTDIR%\SSBJ\cpacsOutput.xml %METHODDIR%\cpacsOutput.xml</command>
                 <description>Details for the command line execution of the PerformanceAnalysis Python tool in Windows using an Optimus integration.</description>
                 <softwareRequirements>
                   <softwareRequirement>Python 2.7.11 or higher installed</softwareRequirement>
@@ -449,36 +449,10 @@
       </designCompetence>
     </designCompetences>
     <mathematicalFunctions>
-      <mathematicalFunction uID="F[R]">
-        <label>F[R]</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/scaledData/R/scaler</parameterUID>
-            <equationLabel>R_scaler</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/other/R</parameterUID>
-            <equationLabel>R</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/scaledData/R/value</parameterUID>
-            <equations uID="F[R]_equation">
-              <equation language="Python">-R/R_scaler</equation>
-            </equations>
-          </output>
-        </outputs>
-      </mathematicalFunction>
       <mathematicalFunction uID="C[Theta]">
         <label>C[Theta]</label>
         <functionType>regular</functionType>
         <inputs>
-          <input>
-            <parameterUID>/dataSchema/scaledData/Theta/scaler</parameterUID>
-            <equationLabel>Theta_scr</equationLabel>
-          </input>
           <input>
             <parameterUID>/dataSchema/aircraft/geometry/Theta</parameterUID>
             <equationLabel>Theta</equationLabel>
@@ -488,7 +462,7 @@
           <output>
             <parameterUID>/dataSchema/scaledData/Theta/value</parameterUID>
             <equations uID="C[Theta]_equation">
-              <equation language="Python">Theta/Theta_scr</equation>
+              <equation language="Python">Theta-1.04</equation>
             </equations>
           </output>
         </outputs>
@@ -501,66 +475,12 @@
             <parameterUID>/dataSchema/aircraft/other/dpdx</parameterUID>
             <equationLabel>dpdx</equationLabel>
           </input>
-          <input>
-            <parameterUID>/dataSchema/scaledData/dpdx/scaler</parameterUID>
-            <equationLabel>dpdx_scr</equationLabel>
-          </input>
         </inputs>
         <outputs>
           <output>
             <parameterUID>/dataSchema/scaledData/dpdx/value</parameterUID>
             <equations uID="C[dpdx]_equation">
-              <equation language="Python">dpdx/dpdx_scr</equation>
-            </equations>
-          </output>
-        </outputs>
-      </mathematicalFunction>
-      <mathematicalFunction uID="C[prop]">
-        <label>C[prop]</label>
-        <functionType>regular</functionType>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/scaledData/DT/scaler</parameterUID>
-            <equationLabel>DT_scr</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/other/DT</parameterUID>
-            <equationLabel>DT</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/scaledData/ESF/scaler</parameterUID>
-            <equationLabel>ESF_scr</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/scaledData/Temp/scaler</parameterUID>
-            <equationLabel>Temp_scr</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/reference/ESF</parameterUID>
-            <equationLabel>ESF</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/reference/Temp</parameterUID>
-            <equationLabel>Temp</equationLabel>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/scaledData/Temp/value</parameterUID>
-            <equations uID="C[prop]_equation">
-              <equation language="Python">Temp/Temp_scr</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/scaledData/ESF/value</parameterUID>
-            <equations uID="C[prop]_equation_1">
-              <equation language="Python">ESF/ESF_scr</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/scaledData/DT/value</parameterUID>
-            <equations uID="C[prop]_equation_2">
-              <equation language="Python">DT/DT_scr</equation>
+              <equation language="Python">dpdx-1.04</equation>
             </equations>
           </output>
         </outputs>
@@ -570,75 +490,115 @@
         <functionType>regular</functionType>
         <inputs>
           <input>
-            <parameterUID>/dataSchema/scaledData/sigma4/scaler</parameterUID>
-            <equationLabel>sigma4_scr</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/other/sigma4</parameterUID>
-            <equationLabel>sigma4</equationLabel>
-          </input>
-          <input>
             <parameterUID>/dataSchema/aircraft/other/sigma1</parameterUID>
             <equationLabel>sigma1</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/aircraft/other/sigma3</parameterUID>
-            <equationLabel>sigma3</equationLabel>
           </input>
           <input>
             <parameterUID>/dataSchema/aircraft/other/sigma2</parameterUID>
             <equationLabel>sigma2</equationLabel>
           </input>
           <input>
-            <parameterUID>/dataSchema/scaledData/sigma3/scaler</parameterUID>
-            <equationLabel>sigma3_scr</equationLabel>
+            <parameterUID>/dataSchema/aircraft/other/sigma3</parameterUID>
+            <equationLabel>sigma3</equationLabel>
           </input>
           <input>
-            <parameterUID>/dataSchema/scaledData/sigma2/scaler</parameterUID>
-            <equationLabel>sigma2_scr</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/scaledData/sigma1/scaler</parameterUID>
-            <equationLabel>sigma1_scr</equationLabel>
+            <parameterUID>/dataSchema/aircraft/other/sigma4</parameterUID>
+            <equationLabel>sigma4</equationLabel>
           </input>
           <input>
             <parameterUID>/dataSchema/aircraft/other/sigma5</parameterUID>
             <equationLabel>sigma5</equationLabel>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/scaledData/sigma5/scaler</parameterUID>
-            <equationLabel>sigma5_scr</equationLabel>
           </input>
         </inputs>
         <outputs>
           <output>
             <parameterUID>/dataSchema/scaledData/sigma1/value</parameterUID>
             <equations uID="C[sigmas]_equation">
-              <equation language="Python">sigma1/sigma1_scr</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/scaledData/sigma4/value</parameterUID>
-            <equations uID="C[sigmas]_equation_1">
-              <equation language="Python">sigma4/sigma4_scr</equation>
-            </equations>
-          </output>
-          <output>
-            <parameterUID>/dataSchema/scaledData/sigma5/value</parameterUID>
-            <equations uID="C[sigmas]_equation_2">
-              <equation language="Python">sigma5/sigma5_scr</equation>
+              <equation language="Python">sigma1-1.09</equation>
             </equations>
           </output>
           <output>
             <parameterUID>/dataSchema/scaledData/sigma2/value</parameterUID>
-            <equations uID="C[sigmas]_equation_3">
-              <equation language="Python">sigma2/sigma2_scr</equation>
+            <equations uID="C[sigmas]_equation_1">
+              <equation language="Python">sigma2-1.09</equation>
             </equations>
           </output>
           <output>
             <parameterUID>/dataSchema/scaledData/sigma3/value</parameterUID>
+            <equations uID="C[sigmas]_equation_2">
+              <equation language="Python">sigma3-1.09</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/scaledData/sigma4/value</parameterUID>
+            <equations uID="C[sigmas]_equation_3">
+              <equation language="Python">sigma4-1.09</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/scaledData/sigma5/value</parameterUID>
             <equations uID="C[sigmas]_equation_4">
-              <equation language="Python">sigma3/sigma3_scr</equation>
+              <equation language="Python">sigma5-1.09</equation>
+            </equations>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="C[prop]">
+        <label>C[prop]</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/reference/ESF</parameterUID>
+            <equationLabel>ESF</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/reference/Temp</parameterUID>
+            <equationLabel>Temp</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/aircraft/other/DT</parameterUID>
+            <equationLabel>DT</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/scaledData/ESF/value</parameterUID>
+            <equations uID="C[prop]_equation">
+              <equation language="Python">ESF-1.5</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/scaledData/DT/value</parameterUID>
+            <equations uID="C[prop]_equation_1">
+              <equation language="Python">DT</equation>
+            </equations>
+          </output>
+          <output>
+            <parameterUID>/dataSchema/scaledData/Temp/value</parameterUID>
+            <equations uID="C[prop]_equation_2">
+              <equation language="Python">Temp-1.02</equation>
+            </equations>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+      <mathematicalFunction uID="F[R]">
+        <label>F[R]</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/aircraft/other/R</parameterUID>
+            <equationLabel>R</equationLabel>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/scaledData/R/scaler</parameterUID>
+            <equationLabel>R_scaler</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/scaledData/R/value</parameterUID>
+            <equations uID="F[R]_equation">
+              <equation language="Python">-R/R_scaler</equation>
             </equations>
           </output>
         </outputs>
@@ -646,224 +606,184 @@
     </mathematicalFunctions>
   </executableBlocks>
   <parameters>
-    <parameter uID="/dataSchema/scaledData/dpdx/value">
-      <label>value</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/weight/WBE">
-      <label>WBE</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/D">
-      <label>D</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/sigma5/value">
-      <label>value</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/L">
-      <label>L</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/R">
-      <label>R</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/T">
-      <label>T</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/SFC">
-      <label>SFC</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/Nz">
-      <label>Nz</label>
+    <parameter uID="/dataSchema/aircraft/geometry/lambda">
+      <label>lambda</label>
       <instanceID>1</instanceID>
     </parameter>
     <parameter uID="/dataSchema/aircraft/geometry/section">
       <label>section</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/aircraft/other/Cf">
-      <label>Cf</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/R/value">
-      <label>value</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/R/scaler">
-      <label>scaler</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/sigma5">
-      <label>sigma5</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/fin">
-      <label>fin</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/weight/WFO">
-      <label>WFO</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/sigma2">
-      <label>sigma2</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/DT/scaler">
-      <label>scaler</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/DT">
-      <label>DT</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/sigma2/value">
-      <label>value</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/sigma4/scaler">
-      <label>scaler</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/sigma4">
-      <label>sigma4</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/dpdx/scaler">
-      <label>scaler</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/sigma1">
-      <label>sigma1</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/Temp/scaler">
-      <label>scaler</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/other/sigma3">
-      <label>sigma3</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/aircraft/weight/WF">
-      <label>WF</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/sigma3/scaler">
-      <label>scaler</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/Theta/value">
-      <label>value</label>
-      <instanceID>1</instanceID>
-    </parameter>
     <parameter uID="/dataSchema/aircraft/weight/WE">
       <label>WE</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/DT/value">
-      <label>value</label>
       <instanceID>1</instanceID>
     </parameter>
     <parameter uID="/dataSchema/aircraft/weight/WO">
       <label>WO</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/scaledData/sigma2/scaler">
-      <label>scaler</label>
+    <parameter uID="/dataSchema/aircraft/weight/WFO">
+      <label>WFO</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/scaledData/Theta/scaler">
-      <label>scaler</label>
+    <parameter uID="/dataSchema/aircraft/other/L">
+      <label>L</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/scaledData/ESF/value">
-      <label>value</label>
+    <parameter uID="/dataSchema/aircraft/other/Nz">
+      <label>Nz</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/reference/Temp">
-      <label>Temp</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/sigma1/value">
-      <label>value</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/sigma1/scaler">
-      <label>scaler</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/scaledData/sigma4/value">
-      <label>value</label>
+    <parameter uID="/dataSchema/aircraft/other/Cf">
+      <label>Cf</label>
       <instanceID>1</instanceID>
     </parameter>
     <parameter uID="/dataSchema/aircraft/other/CDmin">
       <label>CDmin</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/scaledData/Temp/value">
-      <label>value</label>
+    <parameter uID="/dataSchema/aircraft/other/T">
+      <label>T</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/aircraft/geometry/lambda">
-      <label>lambda</label>
+    <parameter uID="/dataSchema/aircraft/other/D">
+      <label>D</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/scaledData/ESF/scaler">
-      <label>scaler</label>
+    <parameter uID="/dataSchema/aircraft/weight/WBE">
+      <label>WBE</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/scaledData/sigma3/value">
-      <label>value</label>
+    <parameter uID="/dataSchema/aircraft/other/fin">
+      <label>fin</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/aircraft/other/SFC">
+      <label>SFC</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/aircraft/weight/WF">
+      <label>WF</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/aircraft/other/sigma1">
+      <label>sigma1</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/aircraft/other/sigma2">
+      <label>sigma2</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/aircraft/other/sigma3">
+      <label>sigma3</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/aircraft/other/sigma4">
+      <label>sigma4</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/aircraft/other/sigma5">
+      <label>sigma5</label>
       <instanceID>1</instanceID>
     </parameter>
     <parameter uID="/dataSchema/aircraft/other/dpdx">
       <label>dpdx</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/scaledData/sigma5/scaler">
+    <parameter uID="/dataSchema/reference/Temp">
+      <label>Temp</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/aircraft/other/DT">
+      <label>DT</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/aircraft/other/R">
+      <label>R</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/scaledData/R/scaler">
       <label>scaler</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/aircraft/weight/WT">
-      <label>WT</label>
+    <parameter uID="/dataSchema/scaledData/R/value">
+      <label>value</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/scaledData/sigma1/value">
+      <label>value</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/scaledData/sigma2/value">
+      <label>value</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/scaledData/sigma3/value">
+      <label>value</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/scaledData/sigma4/value">
+      <label>value</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/scaledData/sigma5/value">
+      <label>value</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/scaledData/Theta/value">
+      <label>value</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/scaledData/dpdx/value">
+      <label>value</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/scaledData/ESF/value">
+      <label>value</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/scaledData/DT/value">
+      <label>value</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/scaledData/Temp/value">
+      <label>value</label>
       <instanceID>1</instanceID>
     </parameter>
     <parameter uID="/dataSchema/aircraft/geometry/tc">
       <label>tc</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/aircraft/geometry/Lambda">
-      <label>Lambda</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/reference/h">
-      <label>h</label>
-      <instanceID>1</instanceID>
-    </parameter>
-    <parameter uID="/dataSchema/reference/ESF">
-      <label>ESF</label>
-      <instanceID>1</instanceID>
-    </parameter>
     <parameter uID="/dataSchema/aircraft/geometry/AR">
       <label>AR</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/reference/M">
-      <label>M</label>
+    <parameter uID="/dataSchema/aircraft/geometry/Lambda">
+      <label>Lambda</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/aircraft/geometry/Sref">
+      <label>Sref</label>
       <instanceID>1</instanceID>
     </parameter>
     <parameter uID="/dataSchema/aircraft/geometry/Theta">
       <label>Theta</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/aircraft/geometry/Sref">
-      <label>Sref</label>
+    <parameter uID="/dataSchema/aircraft/weight/WT">
+      <label>WT</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/reference/h">
+      <label>h</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/reference/M">
+      <label>M</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/reference/ESF">
+      <label>ESF</label>
       <instanceID>1</instanceID>
     </parameter>
   </parameters>
@@ -872,56 +792,56 @@
       <mdaoArchitecture>converged-MDA</mdaoArchitecture>
       <convergerType>Jacobi</convergerType>
       <executableBlocksOrder>
-        <executableBlock position="1">StructuralAnalysis</executableBlock>
-        <executableBlock position="2">AeroAnalysis</executableBlock>
-        <executableBlock position="3">PropulsionAnalysis</executableBlock>
-        <executableBlock position="4">PerformanceAnalysis</executableBlock>
-        <executableBlock position="5">C[sigmas]</executableBlock>
-        <executableBlock position="6">C[Theta]</executableBlock>
-        <executableBlock position="7">C[dpdx]</executableBlock>
-        <executableBlock position="8">C[prop]</executableBlock>
-        <executableBlock position="9">F[R]</executableBlock>
+        <executableBlockUID position="1">StructuralAnalysis</executableBlockUID>
+        <executableBlockUID position="2">AeroAnalysis</executableBlockUID>
+        <executableBlockUID position="3">PropulsionAnalysis</executableBlockUID>
+        <executableBlockUID position="4">PerformanceAnalysis</executableBlockUID>
+        <executableBlockUID position="5">C[sigmas]</executableBlockUID>
+        <executableBlockUID position="6">C[Theta]</executableBlockUID>
+        <executableBlockUID position="7">C[dpdx]</executableBlockUID>
+        <executableBlockUID position="8">C[prop]</executableBlockUID>
+        <executableBlockUID position="9">F[R]</executableBlockUID>
       </executableBlocksOrder>
       <allowUnconvergedCouplings>false</allowUnconvergedCouplings>
     </problemFormulation>
     <problemRoles>
       <parameters>
         <stateVariables>
-          <stateVariable uID="__statVar__/dataSchema/scaledData/dpdx/value">
-            <parameterUID>/dataSchema/scaledData/dpdx/value</parameterUID>
-          </stateVariable>
-          <stateVariable uID="__statVar__/dataSchema/scaledData/sigma5/value">
-            <parameterUID>/dataSchema/scaledData/sigma5/value</parameterUID>
+          <stateVariable uID="__statVar__/dataSchema/aircraft/weight/WE">
+            <parameterUID>/dataSchema/aircraft/weight/WE</parameterUID>
           </stateVariable>
           <stateVariable uID="__statVar__/dataSchema/scaledData/R/value">
             <parameterUID>/dataSchema/scaledData/R/value</parameterUID>
           </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/scaledData/sigma1/value">
+            <parameterUID>/dataSchema/scaledData/sigma1/value</parameterUID>
+          </stateVariable>
           <stateVariable uID="__statVar__/dataSchema/scaledData/sigma2/value">
             <parameterUID>/dataSchema/scaledData/sigma2/value</parameterUID>
           </stateVariable>
-          <stateVariable uID="__statVar__/dataSchema/scaledData/Theta/value">
-            <parameterUID>/dataSchema/scaledData/Theta/value</parameterUID>
-          </stateVariable>
-          <stateVariable uID="__statVar__/dataSchema/aircraft/weight/WE">
-            <parameterUID>/dataSchema/aircraft/weight/WE</parameterUID>
-          </stateVariable>
-          <stateVariable uID="__statVar__/dataSchema/scaledData/DT/value">
-            <parameterUID>/dataSchema/scaledData/DT/value</parameterUID>
-          </stateVariable>
-          <stateVariable uID="__statVar__/dataSchema/scaledData/ESF/value">
-            <parameterUID>/dataSchema/scaledData/ESF/value</parameterUID>
-          </stateVariable>
-          <stateVariable uID="__statVar__/dataSchema/scaledData/sigma1/value">
-            <parameterUID>/dataSchema/scaledData/sigma1/value</parameterUID>
+          <stateVariable uID="__statVar__/dataSchema/scaledData/sigma3/value">
+            <parameterUID>/dataSchema/scaledData/sigma3/value</parameterUID>
           </stateVariable>
           <stateVariable uID="__statVar__/dataSchema/scaledData/sigma4/value">
             <parameterUID>/dataSchema/scaledData/sigma4/value</parameterUID>
           </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/scaledData/sigma5/value">
+            <parameterUID>/dataSchema/scaledData/sigma5/value</parameterUID>
+          </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/scaledData/Theta/value">
+            <parameterUID>/dataSchema/scaledData/Theta/value</parameterUID>
+          </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/scaledData/dpdx/value">
+            <parameterUID>/dataSchema/scaledData/dpdx/value</parameterUID>
+          </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/scaledData/ESF/value">
+            <parameterUID>/dataSchema/scaledData/ESF/value</parameterUID>
+          </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/scaledData/DT/value">
+            <parameterUID>/dataSchema/scaledData/DT/value</parameterUID>
+          </stateVariable>
           <stateVariable uID="__statVar__/dataSchema/scaledData/Temp/value">
             <parameterUID>/dataSchema/scaledData/Temp/value</parameterUID>
-          </stateVariable>
-          <stateVariable uID="__statVar__/dataSchema/scaledData/sigma3/value">
-            <parameterUID>/dataSchema/scaledData/sigma3/value</parameterUID>
           </stateVariable>
         </stateVariables>
       </parameters>
@@ -948,164 +868,48 @@
       <name>XDSM - converged-MDA-J</name>
       <edges>
         <edge>
-          <fromParameterUID>/dataSchema/scaledData/dpdx/value</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/weight/WT</toParameterUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>F[R]</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/R/value</toParameterUID>
+          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/weight/WF</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/geometry/Theta</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/sigma1</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/weight/WBE</fromParameterUID>
-          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
+          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/sigma2</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/D</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/sigma3</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/weight/WT</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/sigma4</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/weight/WT</fromParameterUID>
-          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
+          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/sigma5</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/reference/ESF</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/geometry/Theta</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/scaledData/sigma5/value</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/geometry/Theta</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WE</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WT</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/L</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/tc</fromParameterUID>
-          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/tc</fromParameterUID>
-          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/DT</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WE</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/weight/WE</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/reference/ESF</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/reference/Temp</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/SFC</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/reference/ESF</toParameterUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/Lambda</fromParameterUID>
-          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/Lambda</fromParameterUID>
-          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>PerformanceAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/R</toParameterUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/R</fromParameterUID>
-          <toExecutableBlockUID>F[R]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/T</fromParameterUID>
-          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/other/L</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/SFC</fromParameterUID>
-          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WT</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/Nz</fromParameterUID>
-          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/section</fromParameterUID>
-          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/Cf</fromParameterUID>
-          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/reference/ESF</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/reference/h</fromParameterUID>
-          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/reference/h</fromParameterUID>
-          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/reference/h</fromParameterUID>
-          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>C[Theta]</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/Theta/value</toParameterUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/R/value</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/weight/WE</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/R/scaler</fromParameterUID>
-          <toExecutableBlockUID>F[R]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/sigma5</fromParameterUID>
-          <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
+          <fromExecutableBlockUID>AeroAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/L</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>AeroAnalysis</fromExecutableBlockUID>
@@ -1113,7 +917,7 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>AeroAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/L</toParameterUID>
+          <toParameterUID>/dataSchema/aircraft/other/fin</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>AeroAnalysis</fromExecutableBlockUID>
@@ -1125,70 +929,190 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>AeroAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/fin</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>AeroAnalysis</fromExecutableBlockUID>
           <toParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/other/D</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/reference/ESF</fromParameterUID>
-          <toExecutableBlockUID>C[prop]</toExecutableBlockUID>
+          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/reference/Temp</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/reference/ESF</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/reference/ESF</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/geometry/Theta</fromParameterUID>
+          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/SFC</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/DT</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/weight/WE</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WE</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/reference/ESF</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>PerformanceAnalysis</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/R</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/geometry/tc</fromParameterUID>
+          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/geometry/tc</fromParameterUID>
           <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/fin</fromParameterUID>
-          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/aircraft/geometry/AR</fromParameterUID>
+          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/geometry/AR</fromParameterUID>
+          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/geometry/Lambda</fromParameterUID>
+          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/geometry/Lambda</fromParameterUID>
+          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/geometry/Sref</fromParameterUID>
+          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/geometry/Sref</fromParameterUID>
+          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/geometry/lambda</fromParameterUID>
+          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/geometry/section</fromParameterUID>
+          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/weight/WE</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/weight/WO</fromParameterUID>
+          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/aircraft/weight/WFO</fromParameterUID>
           <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/AR</fromParameterUID>
+          <fromParameterUID>/dataSchema/aircraft/other/L</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/other/Nz</fromParameterUID>
           <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/AR</fromParameterUID>
+          <fromParameterUID>/dataSchema/aircraft/geometry/Theta</fromParameterUID>
+          <toExecutableBlockUID>C[Theta]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/geometry/Theta</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/weight/WT</fromParameterUID>
+          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/weight/WT</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/other/Cf</fromParameterUID>
           <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/other/CDmin</fromParameterUID>
+          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/reference/h</fromParameterUID>
+          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/reference/h</fromParameterUID>
+          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/reference/h</fromParameterUID>
+          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/reference/M</fromParameterUID>
+          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/reference/M</fromParameterUID>
+          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/reference/M</fromParameterUID>
+          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/reference/ESF</fromParameterUID>
+          <toExecutableBlockUID>C[prop]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/reference/ESF</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/other/T</fromParameterUID>
+          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/other/D</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/weight/WBE</fromParameterUID>
+          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/other/fin</fromParameterUID>
+          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/other/SFC</fromParameterUID>
+          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/weight/WF</fromParameterUID>
+          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/aircraft/other/sigma1</fromParameterUID>
+          <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/aircraft/other/sigma2</fromParameterUID>
           <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/weight/WT</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/DT/scaler</fromParameterUID>
-          <toExecutableBlockUID>C[prop]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/DT</fromParameterUID>
-          <toExecutableBlockUID>C[prop]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/other/L</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/sigma2/value</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/reference/ESF</fromParameterUID>
-          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/sigma4/scaler</fromParameterUID>
+          <fromParameterUID>/dataSchema/aircraft/other/sigma3</fromParameterUID>
           <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
         </edge>
         <edge>
@@ -1196,28 +1120,92 @@
           <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/other/D</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/aircraft/other/sigma5</fromParameterUID>
+          <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/scaledData/dpdx/scaler</fromParameterUID>
+          <fromParameterUID>/dataSchema/aircraft/other/dpdx</fromParameterUID>
           <toExecutableBlockUID>C[dpdx]</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/sigma1</fromParameterUID>
-          <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/Temp/scaler</fromParameterUID>
+          <fromParameterUID>/dataSchema/reference/Temp</fromParameterUID>
           <toExecutableBlockUID>C[prop]</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/sigma3</fromParameterUID>
-          <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/aircraft/other/DT</fromParameterUID>
+          <toExecutableBlockUID>C[prop]</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>C[prop]</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/Temp/value</toParameterUID>
+          <fromParameterUID>/dataSchema/aircraft/other/R</fromParameterUID>
+          <toExecutableBlockUID>F[R]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>F[R]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/scaledData/R/value</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/scaledData/R/scaler</fromParameterUID>
+          <toExecutableBlockUID>F[R]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/scaledData/R/value</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/scaledData/sigma1/value</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/scaledData/sigma2/value</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/scaledData/sigma3/value</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/scaledData/sigma4/value</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/scaledData/sigma5/value</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/scaledData/sigma1/value</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/scaledData/sigma2/value</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/scaledData/sigma3/value</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/scaledData/sigma4/value</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/scaledData/sigma5/value</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>C[Theta]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/scaledData/Theta/value</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/scaledData/Theta/value</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>C[dpdx]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/scaledData/dpdx/value</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/scaledData/dpdx/value</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>C[prop]</fromExecutableBlockUID>
@@ -1228,36 +1216,108 @@
           <toParameterUID>/dataSchema/scaledData/DT/value</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/weight/WF</fromParameterUID>
-          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
+          <fromExecutableBlockUID>C[prop]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/scaledData/Temp/value</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/scaledData/sigma3/scaler</fromParameterUID>
-          <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/Theta/value</fromParameterUID>
+          <fromParameterUID>/dataSchema/scaledData/ESF/value</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/weight/WE</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/scaledData/DT/value</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>C[dpdx]</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/dpdx/value</toParameterUID>
+          <fromParameterUID>/dataSchema/scaledData/Temp/value</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/reference/ESF</toParameterUID>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/geometry/lambda</toParameterUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WE</toParameterUID>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/geometry/section</toParameterUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WT</toParameterUID>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/weight/WO</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/weight/WFO</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/Nz</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/Cf</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/CDmin</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/other/T</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/weight/WBE</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/scaledData/R/scaler</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/other/L</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/geometry/Theta</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/weight/WT</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/weight/WE</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/other/D</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/reference/ESF</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/geometry/tc</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/geometry/AR</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/geometry/Lambda</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/aircraft/geometry/Sref</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/reference/h</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/reference/M</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
@@ -1269,311 +1329,91 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WT</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WE</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
           <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/other/D</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/scaledData/DT/value</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/reference/ESF</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/weight/WO</fromParameterUID>
-          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/sigma2/scaler</fromParameterUID>
-          <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/reference/M</fromParameterUID>
-          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/reference/M</fromParameterUID>
-          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/reference/M</fromParameterUID>
-          <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/Theta</fromParameterUID>
-          <toExecutableBlockUID>C[Theta]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/Theta</fromParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/other/L</fromParameterUID>
           <toExecutableBlockUID>Converger</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/Theta/scaler</fromParameterUID>
-          <toExecutableBlockUID>C[Theta]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/ESF/value</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/reference/Temp</fromParameterUID>
-          <toExecutableBlockUID>C[prop]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/sigma1/value</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WE</fromParameterUID>
-          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/sigma1/scaler</fromParameterUID>
-          <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/sigma4/value</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/CDmin</fromParameterUID>
-          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/Temp/value</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/lambda</fromParameterUID>
-          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/weight/WBE</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/geometry/tc</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/reference/M</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/other/D</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/T</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/other/L</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/Nz</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/geometry/section</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/Cf</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/reference/h</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/geometry/Theta</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/weight/WE</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/R/scaler</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/Temp/scaler</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/Theta/scaler</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/geometry/AR</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/sigma5/scaler</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/DT/scaler</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/sigma4/scaler</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/dpdx/scaler</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/sigma3/scaler</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/weight/WO</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/sigma2/scaler</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/weight/WFO</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/geometry/Lambda</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/sigma1/scaler</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/geometry/Sref</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/CDmin</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/geometry/lambda</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/ESF/scaler</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/weight/WT</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/reference/ESF</toParameterUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/ESF/scaler</fromParameterUID>
-          <toExecutableBlockUID>C[prop]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WT</fromParameterUID>
-          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/other/L</fromParameterUID>
           <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/sigma1/value</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/sigma4/value</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/sigma5/value</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/sigma2/value</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/scaledData/sigma3/value</toParameterUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/sigma3/value</fromParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/other/L</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/other/dpdx</fromParameterUID>
-          <toExecutableBlockUID>C[dpdx]</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/geometry/Theta</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/weight/WT</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/sigma5</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/sigma4</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/sigma1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/sigma3</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/other/sigma2</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/weight/WF</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/geometry/Theta</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/aircraft/geometry/Theta</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WT</toParameterUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/scaledData/sigma5/scaler</fromParameterUID>
-          <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/other/D</fromParameterUID>
-          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/geometry/Theta</fromParameterUID>
+          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/geometry/Theta</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/weight/WT</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WT</fromParameterUID>
+          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WT</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/weight/WE</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WE</fromParameterUID>
+          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WE</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/other/D</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/other/D</fromParameterUID>
+          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
           <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/other/D</fromParameterUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/Sref</fromParameterUID>
-          <toExecutableBlockUID>StructuralAnalysis</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/reference/ESF</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/aircraft/geometry/Sref</fromParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/reference/ESF</fromParameterUID>
           <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/reference/ESF</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
       </edges>
     </dataGraph>
@@ -1581,7 +1421,32 @@
       <name>XDSM - converged-MDA-J</name>
       <edges>
         <edge>
+          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <processStepNumber>3</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>AeroAnalysis</fromExecutableBlockUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <processStepNumber>3</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <processStepNumber>3</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>PerformanceAnalysis</fromExecutableBlockUID>
+          <toExecutableBlockUID>F[R]</toExecutableBlockUID>
+          <processStepNumber>5</processStepNumber>
+        </edge>
+        <edge>
           <fromExecutableBlockUID>F[R]</fromExecutableBlockUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <processStepNumber>6</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
           <processStepNumber>6</processStepNumber>
         </edge>
@@ -1591,39 +1456,19 @@
           <processStepNumber>6</processStepNumber>
         </edge>
         <edge>
+          <fromExecutableBlockUID>C[dpdx]</fromExecutableBlockUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <processStepNumber>6</processStepNumber>
+        </edge>
+        <edge>
           <fromExecutableBlockUID>C[prop]</fromExecutableBlockUID>
           <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
           <processStepNumber>6</processStepNumber>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toExecutableBlockUID>C[Theta]</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toExecutableBlockUID>C[prop]</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
-          <processStepNumber>2</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toExecutableBlockUID>C[dpdx]</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
-          <processStepNumber>2</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <processStepNumber>1</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
@@ -1632,50 +1477,70 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toExecutableBlockUID>AeroAnalysis</toExecutableBlockUID>
+          <processStepNumber>2</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toExecutableBlockUID>PropulsionAnalysis</toExecutableBlockUID>
+          <processStepNumber>2</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
           <toExecutableBlockUID>PerformanceAnalysis</toExecutableBlockUID>
           <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
-          <fromExecutableBlockUID>PropulsionAnalysis</fromExecutableBlockUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-          <processStepNumber>3</processStepNumber>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toExecutableBlockUID>C[sigmas]</toExecutableBlockUID>
+          <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-          <processStepNumber>1</processStepNumber>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toExecutableBlockUID>C[Theta]</toExecutableBlockUID>
+          <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
-          <fromExecutableBlockUID>C[dpdx]</fromExecutableBlockUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-          <processStepNumber>6</processStepNumber>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toExecutableBlockUID>C[dpdx]</toExecutableBlockUID>
+          <processStepNumber>4</processStepNumber>
         </edge>
         <edge>
-          <fromExecutableBlockUID>AeroAnalysis</fromExecutableBlockUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-          <processStepNumber>3</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>C[sigmas]</fromExecutableBlockUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
-          <processStepNumber>6</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>StructuralAnalysis</fromExecutableBlockUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-          <processStepNumber>3</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>PerformanceAnalysis</fromExecutableBlockUID>
-          <toExecutableBlockUID>F[R]</toExecutableBlockUID>
-          <processStepNumber>5</processStepNumber>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toExecutableBlockUID>C[prop]</toExecutableBlockUID>
+          <processStepNumber>4</processStepNumber>
         </edge>
       </edges>
       <nodes>
         <node>
+          <referenceUID>StructuralAnalysis</referenceUID>
+          <processStepNumber>2</processStepNumber>
+          <diagonalPosition>2</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>AeroAnalysis</referenceUID>
+          <processStepNumber>2</processStepNumber>
+          <diagonalPosition>3</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>PropulsionAnalysis</referenceUID>
+          <processStepNumber>2</processStepNumber>
+          <diagonalPosition>4</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>PerformanceAnalysis</referenceUID>
+          <processStepNumber>4</processStepNumber>
+          <diagonalPosition>5</diagonalPosition>
+        </node>
+        <node>
           <referenceUID>F[R]</referenceUID>
           <processStepNumber>5</processStepNumber>
           <diagonalPosition>10</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>C[sigmas]</referenceUID>
+          <processStepNumber>4</processStepNumber>
+          <diagonalPosition>6</diagonalPosition>
         </node>
         <node>
           <referenceUID>C[Theta]</referenceUID>
@@ -1683,20 +1548,14 @@
           <diagonalPosition>7</diagonalPosition>
         </node>
         <node>
+          <referenceUID>C[dpdx]</referenceUID>
+          <processStepNumber>4</processStepNumber>
+          <diagonalPosition>8</diagonalPosition>
+        </node>
+        <node>
           <referenceUID>C[prop]</referenceUID>
           <processStepNumber>4</processStepNumber>
           <diagonalPosition>9</diagonalPosition>
-        </node>
-        <node>
-          <referenceUID>Converger</referenceUID>
-          <processStepNumber>1</processStepNumber>
-          <convergerStepNumber>3</convergerStepNumber>
-          <diagonalPosition>1</diagonalPosition>
-        </node>
-        <node>
-          <referenceUID>PropulsionAnalysis</referenceUID>
-          <processStepNumber>2</processStepNumber>
-          <diagonalPosition>4</diagonalPosition>
         </node>
         <node>
           <referenceUID>Coordinator</referenceUID>
@@ -1705,29 +1564,10 @@
           <diagonalPosition>0</diagonalPosition>
         </node>
         <node>
-          <referenceUID>C[dpdx]</referenceUID>
-          <processStepNumber>4</processStepNumber>
-          <diagonalPosition>8</diagonalPosition>
-        </node>
-        <node>
-          <referenceUID>AeroAnalysis</referenceUID>
-          <processStepNumber>2</processStepNumber>
-          <diagonalPosition>3</diagonalPosition>
-        </node>
-        <node>
-          <referenceUID>C[sigmas]</referenceUID>
-          <processStepNumber>4</processStepNumber>
-          <diagonalPosition>6</diagonalPosition>
-        </node>
-        <node>
-          <referenceUID>StructuralAnalysis</referenceUID>
-          <processStepNumber>2</processStepNumber>
-          <diagonalPosition>2</diagonalPosition>
-        </node>
-        <node>
-          <referenceUID>PerformanceAnalysis</referenceUID>
-          <processStepNumber>4</processStepNumber>
-          <diagonalPosition>5</diagonalPosition>
+          <referenceUID>Converger</referenceUID>
+          <processStepNumber>1</processStepNumber>
+          <convergerStepNumber>3</convergerStepNumber>
+          <diagonalPosition>1</diagonalPosition>
         </node>
       </nodes>
       <metadata>
@@ -1760,24 +1600,14 @@
   <architectureElements>
     <parameters>
       <initialGuessCouplingVariables>
-        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/geometry/Theta">
-          <relatedParameterUID>/dataSchema/aircraft/geometry/Theta</relatedParameterUID>
-          <label>Theta^{c0}</label>
-          <instanceID>1</instanceID>
-        </initialGuessCouplingVariable>
-        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/reference/ESF">
-          <relatedParameterUID>/dataSchema/reference/ESF</relatedParameterUID>
-          <label>ESF^{c0}</label>
-          <instanceID>1</instanceID>
-        </initialGuessCouplingVariable>
         <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/other/L">
           <relatedParameterUID>/dataSchema/aircraft/other/L</relatedParameterUID>
           <label>L^{c0}</label>
           <instanceID>1</instanceID>
         </initialGuessCouplingVariable>
-        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/weight/WE">
-          <relatedParameterUID>/dataSchema/aircraft/weight/WE</relatedParameterUID>
-          <label>WE^{c0}</label>
+        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/geometry/Theta">
+          <relatedParameterUID>/dataSchema/aircraft/geometry/Theta</relatedParameterUID>
+          <label>Theta^{c0}</label>
           <instanceID>1</instanceID>
         </initialGuessCouplingVariable>
         <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/weight/WT">
@@ -1785,28 +1615,23 @@
           <label>WT^{c0}</label>
           <instanceID>1</instanceID>
         </initialGuessCouplingVariable>
+        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/weight/WE">
+          <relatedParameterUID>/dataSchema/aircraft/weight/WE</relatedParameterUID>
+          <label>WE^{c0}</label>
+          <instanceID>1</instanceID>
+        </initialGuessCouplingVariable>
         <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/aircraft/other/D">
           <relatedParameterUID>/dataSchema/aircraft/other/D</relatedParameterUID>
           <label>D^{c0}</label>
           <instanceID>1</instanceID>
         </initialGuessCouplingVariable>
+        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/reference/ESF">
+          <relatedParameterUID>/dataSchema/reference/ESF</relatedParameterUID>
+          <label>ESF^{c0}</label>
+          <instanceID>1</instanceID>
+        </initialGuessCouplingVariable>
       </initialGuessCouplingVariables>
       <finalCouplingVariables>
-        <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WE">
-          <relatedParameterUID>/dataSchema/aircraft/weight/WE</relatedParameterUID>
-          <label>WE^{*}</label>
-          <instanceID>1</instanceID>
-        </finalCouplingVariable>
-        <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WT">
-          <relatedParameterUID>/dataSchema/aircraft/weight/WT</relatedParameterUID>
-          <label>WT^{*}</label>
-          <instanceID>1</instanceID>
-        </finalCouplingVariable>
-        <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/reference/ESF">
-          <relatedParameterUID>/dataSchema/reference/ESF</relatedParameterUID>
-          <label>ESF^{*}</label>
-          <instanceID>1</instanceID>
-        </finalCouplingVariable>
         <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/other/L">
           <relatedParameterUID>/dataSchema/aircraft/other/L</relatedParameterUID>
           <label>L^{*}</label>
@@ -1817,26 +1642,36 @@
           <label>Theta^{*}</label>
           <instanceID>1</instanceID>
         </finalCouplingVariable>
+        <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WT">
+          <relatedParameterUID>/dataSchema/aircraft/weight/WT</relatedParameterUID>
+          <label>WT^{*}</label>
+          <instanceID>1</instanceID>
+        </finalCouplingVariable>
+        <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/weight/WE">
+          <relatedParameterUID>/dataSchema/aircraft/weight/WE</relatedParameterUID>
+          <label>WE^{*}</label>
+          <instanceID>1</instanceID>
+        </finalCouplingVariable>
         <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/aircraft/other/D">
           <relatedParameterUID>/dataSchema/aircraft/other/D</relatedParameterUID>
           <label>D^{*}</label>
           <instanceID>1</instanceID>
         </finalCouplingVariable>
+        <finalCouplingVariable uID="/dataSchema/architectureNodes/finalCouplingVariables/dataSchemaCopy/reference/ESF">
+          <relatedParameterUID>/dataSchema/reference/ESF</relatedParameterUID>
+          <label>ESF^{*}</label>
+          <instanceID>1</instanceID>
+        </finalCouplingVariable>
       </finalCouplingVariables>
       <couplingCopyVariables>
+        <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/other/L">
+          <relatedParameterUID>/dataSchema/aircraft/other/L</relatedParameterUID>
+          <label>L^{c}</label>
+          <instanceID>1</instanceID>
+        </couplingCopyVariable>
         <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/geometry/Theta">
           <relatedParameterUID>/dataSchema/aircraft/geometry/Theta</relatedParameterUID>
           <label>Theta^{c}</label>
-          <instanceID>1</instanceID>
-        </couplingCopyVariable>
-        <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/reference/ESF">
-          <relatedParameterUID>/dataSchema/reference/ESF</relatedParameterUID>
-          <label>ESF^{c}</label>
-          <instanceID>1</instanceID>
-        </couplingCopyVariable>
-        <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WE">
-          <relatedParameterUID>/dataSchema/aircraft/weight/WE</relatedParameterUID>
-          <label>WE^{c}</label>
           <instanceID>1</instanceID>
         </couplingCopyVariable>
         <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WT">
@@ -1844,14 +1679,19 @@
           <label>WT^{c}</label>
           <instanceID>1</instanceID>
         </couplingCopyVariable>
-        <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/other/L">
-          <relatedParameterUID>/dataSchema/aircraft/other/L</relatedParameterUID>
-          <label>L^{c}</label>
+        <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/weight/WE">
+          <relatedParameterUID>/dataSchema/aircraft/weight/WE</relatedParameterUID>
+          <label>WE^{c}</label>
           <instanceID>1</instanceID>
         </couplingCopyVariable>
         <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/aircraft/other/D">
           <relatedParameterUID>/dataSchema/aircraft/other/D</relatedParameterUID>
           <label>D^{c}</label>
+          <instanceID>1</instanceID>
+        </couplingCopyVariable>
+        <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/reference/ESF">
+          <relatedParameterUID>/dataSchema/reference/ESF</relatedParameterUID>
+          <label>ESF^{c}</label>
           <instanceID>1</instanceID>
         </couplingCopyVariable>
       </couplingCopyVariables>
@@ -1885,33 +1725,33 @@
       </convergers>
       <coupledAnalyses>
         <coupledAnalysis>
-          <relatedExecutableBlockUID>PropulsionAnalysis</relatedExecutableBlockUID>
+          <relatedExecutableBlockUID>StructuralAnalysis</relatedExecutableBlockUID>
         </coupledAnalysis>
         <coupledAnalysis>
           <relatedExecutableBlockUID>AeroAnalysis</relatedExecutableBlockUID>
         </coupledAnalysis>
         <coupledAnalysis>
-          <relatedExecutableBlockUID>StructuralAnalysis</relatedExecutableBlockUID>
+          <relatedExecutableBlockUID>PropulsionAnalysis</relatedExecutableBlockUID>
         </coupledAnalysis>
       </coupledAnalyses>
       <postCouplingAnalyses>
         <postCouplingAnalysis>
+          <relatedExecutableBlockUID>PerformanceAnalysis</relatedExecutableBlockUID>
+        </postCouplingAnalysis>
+        <postCouplingAnalysis>
           <relatedExecutableBlockUID>F[R]</relatedExecutableBlockUID>
         </postCouplingAnalysis>
         <postCouplingAnalysis>
-          <relatedExecutableBlockUID>PerformanceAnalysis</relatedExecutableBlockUID>
+          <relatedExecutableBlockUID>C[sigmas]</relatedExecutableBlockUID>
         </postCouplingAnalysis>
         <postCouplingAnalysis>
           <relatedExecutableBlockUID>C[Theta]</relatedExecutableBlockUID>
         </postCouplingAnalysis>
         <postCouplingAnalysis>
-          <relatedExecutableBlockUID>C[prop]</relatedExecutableBlockUID>
-        </postCouplingAnalysis>
-        <postCouplingAnalysis>
           <relatedExecutableBlockUID>C[dpdx]</relatedExecutableBlockUID>
         </postCouplingAnalysis>
         <postCouplingAnalysis>
-          <relatedExecutableBlockUID>C[sigmas]</relatedExecutableBlockUID>
+          <relatedExecutableBlockUID>C[prop]</relatedExecutableBlockUID>
         </postCouplingAnalysis>
       </postCouplingAnalyses>
     </executableBlocks>

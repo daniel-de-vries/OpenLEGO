@@ -28,10 +28,10 @@ from openlego.utils.general_utils import change_object_type
 
 
 def get_related_parameter_uid(elem_or_uid_param, full_xml):
-    # type: (_Element, _Element) -> Tuple[str, str]
-    """Function to retrieve the UID of the related parameter. This UID refers to the original local in the XML file of
-     the parameter and is used when a parameter is found in a CMDOWS file which is an architecture type or a higher
-     instance.
+    # type: (Union[str,_Element], _Element) -> Union[Tuple[str, str], Tuple[str,None]]
+    """Retrieve the UID of the related parameter. This UID refers to the original location in the
+    XML file of the parameter and is used when a parameter is found in a CMDOWS file which is an
+    architecture type or a higher instance.
 
     Parameters
     ----------
@@ -44,7 +44,7 @@ def get_related_parameter_uid(elem_or_uid_param, full_xml):
     -------
         param : str
             Original parameter UID for which the related UID is searched for.
-        mapped : str
+        mapped : str or None
             The found related parameter UID.
     """
     if isinstance(elem_or_uid_param, _Element):
@@ -59,9 +59,15 @@ def get_related_parameter_uid(elem_or_uid_param, full_xml):
         mapped = elem_param.find('relatedParameterUID').text
     elif isinstance(elem_param.find('relatedInstanceUID'), _Element):
         related_instance = get_element_by_uid(full_xml, elem_param.find('relatedInstanceUID').text)
-        mapped = related_instance.find('relatedParameterUID').text
+        if isinstance(related_instance.find('relatedParameterUID'), _Element):
+            mapped = related_instance.find('relatedParameterUID').text
+        else:
+            mapped = related_instance.attrib['uID']
     else:
-        raise AssertionError('Could not map element {}.'.format(param))
+        if elem_param.tag == 'couplingWeight':
+            return str(param), None
+        else:
+            raise AssertionError('Could not map element {}.'.format(param))
     return str(param), str(mapped)
 
 
@@ -85,8 +91,8 @@ def get_element_by_uid(xml, uid):
     xpath_expression = get_uid_search_xpath(uid)
     els = xml.xpath(xpath_expression)
     if len(els) > 1:
-        raise AssertionError('Multiple elements with UID ' + uid + ' found. Use "check_uids()" to check if all UIDs'
-                                                                   ' are unique.')
+        raise AssertionError('Multiple elements with UID ' + uid + ' found. Use "check_uids()" to'
+                                                                   ' check if all UIDs are unique.')
     elif len(els) == 0:
         raise AssertionError('Could not find element with UID ' + uid + '.')
     return els[0]
@@ -107,7 +113,8 @@ def get_uid_search_xpath(uid):
             Processed XPath expression to escape quote characters using "concat()".
     """
     if '"' in uid or '&quot;' in uid:
-        uid_concat = "concat('%s')" % uid.replace('&quot;', "\',\'\"\',\'").replace('"', "\',\'\"\',\'")
+        uid_concat = "concat('%s')" % uid.replace('&quot;', "\',\'\"\',\'").replace('"',
+                                                                                    "\',\'\"\',\'")
         return './/*[@uID=' + uid_concat + ']'
     else:
         return './/*[@uID="' + uid + '"]'
@@ -115,8 +122,8 @@ def get_uid_search_xpath(uid):
 
 def get_opt_setting_safe(opt_elem, setting, default, expected_type='str'):
     # type: (_Element, str, Any, str) -> Union[str, int, float]
-    """Function to read out an optimizer setting from a CMDOWS file, and to provide a default value (and warning) if the
-    setting is not found.
+    """Function to read out an optimizer setting from a CMDOWS file, and to provide a default value
+    (and warning) if the setting is not found.
 
     Parameters
     ----------
@@ -130,7 +137,7 @@ def get_opt_setting_safe(opt_elem, setting, default, expected_type='str'):
             The default value of the setting if it is not found in the element.
 
         expected_type : str
-            The expected type of the setting (str, int, float) so that the XML string value can be changed accordingly.
+            The expected type of the setting (str, int, float).
 
     Returns
     -------
@@ -140,16 +147,17 @@ def get_opt_setting_safe(opt_elem, setting, default, expected_type='str'):
     if isinstance(opt_elem.find('settings/{}'.format(setting)), _Element):
         opt_setting = opt_elem.find('settings/{}'.format(setting)).text
     else:
-        warnings.warn('Setting "{}" not specified for optimizer element "{}", setting to default "{}".'
+        warnings.warn('Setting "{}" not specified for element "{}", setting to default "{}".'
                       .format(setting, opt_elem.attrib['uID'], default))
         opt_setting = default
     return change_object_type(opt_setting, expected_type)
 
 
-def get_doe_setting_safe(doe_elem, setting, default, expected_type='str', doe_method=None, required_for_doe_methods=None):
+def get_doe_setting_safe(doe_elem, setting, default, expected_type='str', doe_method=None,
+                         required_for_doe_methods=None):
     # type: (_Element, str, Any, str, str, List[str]) -> Union[str, int, float]
-    """Function to read out a DOE setting from a CMDOWS file based on whether that setting is required, and to provide
-    a default value (and warning) if the setting is not found.
+    """Function to read out a DOE setting from a CMDOWS file based on whether that setting is
+    required, and to provide a default value (and warning) if the setting is not found.
 
     Parameters
     ----------
@@ -163,7 +171,7 @@ def get_doe_setting_safe(doe_elem, setting, default, expected_type='str', doe_me
             The default value of the setting if it is not found in the element.
 
         expected_type : str
-            The expected type of the setting (str, int, float) so that the XML string value can be changed accordingly.
+            The expected type of the setting (str, int, float).
 
         doe_method : str
             The DOE method (LHS, Box-Behnken, etc.) of the DOE block.
@@ -181,7 +189,7 @@ def get_doe_setting_safe(doe_elem, setting, default, expected_type='str', doe_me
     else:
         if required_for_doe_methods:
             if doe_method in required_for_doe_methods:
-                warnings.warn('Setting "{}" not specified for DOE element "{}", setting to default "{}".'
+                warnings.warn('Setting "{}" unspecified for element "{}", setting to default "{}".'
                               .format(setting, doe_elem.attrib['uID'], default))
                 doe_setting = default
             else:
@@ -194,9 +202,21 @@ def get_doe_setting_safe(doe_elem, setting, default, expected_type='str', doe_me
         return doe_setting
 
 
+def get_surrogate_model_setting_safe(sm_elem, setting, default, expected_type='str'):
+    # TODO: add docstring
+
+    if isinstance(sm_elem.find('training/settings/{}'.format(setting)), _Element):
+        doe_setting = sm_elem.find('training/settings/{}'.format(setting)).text
+    else:
+        warnings.warn('Setting "{}" unspecified for element "{}", setting to default "{}".'
+                      .format(setting, sm_elem.attrib['uID'], default))
+        doe_setting = default
+    return change_object_type(doe_setting, expected_type)
+
+
 def get_loop_nesting_obj(elem):
     # type: (_Element) -> Union[list, dict]
-    """Function to make an object of the loop hierarchy based on the loopNesting element in a CMDOWS file.
+    """Make an object of the loop hierarchy based on the loopNesting element in a CMDOWS file.
 
     Parameters
     ----------
@@ -206,7 +226,7 @@ def get_loop_nesting_obj(elem):
     Returns
     -------
         list or dict
-            A list object containing dictionaries and string entries to represent the loopNesting element.
+            List object containing dictionaries and string entries representing loopNesting element.
 
     Raises
     ------

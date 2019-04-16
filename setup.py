@@ -42,6 +42,7 @@ setup(
         'Topic :: Scientific/Engineering',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.7',
     ],
     keywords='optimization agile multidisciplinary kadmos openmdao engineering xml cpacs',
     url='https://github.com/daniel-de-vries/OpenLEGO',
@@ -52,11 +53,14 @@ setup(
     packages=find_packages(),
     package_data={'openlego.partials': ['partials.xsd']},
     install_requires=[
-        'openmdao>=2.5.0',
+        'openmdao>=2.6.0',
         'lxml',
         'numpy',
-        'ssbjkadmos>=0.1.6',
-        'cached-property'
+        'ssbjkadmos>=0.1.9',
+        'cached-property',
+        'plotly',
+        'six',
+        'typing'
     ],
     include_package_data=True,
     zip_safe=False

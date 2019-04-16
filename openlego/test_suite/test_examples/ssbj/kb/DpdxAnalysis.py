@@ -11,15 +11,15 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 
-from ssbjkadmos.tools.propulsion.Propulsion import Propulsion
+from ssbjkadmos.tools.dpdxcalc.DpdxCalc import DpdxCalc
 from ssbjkadmos.utils.execution import run_tool
 
 
-class PropulsionAnalysis(Propulsion):  # AbstractDiscipline
-
+class DpdxAnalysis(DpdxCalc):  # AbstractDiscipline
     pass
 
 
 if __name__ == "__main__":
-    analysis = PropulsionAnalysis()
+
+    analysis = DpdxAnalysis()
     run_tool(analysis, sys.argv)

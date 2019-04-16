@@ -26,9 +26,7 @@ from os import path
 
 import numpy as np
 from lxml import etree
-
-from openmdao.core.driver import Driver
-from typing import Callable, Any, Optional, Union, Type, List, SupportsInt, SupportsFloat
+from typing import Callable, Any, Union, List, SupportsInt, SupportsFloat
 
 
 def try_hard(fun, *args, **kwargs):
@@ -189,129 +187,22 @@ def parse_cmdows_value(elem):
         return parse_string(elem.text)
 
 
-def normalized_to_bounds(driver):
-    # type: (Type[Driver]) -> Type[NormalizedDriver]
-    """Decorate a `Driver` to adjust its ``adder``/``scaler`` attributes normalizing the ``desvar``s.
+def unscale_value(v, ref0, ref):
+    # TODO: add docstring
+    if isinstance(v, list):
+        v = np.array(v)
+    return v*(ref-ref0)+ref0
 
-    This decorator automatically adjusts the adder and scalar attributes of the design variables belonging to the
-    targeted ``OpenMDAO`` `Driver` class such that the design variables are normalized to their bounds.
 
-    Parameters
-    ----------
-        driver : :obj:`Driver`
-            `Driver` to normalize the design variables of.
-
-    Returns
-    -------
-        :obj:`NormalizedDriver`
-            Instance of `NormalizedDriver` which inherits from the given `Driver`.
-
-    Examples
-    --------
-        @normalized_to_bounds\n
-        class MyNormalizedDriver(Driver):
-            # My design variables will now automatically be normalized to their bounds.
-            pass
-    """
-
-    class NormalizedDriver(driver):
-        """Wrapper class for the `normalized_to_bounds` decorator.
-
-        This class adds a static function to the `Driver` it inherits from, which will intercept all `add_desvar()`
-        calls to the wrapped `Driver` class to change its ``adder``/``scaler`` attributes depending on the given
-        upper and lower bounds.
-        """
-
-        @staticmethod
-        def normalize_to_bounds(func):
-            # type: (Callable) -> Callable
-            """Wrap the function handle of the `add_desvar()` function.
-
-            Parameters
-            ----------
-                func : function
-                    Function handle of the `add_desvar()` function.
-
-            Returns
-            -------
-                func : function
-                    Function wrapping the `add_desvar()` function, which adds logic to calculate ``adder``/``scaler``.
-            """
-
-            def new_function(name,          # type: str
-                             lower=None,    # type: Optional[Union[float, np.ndarray]]
-                             upper=None,    # type: Optional[Union[float, np.ndarray]]
-                             *args, **kwargs):
-                # type: (...) -> None
-                """Wrap the `add_desvar()` function call.
-
-                Inner wrapper function which will set the ``adder`` and ``scaler`` `kwargs` of the wrapped
-                `add_desvar()` method before calling it.
-
-                Parameters
-                ----------
-                    name : str
-                        Name of the design variable to add.
-
-                    lower : float or list of float, optional
-                        Lower bound(s) of the design variable.
-
-                    upper : float or list of float, optional
-                        Upper bound(s) of the design variable.
-
-                    *args
-                        Any extra, ordered arguments to pass to the `add_desvar()` method.
-
-                    **kwargs
-                        Any extra, named arguments to pass to the `add_desvar()` method.
-                """
-                if lower is not None:
-                    adder = -lower
-                else:
-                    adder = 0.
-
-                if upper is not None:
-                    scaler = 1./(upper + adder)
-                else:
-                    scaler = 1.
-
-                if len(args) > 4:
-                    args = args[:-1]
-                elif len(args) > 3:
-                    args = args[:-1]
-
-                if 'adder' in kwargs:
-                    del kwargs['adder']
-                if 'scaler' in kwargs:
-                    del kwargs['scaler']
-
-                func(name, lower, upper, adder=adder, scaler=scaler, *args, **kwargs)
-
-            return new_function
-
-        def __getattribute__(self, item):
-            """Intercept any calls to the `add_desvar()` method of the Driver class.
-
-            This ``hook`` checks if `add_desvar()` is called. If so, it returns the wrapped function instead of the
-            clean `add_desvar()` call.
-
-            Parameters
-            ----------
-                item : str
-                    Name of the attribute.
-
-            Returns
-            -------
-                any
-                    The attribute that was requested or the wrapped call to `add_desvar()` if it is requested.
-            """
-            x = super(NormalizedDriver, self).__getattribute__(item)
-            if item in ['add_desvar']:
-                return self.normalize_to_bounds(x)
-            else:
-                return x
-
-    return NormalizedDriver
+def scale_value(v, adder, scaler):
+    # TODO: add docstring
+    if adder is None:
+        adder = 0.
+    if scaler is None:
+        scaler = 1.
+    if isinstance(v, list):
+        v = np.array(v)
+    return (v + adder) * scaler
 
 
 re_sys_name_char = re.compile(r'[^_a-zA-Z0-9]')
@@ -350,13 +241,35 @@ def clean_dir_filtered(dr, filters):
                 continue
 
 
+def warn_about_failed_experiments(failed_experiments):
+    # TODO: Add docstring
+    if failed_experiments:
+        for sm_uid, failure_data in failed_experiments.items():
+            if failure_data[1] == 1.:
+                raise AssertionError('All experiments failed for surrogate model {}'.format(sm_uid))
+            elif failure_data[1] > 0.5:
+                warnings.warn('ATTENTION! More than 50% of the experiments (actually {:.1f}%) failed for surrogate'
+                              ' model {}'.format(failure_data[1]*100., sm_uid))
+            elif failure_data[1] > 0.2:
+                warnings.warn('More than 20% of the experiments (actually {:.1f}%) failed for surrogate model {}'
+                              .format(failure_data[1] * 100., sm_uid))
+
+            else:
+                print('{:.1f}% of the experiments failed for surrogate model {}'.format(failure_data[1] * 100., sm_uid))
+
+
+
 class PyOptSparseImportError(ImportError):
 
     def __init__(self):
-        msg = "Cannot import name pyOptSparseDriver. This probably means that this package has not been installed to " \
-              "your Python packages. Note that it needs to be installed to your Python manually (no PyPIdistribution " \
-              "available). pyOptSparse can be downloaded here: https://github.com/mdolab/pyoptsparse"
-        super(PyOptSparseImportError, self).__init__(msg)
+        super(PyOptSparseImportError, self).__init__()
+
+    @property
+    def msg(self):
+        return "Cannot import name pyOptSparseDriver. This probably means that this package has " \
+               "not been installed to your Python packages. Note that it needs to be installed to " \
+               "your Python manually (no PyPIdistribution available). pyOptSparse can be " \
+               "downloaded here: https://github.com/mdolab/pyoptsparse"
 
 
 def pyoptsparse_installed():
@@ -365,6 +278,7 @@ def pyoptsparse_installed():
     try:
         from openmdao.api import pyOptSparseDriver
     except ImportError:
-        print(PyOptSparseImportError().message)
+        print(PyOptSparseImportError().msg)
         return False
     return True
+

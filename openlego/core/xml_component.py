@@ -270,7 +270,7 @@ class XMLComponent(ExplicitComponent):
                 Input vector of this `Component`.
         """
         # Create new root element and an ElementTree
-        root = etree.Element(param_to_xpath(self.inputs_from_xml.keys()[0]).split('/')[1])
+        root = etree.Element(param_to_xpath(list(self.inputs_from_xml)[0]).split('/')[1])
         doc = etree.ElementTree(root)
 
         # Convert all XML param names to XPaths and add new elements to the tree correspondingly

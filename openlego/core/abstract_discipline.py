@@ -23,6 +23,8 @@ import abc
 import inspect
 import os
 
+from six import string_types
+
 from openlego.partials.partials import Partials
 
 
@@ -68,53 +70,55 @@ class AbstractDiscipline(object):
 
     @abc.abstractmethod
     def generate_input_xml(self):
-        # type: () -> str
+        # type: () -> string_types
         """Generate the template input XML for this discipline.
 
         This method should be implemented to define the input template of a specific discipline.
 
         Returns
         -------
-            str
+            string_types
                 String representation of the template input XML.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def generate_output_xml(self):
-        # type: () -> str
+        # type: () -> string_types
         """Generate the template output XML for this discipline.
 
         This method should be implemented to define the output template of a specific discipline.
 
         Returns
         -------
-            str
+            string_types
                 String representation of the template output XML file.
         """
         raise NotImplementedError
 
     def generate_partials_xml(self):
-        # type: () -> str
+        # type: () -> string_types
         """Generate the template partials XML file for this discipline.
 
-        This method should be implemented to define for which inputs this discipline can provide the sensitivities.
+        This method should be implemented to define for which inputs this discipline can provide
+        the sensitivities.
 
         Returns
         -------
-            str
+            string_types
                 String representation of the template partials XML file.
         """
         return Partials().get_string()
 
     def deploy(self):
         # type: () -> None
-        """Deploy this discipline's template in-/output, partials XML files and its information JSON file."""
-        with open(self.in_file, 'w') as f:
+        """Deploy this discipline's template in-/output, partials XML files and its information
+        JSON file."""
+        with open(self.in_file, 'wb') as f:
             f.write(self.generate_input_xml())
-        with open(self.out_file, 'w') as f:
+        with open(self.out_file, 'wb') as f:
             f.write(self.generate_output_xml())
-        with open(self.partials_file, 'w') as f:
+        with open(self.partials_file, 'wb') as f:
             f.write(self.generate_partials_xml())
 
     @staticmethod
@@ -138,10 +142,11 @@ class AbstractDiscipline(object):
     @staticmethod
     def linearize(in_file, partials_file):
         # type: (str, str) -> None
-        """Compute the sensitivities of a given input XML file and write them to a given partials XML file.
+        """Compute the sensitivities of a given input XML file and write them to a given partials
+        XML file.
 
-        This method should be implemented to define the linearization of a specific discipline. By default a discipline
-        is considered a 'black box', and no sensitivities are provided.
+        This method should be implemented to define the linearization of a specific discipline. By
+        default a discipline is considered a 'black box', and no sensitivities are provided.
 
         Parameters
         ----------

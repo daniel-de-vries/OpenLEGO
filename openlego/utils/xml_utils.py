@@ -25,6 +25,7 @@ from shutil import copyfile
 
 import numpy as np
 from lxml import etree
+from six import string_types
 from typing import Optional, Union, List
 
 # Patterns for XML attribute names and values
@@ -114,12 +115,12 @@ def value_to_xml(elem, value):
 
     if isinstance(value, np.ndarray):
         if value.size == 1:
-            elem.text = str('{:.16f}'.format(value[0]))
+            elem.text = str('{:.24e}'.format(value[0]))
         else:
-            elem.text = ';'.join([str('{:.16f}'.format(v)) for v in value[:]])
+            elem.text = ';'.join([str('{:.24e}'.format(v)) for v in value[:]])
             elem.attrib.update({'mapType': 'vector'})
     elif isinstance(value, float):
-        elem.text = str('{:.16f}'.format(value))
+        elem.text = str('{:.24e}'.format(value))
     else:
         elem.text = str(value)
 
@@ -138,7 +139,7 @@ def xml_to_dict(xml):
         :obj:`OrderedDict`
             `OrderedDict` representing the XML file in file order.
     """
-    if isinstance(xml, str):
+    if isinstance(xml, string_types):
         xml = etree.parse(xml, parser)
 
     _dict = OrderedDict()
@@ -321,14 +322,14 @@ def xml_merge(base, merger, out_file=None):
     -----
         If conflicting elements exist the value of the merger will overwrite the one in the base.
     """
-    if isinstance(base, str):
+    if isinstance(base, string_types):
         try:
             doc = etree.parse(base, parser)
         except IOError:
             if out_file is None:
                 out_file = base
 
-            if isinstance(merger, str):
+            if isinstance(merger, string_types):
                 copyfile(merger, out_file)
             else:
                 merger.write(out_file, encoding='utf-8', pretty_print=True, xml_declaration=True)
@@ -343,5 +344,5 @@ def xml_merge(base, merger, out_file=None):
 
     if out_file is not None:
         doc.write(out_file, encoding='utf-8', pretty_print=True, xml_declaration=True)
-    elif isinstance(base, str):
+    elif isinstance(base, string_types):
         doc.write(base, encoding='utf-8', pretty_print=True, xml_declaration=True)

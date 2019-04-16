@@ -3,14 +3,14 @@
   <header>
     <creator>Imco van Gent</creator>
     <description>Mdao CMDOWS file of the well-known Sellar problem</description>
-    <timestamp>2018-08-21T09:50:51.226421</timestamp>
+    <timestamp>2019-03-27T12:57:40.975511</timestamp>
     <fileVersion>0.1</fileVersion>
     <cmdowsVersion>0.9</cmdowsVersion>
     <updates>
       <update>
         <modification>KADMOS export of a mdao data graph (MDG).</modification>
         <creator>Imco van Gent</creator>
-        <timestamp>2018-08-21T09:50:51.226421</timestamp>
+        <timestamp>2019-03-27T12:57:40.975511</timestamp>
         <fileVersion>0.1</fileVersion>
         <cmdowsVersion>0.9</cmdowsVersion>
       </update>
@@ -27,12 +27,6 @@
           <department>Flight Performance and Propulsion</department>
           <email>i.vangent@tudelft.nl</email>
         </contact>
-        <contact uID="danieldevries">
-          <name>Daniel de Vries</name>
-          <country>USA</country>
-          <company>TU Delft</company>
-          <email>danieldevries6@gmail.com</email>
-        </contact>
       </contacts>
       <organigram>
         <architects>
@@ -45,11 +39,6 @@
             <contactUID>imcovangent</contactUID>
           </integrator>
         </integrators>
-        <toolSpecialists>
-          <toolSpecialist>
-            <contactUID>danieldevries</contactUID>
-          </toolSpecialist>
-        </toolSpecialists>
       </organigram>
     </organization>
   </header>
@@ -60,10 +49,10 @@
         <instanceID>1</instanceID>
         <inputs>
           <input>
-            <parameterUID>/dataSchema/geometry/x1</parameterUID>
+            <parameterUID>/dataSchema/variables/x1</parameterUID>
           </input>
           <input>
-            <parameterUID>/dataSchema/geometry/z2</parameterUID>
+            <parameterUID>/dataSchema/variables/z2</parameterUID>
           </input>
           <input>
             <parameterUID>/dataSchema/analyses/y2</parameterUID>
@@ -84,105 +73,25 @@
           <generalInfo>
             <status>Available</status>
             <description>F discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>imcovangent</contactUID>
+            </owner>
             <creator>
               <contactUID>imcovangent</contactUID>
             </creator>
-            <owner>
-              <contactUID>danieldevries</contactUID>
-            </owner>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
             <licensing>
               <licenseType>open-source</licenseType>
               <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
               <licenseSpecification>Apache License 2.0</licenseSpecification>
             </licensing>
-            <operator>
-              <contactUID>imcovangent</contactUID>
-            </operator>
           </generalInfo>
         </metadata>
       </designCompetence>
-      <designCompetence uID="D2">
-        <label>D2</label>
-        <instanceID>1</instanceID>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/geometry/z1</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/geometry/z2</parameterUID>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/analyses/y2</parameterUID>
-          </output>
-        </outputs>
-        <ID>D2</ID>
-        <modeID>main</modeID>
-        <version>1.0</version>
-        <metadata>
-          <generalInfo>
-            <status>Available</status>
-            <description>D2 discipline of the Sellar tool set.</description>
-            <creator>
-              <contactUID>imcovangent</contactUID>
-            </creator>
-            <owner>
-              <contactUID>danieldevries</contactUID>
-            </owner>
-            <licensing>
-              <licenseType>open-source</licenseType>
-              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
-              <licenseSpecification>Apache License 2.0</licenseSpecification>
-            </licensing>
-            <operator>
-              <contactUID>imcovangent</contactUID>
-            </operator>
-          </generalInfo>
-        </metadata>
-      </designCompetence>
-      <designCompetence uID="G2">
-        <label>G2</label>
-        <instanceID>1</instanceID>
-        <inputs>
-          <input>
-            <parameterUID>/dataSchema/analyses/y2</parameterUID>
-          </input>
-        </inputs>
-        <outputs>
-          <output>
-            <parameterUID>/dataSchema/analyses/g2</parameterUID>
-          </output>
-        </outputs>
-        <ID>G2</ID>
-        <modeID>main</modeID>
-        <version>1.0</version>
-        <metadata>
-          <generalInfo>
-            <status>Available</status>
-            <description>G2 discipline of the Sellar tool set.</description>
-            <creator>
-              <contactUID>imcovangent</contactUID>
-            </creator>
-            <owner>
-              <contactUID>danieldevries</contactUID>
-            </owner>
-            <licensing>
-              <licenseType>open-source</licenseType>
-              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
-              <licenseSpecification>Apache License 2.0</licenseSpecification>
-            </licensing>
-            <operator>
-              <contactUID>imcovangent</contactUID>
-            </operator>
-          </generalInfo>
-        </metadata>
-      </designCompetence>
-      <designCompetence uID="G1">
-        <label>G1</label>
+      <designCompetence uID="G[1]">
+        <label>G[1]</label>
         <instanceID>1</instanceID>
         <inputs>
           <input>
@@ -194,45 +103,48 @@
             <parameterUID>/dataSchema/analyses/g1</parameterUID>
           </output>
         </outputs>
-        <ID>G1</ID>
-        <modeID>main</modeID>
+        <ID>G</ID>
+        <modeID>1</modeID>
         <version>1.0</version>
         <metadata>
           <generalInfo>
             <status>Available</status>
             <description>G1 discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>imcovangent</contactUID>
+            </owner>
             <creator>
               <contactUID>imcovangent</contactUID>
             </creator>
-            <owner>
-              <contactUID>danieldevries</contactUID>
-            </owner>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
             <licensing>
               <licenseType>open-source</licenseType>
               <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
               <licenseSpecification>Apache License 2.0</licenseSpecification>
             </licensing>
-            <operator>
-              <contactUID>imcovangent</contactUID>
-            </operator>
           </generalInfo>
         </metadata>
       </designCompetence>
-      <designCompetence uID="D1">
-        <label>D1</label>
+      <designCompetence uID="D[1]">
+        <label>D[1]</label>
         <instanceID>1</instanceID>
         <inputs>
           <input>
-            <parameterUID>/dataSchema/geometry/x1</parameterUID>
+            <parameterUID>/dataSchema/variables/x1</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/variables/z1</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/variables/z2</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/settings/c</parameterUID>
           </input>
           <input>
             <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/geometry/z1</parameterUID>
-          </input>
-          <input>
-            <parameterUID>/dataSchema/geometry/z2</parameterUID>
           </input>
         </inputs>
         <outputs>
@@ -240,59 +152,211 @@
             <parameterUID>/dataSchema/analyses/y1</parameterUID>
           </output>
         </outputs>
-        <ID>D1</ID>
-        <modeID>main</modeID>
+        <ID>D</ID>
+        <modeID>1</modeID>
         <version>1.0</version>
         <metadata>
           <generalInfo>
             <status>Available</status>
             <description>D1 discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>imcovangent</contactUID>
+            </owner>
             <creator>
               <contactUID>imcovangent</contactUID>
             </creator>
-            <owner>
-              <contactUID>danieldevries</contactUID>
-            </owner>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
             <licensing>
               <licenseType>open-source</licenseType>
               <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
               <licenseSpecification>Apache License 2.0</licenseSpecification>
             </licensing>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="G[2]">
+        <label>G[2]</label>
+        <instanceID>1</instanceID>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/analyses/y2</parameterUID>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/analyses/g2</parameterUID>
+          </output>
+        </outputs>
+        <ID>G</ID>
+        <modeID>2</modeID>
+        <version>1.0</version>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>G2 discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>imcovangent</contactUID>
+            </owner>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
             <operator>
               <contactUID>imcovangent</contactUID>
             </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="D[2]">
+        <label>D[2]</label>
+        <instanceID>1</instanceID>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/variables/z1</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/variables/z2</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/settings/c</parameterUID>
+          </input>
+          <input>
+            <parameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</parameterUID>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/analyses/y2</parameterUID>
+          </output>
+        </outputs>
+        <ID>D</ID>
+        <modeID>2</modeID>
+        <version>1.0</version>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>D2 discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>imcovangent</contactUID>
+            </owner>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
+          </generalInfo>
+        </metadata>
+      </designCompetence>
+      <designCompetence uID="H">
+        <label>H</label>
+        <instanceID>1</instanceID>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/variables/x0</parameterUID>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/variables/x1</parameterUID>
+          </output>
+        </outputs>
+        <ID>H</ID>
+        <modeID>main</modeID>
+        <version>1.0</version>
+        <metadata>
+          <generalInfo>
+            <status>Available</status>
+            <description>H discipline of the Sellar tool set.</description>
+            <owner>
+              <contactUID>imcovangent</contactUID>
+            </owner>
+            <creator>
+              <contactUID>imcovangent</contactUID>
+            </creator>
+            <operator>
+              <contactUID>imcovangent</contactUID>
+            </operator>
+            <licensing>
+              <licenseType>open-source</licenseType>
+              <licenseInfo>https://www.apache.org/licenses/LICENSE-2.0</licenseInfo>
+              <licenseSpecification>Apache License 2.0</licenseSpecification>
+            </licensing>
           </generalInfo>
         </metadata>
       </designCompetence>
     </designCompetences>
+    <mathematicalFunctions>
+      <mathematicalFunction uID="ABC">
+        <label>ABC</label>
+        <functionType>regular</functionType>
+        <inputs>
+          <input>
+            <parameterUID>/dataSchema/settings/a</parameterUID>
+            <equationLabel>a</equationLabel>
+          </input>
+        </inputs>
+        <outputs>
+          <output>
+            <parameterUID>/dataSchema/settings/c</parameterUID>
+            <equations uID="ABC_equation">
+              <equation language="Python">a</equation>
+            </equations>
+          </output>
+        </outputs>
+      </mathematicalFunction>
+    </mathematicalFunctions>
   </executableBlocks>
   <parameters>
-    <parameter uID="/dataSchema/analyses/g1">
-      <label>g1</label>
+    <parameter uID="/dataSchema/settings/a">
+      <label>a</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/variables/x0">
+      <label>x0</label>
       <instanceID>1</instanceID>
     </parameter>
     <parameter uID="/dataSchema/analyses/f">
       <label>f</label>
       <instanceID>1</instanceID>
     </parameter>
+    <parameter uID="/dataSchema/analyses/g1">
+      <label>g1</label>
+      <instanceID>1</instanceID>
+    </parameter>
     <parameter uID="/dataSchema/analyses/g2">
       <label>g2</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/geometry/x1">
+    <parameter uID="/dataSchema/variables/x1">
       <label>x1</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/geometry/z1">
+    <parameter uID="/dataSchema/variables/z1">
       <label>z1</label>
       <instanceID>1</instanceID>
     </parameter>
-    <parameter uID="/dataSchema/geometry/z2">
+    <parameter uID="/dataSchema/variables/z2">
       <label>z2</label>
       <instanceID>1</instanceID>
     </parameter>
     <parameter uID="/dataSchema/analyses/y2">
       <label>y2</label>
+      <instanceID>1</instanceID>
+    </parameter>
+    <parameter uID="/dataSchema/settings/c">
+      <label>c</label>
       <instanceID>1</instanceID>
     </parameter>
     <parameter uID="/dataSchema/analyses/y1">
@@ -305,11 +369,13 @@
       <mdaoArchitecture>converged-DOE</mdaoArchitecture>
       <convergerType>Jacobi</convergerType>
       <executableBlocksOrder>
-        <executableBlock position="1">D2</executableBlock>
-        <executableBlock position="2">D1</executableBlock>
-        <executableBlock position="3">G1</executableBlock>
-        <executableBlock position="4">G2</executableBlock>
-        <executableBlock position="5">F</executableBlock>
+        <executableBlockUID position="1">ABC</executableBlockUID>
+        <executableBlockUID position="2">H</executableBlockUID>
+        <executableBlockUID position="3">D[1]</executableBlockUID>
+        <executableBlockUID position="4">D[2]</executableBlockUID>
+        <executableBlockUID position="5">F</executableBlockUID>
+        <executableBlockUID position="6">G[1]</executableBlockUID>
+        <executableBlockUID position="7">G[2]</executableBlockUID>
       </executableBlocksOrder>
       <allowUnconvergedCouplings>false</allowUnconvergedCouplings>
       <doeSettings>
@@ -319,9 +385,8 @@
     <problemRoles>
       <parameters>
         <designVariables>
-          <designVariable uID="__desVar__/dataSchema/geometry/x1">
-            <parameterUID>/dataSchema/geometry/x1</parameterUID>
-            <nominalValue>0.0</nominalValue>
+          <designVariable uID="__desVar__/dataSchema/variables/x0">
+            <parameterUID>/dataSchema/variables/x0</parameterUID>
             <samples>
               <sample position="1">2.000000000000</sample>
               <sample position="2">2.100000000000</sample>
@@ -329,9 +394,8 @@
               <sample position="4">2.750000000000</sample>
             </samples>
           </designVariable>
-          <designVariable uID="__desVar__/dataSchema/geometry/z1">
-            <parameterUID>/dataSchema/geometry/z1</parameterUID>
-            <nominalValue>0.0</nominalValue>
+          <designVariable uID="__desVar__/dataSchema/variables/z1">
+            <parameterUID>/dataSchema/variables/z1</parameterUID>
             <samples>
               <sample position="1">0.000000000000</sample>
               <sample position="2">0.100000000000</sample>
@@ -339,9 +403,8 @@
               <sample position="4">0.750000000000</sample>
             </samples>
           </designVariable>
-          <designVariable uID="__desVar__/dataSchema/geometry/z2">
-            <parameterUID>/dataSchema/geometry/z2</parameterUID>
-            <nominalValue>0.0</nominalValue>
+          <designVariable uID="__desVar__/dataSchema/variables/z2">
+            <parameterUID>/dataSchema/variables/z2</parameterUID>
             <samples>
               <sample position="1">1.000000000000</sample>
               <sample position="2">1.100000000000</sample>
@@ -351,11 +414,11 @@
           </designVariable>
         </designVariables>
         <stateVariables>
-          <stateVariable uID="__statVar__/dataSchema/analyses/g1">
-            <parameterUID>/dataSchema/analyses/g1</parameterUID>
-          </stateVariable>
           <stateVariable uID="__statVar__/dataSchema/analyses/f">
             <parameterUID>/dataSchema/analyses/f</parameterUID>
+          </stateVariable>
+          <stateVariable uID="__statVar__/dataSchema/analyses/g1">
+            <parameterUID>/dataSchema/analyses/g1</parameterUID>
           </stateVariable>
           <stateVariable uID="__statVar__/dataSchema/analyses/g2">
             <parameterUID>/dataSchema/analyses/g2</parameterUID>
@@ -364,14 +427,20 @@
       </parameters>
       <executableBlocks>
         <coupledBlocks>
-          <coupledBlock>D2</coupledBlock>
-          <coupledBlock>D1</coupledBlock>
+          <coupledBlock>D[1]</coupledBlock>
+          <coupledBlock>D[2]</coupledBlock>
         </coupledBlocks>
         <postCouplingBlocks>
-          <postCouplingBlock>G1</postCouplingBlock>
-          <postCouplingBlock>G2</postCouplingBlock>
           <postCouplingBlock>F</postCouplingBlock>
+          <postCouplingBlock>G[1]</postCouplingBlock>
+          <postCouplingBlock>G[2]</postCouplingBlock>
         </postCouplingBlocks>
+        <uncoupledDesVarIndBlocks>
+          <uncoupledDesVarIndBlock>ABC</uncoupledDesVarIndBlock>
+        </uncoupledDesVarIndBlocks>
+        <uncoupledDesVarDepBlocks>
+          <uncoupledDesVarDepBlock>H</uncoupledDesVarDepBlock>
+        </uncoupledDesVarDepBlocks>
       </executableBlocks>
     </problemRoles>
   </problemDefinition>
@@ -381,132 +450,116 @@
       <name>XDSM - converged-DOE-J</name>
       <edges>
         <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</toParameterUID>
+          <fromExecutableBlockUID>D[1]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/analyses/y1</toParameterUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/geometry/x1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/geometry/z2</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g2</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/geometry/z1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/f</toParameterUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2</fromParameterUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
-          <toExecutableBlockUID>D2</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2</fromParameterUID>
-          <toExecutableBlockUID>D1</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>G2</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/analyses/g2</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>G1</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/analyses/g1</toParameterUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/analyses/g1</fromParameterUID>
-          <toExecutableBlockUID>DOE</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/geometry/x1</fromParameterUID>
-          <toExecutableBlockUID>D1</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/geometry/x1</fromParameterUID>
-          <toExecutableBlockUID>F</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/geometry/z1</fromParameterUID>
-          <toExecutableBlockUID>D2</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/geometry/z1</fromParameterUID>
-          <toExecutableBlockUID>D1</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
-          <toExecutableBlockUID>D1</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
-          <toExecutableBlockUID>D2</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/geometry/z2</fromParameterUID>
-          <toExecutableBlockUID>F</toExecutableBlockUID>
+          <fromExecutableBlockUID>D[2]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/analyses/y2</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>F</fromExecutableBlockUID>
           <toParameterUID>/dataSchema/analyses/f</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/f</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <fromExecutableBlockUID>G[1]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/analyses/g1</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g2</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <fromExecutableBlockUID>G[2]</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/analyses/g2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>H</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/variables/x1</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/settings/a</fromParameterUID>
+          <toExecutableBlockUID>ABC</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/variables/x1</fromParameterUID>
+          <toExecutableBlockUID>D[1]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/variables/x1</fromParameterUID>
+          <toExecutableBlockUID>F</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/variables/z1</fromParameterUID>
+          <toExecutableBlockUID>D[1]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/variables/z1</fromParameterUID>
+          <toExecutableBlockUID>D[2]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/variables/z2</fromParameterUID>
+          <toExecutableBlockUID>D[1]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/variables/z2</fromParameterUID>
+          <toExecutableBlockUID>D[2]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/variables/z2</fromParameterUID>
+          <toExecutableBlockUID>F</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>F</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>G[2]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/settings/c</fromParameterUID>
+          <toExecutableBlockUID>D[1]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/settings/c</fromParameterUID>
+          <toExecutableBlockUID>D[2]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>F</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>G[1]</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/variables/x0</fromParameterUID>
+          <toExecutableBlockUID>H</toExecutableBlockUID>
         </edge>
         <edge>
           <fromParameterUID>/dataSchema/analyses/f</fromParameterUID>
           <toExecutableBlockUID>DOE</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/x1</fromParameterUID>
+          <fromParameterUID>/dataSchema/analyses/g1</fromParameterUID>
           <toExecutableBlockUID>DOE</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z1</fromParameterUID>
+          <fromParameterUID>/dataSchema/analyses/g2</fromParameterUID>
           <toExecutableBlockUID>DOE</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z2</fromParameterUID>
-          <toExecutableBlockUID>DOE</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g1</fromParameterUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <fromExecutableBlockUID>ABC</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/settings/c</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</toParameterUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/x1</toParameterUID>
+          <toParameterUID>/dataSchema/settings/a</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
@@ -514,47 +567,91 @@
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z1</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</toParameterUID>
         </edge>
         <edge>
           <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z2</toParameterUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/variables/x0</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
-          <toExecutableBlockUID>G2</toExecutableBlockUID>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/variables/z1</toParameterUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/variables/z2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/variables/x0</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/variables/z1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/variables/z2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/f</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g1</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2</toParameterUID>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</toParameterUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2</fromParameterUID>
           <toExecutableBlockUID>Converger</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/analyses/y2</fromParameterUID>
-          <toExecutableBlockUID>F</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2</fromParameterUID>
+          <toExecutableBlockUID>D[1]</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/analyses/y1</fromParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
           <toExecutableBlockUID>Converger</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/analyses/y1</fromParameterUID>
-          <toExecutableBlockUID>G1</toExecutableBlockUID>
+          <fromParameterUID>/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1</fromParameterUID>
+          <toExecutableBlockUID>D[2]</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromParameterUID>/dataSchema/analyses/y1</fromParameterUID>
-          <toExecutableBlockUID>F</toExecutableBlockUID>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>D2</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/analyses/y2</toParameterUID>
-        </edge>
-        <edge>
-          <fromParameterUID>/dataSchema/analyses/g2</fromParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/variables/x0</fromParameterUID>
           <toExecutableBlockUID>DOE</toExecutableBlockUID>
         </edge>
         <edge>
-          <fromExecutableBlockUID>D1</fromExecutableBlockUID>
-          <toParameterUID>/dataSchema/analyses/y1</toParameterUID>
+          <fromParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/variables/z1</fromParameterUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/variables/z2</fromParameterUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/f</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g1</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+        </edge>
+        <edge>
+          <fromParameterUID>/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g2</fromParameterUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
         </edge>
       </edges>
     </dataGraph>
@@ -562,113 +659,133 @@
       <name>mpg Sellar problem</name>
       <edges>
         <edge>
-          <fromExecutableBlockUID>G2</fromExecutableBlockUID>
-          <toExecutableBlockUID>DOE</toExecutableBlockUID>
+          <fromExecutableBlockUID>D[1]</fromExecutableBlockUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
           <processStepNumber>6</processStepNumber>
         </edge>
         <edge>
-          <fromExecutableBlockUID>G1</fromExecutableBlockUID>
-          <toExecutableBlockUID>DOE</toExecutableBlockUID>
+          <fromExecutableBlockUID>D[2]</fromExecutableBlockUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
           <processStepNumber>6</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>F</fromExecutableBlockUID>
           <toExecutableBlockUID>DOE</toExecutableBlockUID>
-          <processStepNumber>6</processStepNumber>
+          <processStepNumber>8</processStepNumber>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toExecutableBlockUID>D1</toExecutableBlockUID>
+          <fromExecutableBlockUID>G[1]</fromExecutableBlockUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
+          <processStepNumber>8</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>G[2]</fromExecutableBlockUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
+          <processStepNumber>8</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>H</fromExecutableBlockUID>
+          <toExecutableBlockUID>Converger</toExecutableBlockUID>
+          <processStepNumber>4</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>ABC</fromExecutableBlockUID>
+          <toExecutableBlockUID>DOE</toExecutableBlockUID>
+          <processStepNumber>2</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
+          <toExecutableBlockUID>ABC</toExecutableBlockUID>
+          <processStepNumber>1</processStepNumber>
+        </edge>
+        <edge>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toExecutableBlockUID>H</toExecutableBlockUID>
           <processStepNumber>3</processStepNumber>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toExecutableBlockUID>D2</toExecutableBlockUID>
-          <processStepNumber>3</processStepNumber>
+          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
+          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
+          <processStepNumber>9</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toExecutableBlockUID>G2</toExecutableBlockUID>
+          <toExecutableBlockUID>D[1]</toExecutableBlockUID>
           <processStepNumber>5</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
-          <toExecutableBlockUID>G1</toExecutableBlockUID>
+          <toExecutableBlockUID>D[2]</toExecutableBlockUID>
           <processStepNumber>5</processStepNumber>
         </edge>
         <edge>
           <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
           <toExecutableBlockUID>F</toExecutableBlockUID>
-          <processStepNumber>5</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
-          <toExecutableBlockUID>Coordinator</toExecutableBlockUID>
           <processStepNumber>7</processStepNumber>
         </edge>
         <edge>
-          <fromExecutableBlockUID>DOE</fromExecutableBlockUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-          <processStepNumber>2</processStepNumber>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toExecutableBlockUID>G[1]</toExecutableBlockUID>
+          <processStepNumber>7</processStepNumber>
         </edge>
         <edge>
-          <fromExecutableBlockUID>Coordinator</fromExecutableBlockUID>
-          <toExecutableBlockUID>DOE</toExecutableBlockUID>
-          <processStepNumber>1</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>D2</fromExecutableBlockUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
-        </edge>
-        <edge>
-          <fromExecutableBlockUID>D1</fromExecutableBlockUID>
-          <toExecutableBlockUID>Converger</toExecutableBlockUID>
-          <processStepNumber>4</processStepNumber>
+          <fromExecutableBlockUID>Converger</fromExecutableBlockUID>
+          <toExecutableBlockUID>G[2]</toExecutableBlockUID>
+          <processStepNumber>7</processStepNumber>
         </edge>
       </edges>
       <nodes>
         <node>
-          <referenceUID>G2</referenceUID>
-          <processStepNumber>5</processStepNumber>
-          <diagonalPosition>6</diagonalPosition>
-        </node>
-        <node>
-          <referenceUID>G1</referenceUID>
+          <referenceUID>D[1]</referenceUID>
           <processStepNumber>5</processStepNumber>
           <diagonalPosition>5</diagonalPosition>
         </node>
         <node>
-          <referenceUID>F</referenceUID>
+          <referenceUID>D[2]</referenceUID>
           <processStepNumber>5</processStepNumber>
+          <diagonalPosition>6</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>F</referenceUID>
+          <processStepNumber>7</processStepNumber>
           <diagonalPosition>7</diagonalPosition>
         </node>
         <node>
-          <referenceUID>Converger</referenceUID>
-          <processStepNumber>2</processStepNumber>
-          <convergerStepNumber>4</convergerStepNumber>
-          <diagonalPosition>2</diagonalPosition>
+          <referenceUID>G[1]</referenceUID>
+          <processStepNumber>7</processStepNumber>
+          <diagonalPosition>8</diagonalPosition>
         </node>
         <node>
-          <referenceUID>DOE</referenceUID>
+          <referenceUID>G[2]</referenceUID>
+          <processStepNumber>7</processStepNumber>
+          <diagonalPosition>9</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>H</referenceUID>
+          <processStepNumber>3</processStepNumber>
+          <diagonalPosition>3</diagonalPosition>
+        </node>
+        <node>
+          <referenceUID>ABC</referenceUID>
           <processStepNumber>1</processStepNumber>
-          <convergerStepNumber>6</convergerStepNumber>
           <diagonalPosition>1</diagonalPosition>
         </node>
         <node>
           <referenceUID>Coordinator</referenceUID>
           <processStepNumber>0</processStepNumber>
-          <convergerStepNumber>7</convergerStepNumber>
+          <convergerStepNumber>9</convergerStepNumber>
           <diagonalPosition>0</diagonalPosition>
         </node>
         <node>
-          <referenceUID>D2</referenceUID>
-          <processStepNumber>3</processStepNumber>
-          <diagonalPosition>3</diagonalPosition>
+          <referenceUID>DOE</referenceUID>
+          <processStepNumber>2</processStepNumber>
+          <convergerStepNumber>8</convergerStepNumber>
+          <diagonalPosition>2</diagonalPosition>
         </node>
         <node>
-          <referenceUID>D1</referenceUID>
-          <processStepNumber>3</processStepNumber>
+          <referenceUID>Converger</referenceUID>
+          <processStepNumber>4</processStepNumber>
+          <convergerStepNumber>6</convergerStepNumber>
           <diagonalPosition>4</diagonalPosition>
         </node>
       </nodes>
@@ -681,18 +798,22 @@
                   <loopElements>
                     <loopElement relatedUID="Converger">
                       <functionElements>
-                        <functionElement>D1</functionElement>
-                        <functionElement>D2</functionElement>
+                        <functionElement>D[1]</functionElement>
+                        <functionElement>D[2]</functionElement>
                       </functionElements>
                     </loopElement>
                   </loopElements>
                   <functionElements>
+                    <functionElement>H</functionElement>
                     <functionElement>F</functionElement>
-                    <functionElement>G1</functionElement>
-                    <functionElement>G2</functionElement>
+                    <functionElement>G[1]</functionElement>
+                    <functionElement>G[2]</functionElement>
                   </functionElements>
                 </loopElement>
               </loopElements>
+              <functionElements>
+                <functionElement>ABC</functionElement>
+              </functionElements>
             </loopElement>
           </loopElements>
         </loopNesting>
@@ -702,42 +823,42 @@
   <architectureElements>
     <parameters>
       <initialGuessCouplingVariables>
-        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1">
-          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
-          <label>y1^{c0}</label>
-          <instanceID>1</instanceID>
-        </initialGuessCouplingVariable>
         <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y2">
           <relatedParameterUID>/dataSchema/analyses/y2</relatedParameterUID>
           <label>y2^{c0}</label>
           <instanceID>1</instanceID>
         </initialGuessCouplingVariable>
+        <initialGuessCouplingVariable uID="/dataSchema/architectureNodes/initialGuessCouplingVariables/dataSchemaCopy/analyses/y1">
+          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
+          <label>y1^{c0}</label>
+          <instanceID>1</instanceID>
+        </initialGuessCouplingVariable>
       </initialGuessCouplingVariables>
       <couplingCopyVariables>
-        <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1">
-          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
-          <label>y1^{c}</label>
-          <instanceID>1</instanceID>
-        </couplingCopyVariable>
         <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y2">
           <relatedParameterUID>/dataSchema/analyses/y2</relatedParameterUID>
           <label>y2^{c}</label>
           <instanceID>1</instanceID>
         </couplingCopyVariable>
+        <couplingCopyVariable uID="/dataSchema/architectureNodes/couplingCopyVariables/dataSchemaCopy/analyses/y1">
+          <relatedParameterUID>/dataSchema/analyses/y1</relatedParameterUID>
+          <label>y1^{c}</label>
+          <instanceID>1</instanceID>
+        </couplingCopyVariable>
       </couplingCopyVariables>
       <doeInputSampleLists>
-        <doeInputSampleList uID="/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/x1">
-          <relatedParameterUID>/dataSchema/geometry/x1</relatedParameterUID>
-          <label>DOE_x1_{inp}</label>
+        <doeInputSampleList uID="/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/variables/x0">
+          <relatedParameterUID>/dataSchema/variables/x0</relatedParameterUID>
+          <label>DOE_x0_{inp}</label>
           <instanceID>1</instanceID>
         </doeInputSampleList>
-        <doeInputSampleList uID="/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z1">
-          <relatedParameterUID>/dataSchema/geometry/z1</relatedParameterUID>
+        <doeInputSampleList uID="/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/variables/z1">
+          <relatedParameterUID>/dataSchema/variables/z1</relatedParameterUID>
           <label>DOE_z1_{inp}</label>
           <instanceID>1</instanceID>
         </doeInputSampleList>
-        <doeInputSampleList uID="/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/geometry/z2">
-          <relatedParameterUID>/dataSchema/geometry/z2</relatedParameterUID>
+        <doeInputSampleList uID="/dataSchema/architectureNodes/doeInputSampleLists/dataSchemaCopy/variables/z2">
+          <relatedParameterUID>/dataSchema/variables/z2</relatedParameterUID>
           <label>DOE_z2_{inp}</label>
           <instanceID>1</instanceID>
         </doeInputSampleList>
@@ -748,14 +869,14 @@
           <label>DOE_f_{out}</label>
           <instanceID>1</instanceID>
         </doeOutputSampleList>
-        <doeOutputSampleList uID="/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g2">
-          <relatedParameterUID>/dataSchema/analyses/g2</relatedParameterUID>
-          <label>DOE_g2_{out}</label>
-          <instanceID>1</instanceID>
-        </doeOutputSampleList>
         <doeOutputSampleList uID="/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g1">
           <relatedParameterUID>/dataSchema/analyses/g1</relatedParameterUID>
           <label>DOE_g1_{out}</label>
+          <instanceID>1</instanceID>
+        </doeOutputSampleList>
+        <doeOutputSampleList uID="/dataSchema/architectureNodes/doeOutputSampleLists/dataSchemaCopy/analyses/g2">
+          <relatedParameterUID>/dataSchema/analyses/g2</relatedParameterUID>
+          <label>DOE_g2_{out}</label>
           <instanceID>1</instanceID>
         </doeOutputSampleList>
       </doeOutputSampleLists>
@@ -793,19 +914,19 @@
           <settings>
             <method>Custom design table</method>
             <table>
-              <tableRow relatedParameterUID="/dataSchema/geometry/x1">
+              <tableRow relatedParameterUID="/dataSchema/variables/x0">
                 <tableElement experimentID="0">2.000000000000</tableElement>
                 <tableElement experimentID="1">2.100000000000</tableElement>
                 <tableElement experimentID="2">2.500000000000</tableElement>
                 <tableElement experimentID="3">2.750000000000</tableElement>
               </tableRow>
-              <tableRow relatedParameterUID="/dataSchema/geometry/z1">
+              <tableRow relatedParameterUID="/dataSchema/variables/z1">
                 <tableElement experimentID="0">0.000000000000</tableElement>
                 <tableElement experimentID="1">0.100000000000</tableElement>
                 <tableElement experimentID="2">0.500000000000</tableElement>
                 <tableElement experimentID="3">0.750000000000</tableElement>
               </tableRow>
-              <tableRow relatedParameterUID="/dataSchema/geometry/z2">
+              <tableRow relatedParameterUID="/dataSchema/variables/z2">
                 <tableElement experimentID="0">1.000000000000</tableElement>
                 <tableElement experimentID="1">1.100000000000</tableElement>
                 <tableElement experimentID="2">1.500000000000</tableElement>
@@ -815,34 +936,44 @@
           </settings>
           <designVariables>
             <designVariable>
-              <designVariableUID>__desVar__/dataSchema/geometry/x1</designVariableUID>
+              <designVariableUID>__desVar__/dataSchema/variables/x0</designVariableUID>
             </designVariable>
             <designVariable>
-              <designVariableUID>__desVar__/dataSchema/geometry/z1</designVariableUID>
+              <designVariableUID>__desVar__/dataSchema/variables/z1</designVariableUID>
             </designVariable>
             <designVariable>
-              <designVariableUID>__desVar__/dataSchema/geometry/z2</designVariableUID>
+              <designVariableUID>__desVar__/dataSchema/variables/z2</designVariableUID>
             </designVariable>
           </designVariables>
         </doe>
       </does>
+      <uncoupledDesVarIndAnalyses>
+        <uncoupledDesVarIndAnalysis>
+          <relatedExecutableBlockUID>ABC</relatedExecutableBlockUID>
+        </uncoupledDesVarIndAnalysis>
+      </uncoupledDesVarIndAnalyses>
+      <uncoupledDesVarDepAnalyses>
+        <uncoupledDesVarDepAnalysis>
+          <relatedExecutableBlockUID>H</relatedExecutableBlockUID>
+        </uncoupledDesVarDepAnalysis>
+      </uncoupledDesVarDepAnalyses>
       <coupledAnalyses>
         <coupledAnalysis>
-          <relatedExecutableBlockUID>D2</relatedExecutableBlockUID>
+          <relatedExecutableBlockUID>D[1]</relatedExecutableBlockUID>
         </coupledAnalysis>
         <coupledAnalysis>
-          <relatedExecutableBlockUID>D1</relatedExecutableBlockUID>
+          <relatedExecutableBlockUID>D[2]</relatedExecutableBlockUID>
         </coupledAnalysis>
       </coupledAnalyses>
       <postCouplingAnalyses>
         <postCouplingAnalysis>
-          <relatedExecutableBlockUID>G2</relatedExecutableBlockUID>
-        </postCouplingAnalysis>
-        <postCouplingAnalysis>
-          <relatedExecutableBlockUID>G1</relatedExecutableBlockUID>
-        </postCouplingAnalysis>
-        <postCouplingAnalysis>
           <relatedExecutableBlockUID>F</relatedExecutableBlockUID>
+        </postCouplingAnalysis>
+        <postCouplingAnalysis>
+          <relatedExecutableBlockUID>G[1]</relatedExecutableBlockUID>
+        </postCouplingAnalysis>
+        <postCouplingAnalysis>
+          <relatedExecutableBlockUID>G[2]</relatedExecutableBlockUID>
         </postCouplingAnalysis>
       </postCouplingAnalyses>
     </executableBlocks>

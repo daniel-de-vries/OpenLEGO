@@ -1034,9 +1034,13 @@ class LEGOModel(CMDOWSObject, Group):
                         else:
                             raise ValueError('Specified convergerType "{}" is not supported.'
                                              .format(linsol_el.find('method').text))
-                        linsol.options['maxiter'] = int(linsol_el.find('maximumIterations').text)
-                        linsol.options['atol'] = float(linsol_el.find(conv_tol + 'Absolute').text)
-                        linsol.options['rtol'] = float(linsol_el.find(conv_tol + 'Relative').text)
+
+                        if linsol_el.find('maximumIterations'):
+                            linsol.options['maxiter'] = int(linsol_el.find('maximumIterations').text)
+                        if linsol_el.find(conv_tol + 'Absolute'):
+                            linsol.options['atol'] = float(linsol_el.find(conv_tol + 'Absolute').text)
+                        if linsol_el.find(conv_tol + 'Relative'):
+                            linsol.options['rtol'] = float(linsol_el.find(conv_tol + 'Relative').text)
                     else:
                         subsys.linear_solver = DirectSolver()
                         warnings.warn('Linear solver was not defined in CMDOWS file for converger'
@@ -1056,9 +1060,13 @@ class LEGOModel(CMDOWSObject, Group):
                         else:
                             raise ValueError('Specified convergerType "{}" is not supported.'
                                              .format(nonlsol_el.find('method').text))
-                        nonlsol.options['maxiter'] = int(nonlsol_el.find('maximumIterations').text)
-                        nonlsol.options['atol'] = float(nonlsol_el.find(conv_tol + 'Absolute').text)
-                        nonlsol.options['rtol'] = float(nonlsol_el.find(conv_tol + 'Relative').text)
+
+                        if nonlsol_el.find('maximumIterations'):
+                            nonlsol.options['maxiter'] = int(nonlsol_el.find('maximumIterations').text)
+                        if nonlsol_el.find(conv_tol + 'Absolute'):
+                            nonlsol.options['atol'] = float(nonlsol_el.find(conv_tol + 'Absolute').text)
+                        if nonlsol_el.find(conv_tol + 'Relative'):
+                            nonlsol.options['rtol'] = float(nonlsol_el.find(conv_tol + 'Relative').text)
                     else:
                         subsys.nonlinear_solver = NonlinearRunOnce()
                         warnings.warn('Nonlinear solver was not defined in CMDOWS file for '

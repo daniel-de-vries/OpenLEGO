@@ -12,7 +12,6 @@ from __future__ import absolute_import, division, print_function
 import sys
 
 from ssbjkadmos.tools.propulsion.Propulsion import Propulsion
-from ssbjkadmos.utils.execution import run_tool
 
 
 class PropulsionAnalysis(Propulsion):  # AbstractDiscipline
@@ -22,4 +21,4 @@ class PropulsionAnalysis(Propulsion):  # AbstractDiscipline
 
 if __name__ == "__main__":
     analysis = PropulsionAnalysis()
-    run_tool(analysis, sys.argv)
+    analysis.run_tool(sys.argv)

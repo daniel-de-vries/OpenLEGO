@@ -12,7 +12,6 @@ from __future__ import absolute_import, division, print_function
 import sys
 
 from ssbjkadmos.tools.structures.Structures import Structures
-from ssbjkadmos.utils.execution import run_tool
 
 
 class StructuralAnalysis(Structures):  # AbstractDiscipline
@@ -21,6 +20,5 @@ class StructuralAnalysis(Structures):  # AbstractDiscipline
 
 
 if __name__ == "__main__":
-
     analysis = StructuralAnalysis()
-    run_tool(analysis, sys.argv)
+    analysis.run_tool(sys.argv)

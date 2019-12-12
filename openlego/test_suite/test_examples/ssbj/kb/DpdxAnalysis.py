@@ -12,7 +12,6 @@ from __future__ import absolute_import, division, print_function
 import sys
 
 from ssbjkadmos.tools.dpdxcalc.DpdxCalc import DpdxCalc
-from ssbjkadmos.utils.execution import run_tool
 
 
 class DpdxAnalysis(DpdxCalc):  # AbstractDiscipline
@@ -20,6 +19,5 @@ class DpdxAnalysis(DpdxCalc):  # AbstractDiscipline
 
 
 if __name__ == "__main__":
-
     analysis = DpdxAnalysis()
-    run_tool(analysis, sys.argv)
+    analysis.run_tool(sys.argv)

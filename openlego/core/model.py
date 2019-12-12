@@ -666,7 +666,7 @@ class LEGOModel(CMDOWSObject, Group):
         """:obj:`Dict[str, int]`: Dictionary containing the system input sizes by their names."""
         _system_inputs = {}
         for value in self.elem_cmdows.xpath(r'workflow/dataGraph/edges/edge[fromExecutableBlock'
-                                            r'UID="Coordinator"]/toParameterUID/text()'):
+                                            r'UID="{}"]/toParameterUID/text()'.format(self.coordinator_block_uid)):
             if 'architectureNodes' not in value or 'designVariables' in value:
                 if value in self.model_required_inputs:
                     name = xpath_to_param(value)
@@ -1125,6 +1125,13 @@ class LEGOModel(CMDOWSObject, Group):
             raise InvalidCMDOWSFileError('something is wrong with the executableBlocksOrder')
 
         return _system_order
+
+    @cached_property
+    def coordinator_block_uid(self):
+        for uid, role in self.loop_element_details.items():
+            if role == 'coordinator':
+                return uid
+        return 'Coordinator'
 
     @cached_property
     def coordinator(self):

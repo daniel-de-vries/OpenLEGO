@@ -1035,11 +1035,11 @@ class LEGOModel(CMDOWSObject, Group):
                             raise ValueError('Specified convergerType "{}" is not supported.'
                                              .format(linsol_el.find('method').text))
 
-                        if linsol_el.find('maximumIterations'):
+                        if linsol_el.find('maximumIterations') is not None:
                             linsol.options['maxiter'] = int(linsol_el.find('maximumIterations').text)
-                        if linsol_el.find(conv_tol + 'Absolute'):
+                        if linsol_el.find(conv_tol + 'Absolute') is not None:
                             linsol.options['atol'] = float(linsol_el.find(conv_tol + 'Absolute').text)
-                        if linsol_el.find(conv_tol + 'Relative'):
+                        if linsol_el.find(conv_tol + 'Relative') is not None:
                             linsol.options['rtol'] = float(linsol_el.find(conv_tol + 'Relative').text)
                     else:
                         subsys.linear_solver = DirectSolver()
@@ -1061,11 +1061,11 @@ class LEGOModel(CMDOWSObject, Group):
                             raise ValueError('Specified convergerType "{}" is not supported.'
                                              .format(nonlsol_el.find('method').text))
 
-                        if nonlsol_el.find('maximumIterations'):
+                        if nonlsol_el.find('maximumIterations') is not None:
                             nonlsol.options['maxiter'] = int(nonlsol_el.find('maximumIterations').text)
-                        if nonlsol_el.find(conv_tol + 'Absolute'):
+                        if nonlsol_el.find(conv_tol + 'Absolute') is not None:
                             nonlsol.options['atol'] = float(nonlsol_el.find(conv_tol + 'Absolute').text)
-                        if nonlsol_el.find(conv_tol + 'Relative'):
+                        if nonlsol_el.find(conv_tol + 'Relative') is not None:
                             nonlsol.options['rtol'] = float(nonlsol_el.find(conv_tol + 'Relative').text)
                     else:
                         subsys.nonlinear_solver = NonlinearRunOnce()

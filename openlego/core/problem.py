@@ -30,7 +30,7 @@ import warnings
 
 from openmdao.api import Problem, ScipyOptimizeDriver, DOEDriver, UniformGenerator, \
     FullFactorialGenerator, BoxBehnkenGenerator, LatinHypercubeGenerator, ListGenerator, \
-    view_model, SqliteRecorder, CaseReader
+    n2, SqliteRecorder, CaseReader
 from openmdao.core.driver import Driver
 
 from openlego.core.model import LEGOModel
@@ -336,7 +336,7 @@ class LEGOProblem(CMDOWSObject, Problem):
         """
         if self._setup_status == 0:
             self.setup()
-        view_model(self, outfile=self.model_view_path, show_browser=open_in_browser)
+        n2(self, outfile=self.model_view_path, show_browser=open_in_browser)
 
     def initialize(self):
         # type: () -> None
@@ -396,7 +396,7 @@ class LEGOProblem(CMDOWSObject, Problem):
                                 raise RuntimeError(e)
 
     def postprocess_experiments(self, vector, vector_name, failed_experiments=(None, None)):
-        # type: (np.array, str, Optional(Tuple)) -> np.array
+        # type: (np.array, str, Optional[Tuple]) -> np.array
         """
         Postprocess experiments from a DOE to remove failed experiments from the vector.
 

@@ -56,12 +56,16 @@ setup(
         'openmdao>=2.6.0',
         'lxml',
         'numpy',
-        'ssbjkadmos>=0.1.9',
         'cached-property',
         'plotly',
         'six',
         'typing'
     ],
+    extras_require={
+        'SSBJ': [
+            'ssbjkadmos>=0.1.9',
+        ],
+    },
     include_package_data=True,
     zip_safe=False
 )

@@ -50,7 +50,7 @@ mdao_definitions = ['unconverged-MDA-GS',     # 0
 
 
 def get_loop_items(analyze_mdao_definitions):
-    # type: (Union(int, list, str)) -> List[str]
+    # type: (Union[int, list, str]) -> List[str]
     """Retrieve the list of MDAO definitions to be analyzed based on different input settings.
 
     Parameters
@@ -195,9 +195,6 @@ def run_openlego(analyze_mdao_definitions, cmdows_dir=None, initial_file_path=No
 class TestSsbj(unittest.TestCase):
     """Test class to run the SSBJ test case for a range of architectures.
     """
-    def __call__(self, *args, **kwargs):
-        kb.deploy()
-        super(TestSsbj, self).__call__(*args, **kwargs)
 
     def assertion_mda(self, tc, h, M, AR, Lambda, Sref, lambda_, section, Cf, T, R, extra):
         self.assertAlmostEqual(tc, .05, 2)

@@ -38,7 +38,7 @@ class DisciplineComponent(XMLComponent):
     """
 
     def __init__(self, discipline, data_folder='', keep_files=False, base_file=None):
-        # type: (AbstractDiscipline, Optional[str]) -> None
+        # type: (AbstractDiscipline, Optional[str], bool, Optional[str]) -> None
         """Initialize a `Component` using a given `discipline`.
 
         Stores a reference to the given `discipline`. The in- and output XML templates should
@@ -73,16 +73,9 @@ class DisciplineComponent(XMLComponent):
         self._discipline = discipline
         self.number_of_computes = 0
         self.number_of_linearizes = 0
-        if discipline.supplies_partials:
-            super(DisciplineComponent, self).__init__(self._discipline.in_file,
-                                                      self._discipline.out_file,
-                                                      self._discipline.partials_file,
-                                                      data_folder, keep_files, base_file)
-        else:
-            super(DisciplineComponent, self).__init__(self._discipline.in_file,
-                                                      self._discipline.out_file,
-                                                      None,
-                                                      data_folder, keep_files, base_file)
+        super(DisciplineComponent, self).__init__(discipline.in_file_content, discipline.out_file_content,
+                                                  discipline.partials_file_content, data_folder, keep_files, base_file)
+        if not discipline.supplies_partials:
             self.partials_from_xml = None
 
     @property

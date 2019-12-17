@@ -79,7 +79,7 @@ class LEGOProblem(CMDOWSObject, Problem):
 
     def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None,
                  base_xml_file=None, output_case_str=None, **kwargs):
-        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Any) -> None
         """Initialize a CMDOWS Problem from a given CMDOWS file, knowledge base (optional) and
         driver UID (optional).
 
@@ -169,11 +169,14 @@ class LEGOProblem(CMDOWSObject, Problem):
         # type: () -> LEGOModel
         """:obj:`LEGOModel`: The LEGOModel that is automatically built from the CMDOWS file and
         knowledge base."""
-        return LEGOModel(self.cmdows_path,   # CMDOWS file
-                         self.kb_path,       # Knowledge base path
-                         self.driver_uid,    # Driver UID
-                         self.data_folder,    # Output directory
-                         self.base_xml_file)  # Output file
+        return LEGOModel(
+            cmdows_path=self.cmdows_path,
+            kb_path=self.kb_path,
+            driver_uid=self.driver_uid,
+            data_folder=self.data_folder,
+            base_xml_file=self.base_xml_file,
+            discipline_resolvers=self.discipline_resolvers.copy(),
+        )
 
     @cached_property
     def driver(self):

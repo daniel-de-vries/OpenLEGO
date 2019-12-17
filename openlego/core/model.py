@@ -21,7 +21,6 @@ from __future__ import absolute_import, division, print_function
 
 import copy
 import os
-import sys
 import warnings
 from collections import OrderedDict, Iterable
 from numbers import Integral
@@ -49,6 +48,7 @@ from openlego.core.exec_comp import ExecComp
 from .abstract_discipline import AbstractDiscipline
 from .cmdows import CMDOWSObject, InvalidCMDOWSFileError
 from .discipline_component import DisciplineComponent
+from .discipline_resolver import ModuleDisciplineResolver
 
 
 class LEGOModel(CMDOWSObject, Group):
@@ -97,7 +97,7 @@ class LEGOModel(CMDOWSObject, Group):
 
     def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None,
                  base_xml_file=None, **kwargs):
-        # type: (Optional[str], Optional[str], Optional[str], Optional[str]) -> None
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Any) -> None
         """Initialize a CMDOWS Problem from a given CMDOWS file and knowledge base.
 
         It is also possible to specify where (temporary) data should be stored, and if a base XML
@@ -121,6 +121,9 @@ class LEGOModel(CMDOWSObject, Group):
         self.nonlinear_solver = NonlinearRunOnce()
         super(LEGOModel, self).__init__(cmdows_path, kb_path, driver_uid, data_folder,
                                         base_xml_file, **kwargs)
+
+        # Register default discipline resolver
+        self.register_discipline_resolver(ModuleDisciplineResolver(self.kb_path), last=True)
 
     def __setattr__(self, name, value):
         # type: (str, Any) -> None
@@ -183,38 +186,26 @@ class LEGOModel(CMDOWSObject, Group):
         for design_competence in self.elem_cmdows.iter('designCompetence'):
             if design_competence.attrib['uID'] in self.model_exec_blocks or \
                     self.driver_uid in self.super_drivers or self._super_driver_components:
-                if not self._kb_path or not os.path.isdir(self._kb_path):
-                    raise ValueError('No valid knowledge base path ({}) specified while the CMDOWS '
-                                     'file contains design competences.'.format(self._kb_path))
                 uid = design_competence.attrib['uID']
                 name = design_competence.find('ID').text
                 mode = design_competence.find('modeID').text
-                if mode != 'main':
-                    name = '{}_{}'.format(name, mode)
-                try:
-                    try:  # Python 3
-                        import importlib.util as importlibutil
-                        pyfp = os.path.join(os.path.abspath(self.kb_path), name + '.py')
-                        spec = importlibutil.spec_from_file_location(name, pyfp)
-                        mod = importlibutil.module_from_spec(spec)
-                        spec.loader.exec_module(mod)
-                        sys.modules[name] = mod
-                    except ImportError:  # Python 2
-                        import imp
-                        fp, pathname, description = imp.find_module(name, [self.kb_path])
-                        mod = imp.load_module(name, fp, pathname, description)
-                    cls = getattr(mod, name)  # type: AbstractDiscipline.__class__
-                    if not issubclass(cls, AbstractDiscipline):
-                        raise RuntimeError
-                except Exception:
+
+                discipline = None
+                for resolver in self.discipline_resolvers:
+                    resolved_discipline = resolver.resolve_discipline(name, mode)
+                    if resolved_discipline is not None:
+                        if isinstance(resolved_discipline, AbstractDiscipline):
+                            discipline = resolved_discipline
+                            break
+                        elif issubclass(resolved_discipline, AbstractDiscipline):
+                            discipline = resolved_discipline()
+                            break
+
+                if discipline is None:
                     raise ValueError('Unable to process CMDOWS file: no proper discipline found for'
                                      ' design competence with name {}'.format(name))
-                finally:
-                    if 'fp' in locals():
-                        fp.close()
 
-                component = DisciplineComponent(cls(), data_folder=self.data_folder,
-                                                base_file=self.base_xml_file)
+                component = DisciplineComponent(discipline, data_folder=self.data_folder, base_file=self.base_xml_file)
                 _discipline_components.update({uid: component})
         return _discipline_components
 

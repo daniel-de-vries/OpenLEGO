@@ -1,0 +1,10 @@
+<dataSchema>
+  <variables>
+    <x1>5.0</x1>
+    <z2>5.0</z2>
+  </variables>
+  <analyses>
+    <y1>5.0</y1>
+    <y2>5.0</y2>
+  </analyses>
+</dataSchema>

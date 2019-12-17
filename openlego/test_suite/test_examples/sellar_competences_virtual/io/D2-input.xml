@@ -1,0 +1,9 @@
+<dataSchema>
+  <variables>
+    <z1>1.0</z1>
+    <z2>5.0</z2>
+  </variables>
+  <analyses>
+    <y1>5.0</y1>
+  </analyses>
+</dataSchema>

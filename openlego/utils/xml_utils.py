@@ -25,7 +25,7 @@ from shutil import copyfile
 
 import numpy as np
 from lxml import etree
-from six import string_types
+from six import string_types, binary_type
 from typing import Optional, Union, List
 
 # Patterns for XML attribute names and values
@@ -139,8 +139,14 @@ def xml_to_dict(xml):
         :obj:`OrderedDict`
             `OrderedDict` representing the XML file in file order.
     """
+    if isinstance(xml, binary_type):
+        xml = xml.decode('utf-8')
     if isinstance(xml, string_types):
-        xml = etree.parse(xml, parser)
+        if xml[0] == '<':
+            # https://stackoverflow.com/a/18281386
+            xml = etree.ElementTree(etree.fromstring(xml.encode('utf-8'), parser))
+        else:
+            xml = etree.parse(xml, parser)
 
     _dict = OrderedDict()
     for text in find_text(xml):

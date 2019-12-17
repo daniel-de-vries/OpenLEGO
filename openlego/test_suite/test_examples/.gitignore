@@ -5,4 +5,5 @@
 **/kb/*-base.xml
 **/kb/*-partials.xml
 **/*-output.xml
+!**/io/*-output.xml
 **/*.png

@@ -31,6 +31,7 @@ from typing import Any, Optional
 from cached_property import cached_property
 
 from openlego.utils.xml_utils import xpath_to_param
+from .discipline_resolver import DisciplineResolver
 
 
 class InvalidCMDOWSFileError(ValueError):
@@ -67,8 +68,8 @@ class CMDOWSObject(object):
     SUPERCOMP_PREFIX = '__SuperComponent__'
 
     def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None,
-                 base_xml_file=None, **kwargs):
-        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
+                 base_xml_file=None, discipline_resolvers=None, **kwargs):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Optional[list], dict) -> None
         """Initialize CMDOWS dependent class from given CMDOWS file, knowledge base and driver UID.
 
         It is also possible to specify where (temporary) data should be stored, and if a base XML
@@ -97,6 +98,8 @@ class CMDOWSObject(object):
         self.data_folder = data_folder
         self.base_xml_file = base_xml_file
         self._super_driver_components = []
+
+        self._discipline_resolvers = discipline_resolvers or []  # type: List[DisciplineResolver]
 
         super(CMDOWSObject, self).__init__()
 
@@ -278,6 +281,19 @@ class CMDOWSObject(object):
         # type: (str) -> None
         self._kb_path = kb_path
         self.invalidate()
+
+    @property
+    def discipline_resolvers(self):
+        # type: () -> List[DisciplineResolver]
+        return self._discipline_resolvers
+
+    def register_discipline_resolver(self, discipline_resolver, last=False):
+        # type: (DisciplineResolver, bool) -> None
+        """Register a DisciplineResolver only for this LEGOModel instance."""
+        if last:
+            self._discipline_resolvers.append(discipline_resolver)
+        else:
+            self._discipline_resolvers.insert(0, discipline_resolver)
 
     @property
     def driver_uid(self):

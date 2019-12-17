@@ -25,6 +25,8 @@ import warnings
 from lxml import etree
 from typing import Union, List, Optional, Any
 
+from six import binary_type
+
 from openlego.utils.general_utils import parse_string
 from openlego.utils.xml_utils import value_to_xml
 
@@ -53,7 +55,13 @@ class Partials(object):
         if file is None:
             self._tree = etree.ElementTree(etree.Element('partials'), parser=parser)    # type: etree._ElementTree
         else:
-            self._tree = etree.parse(file, parser)
+            if isinstance(file, binary_type):
+                file = file.decode('utf-8')
+            if file[0] == '<':
+                # https://stackoverflow.com/a/18281386
+                self._tree = etree.ElementTree(etree.fromstring(file.encode('utf-8'), parser))
+            else:
+                self._tree = etree.parse(file, parser)
 
     @property
     def _elem_root(self):

@@ -12,7 +12,6 @@ from __future__ import absolute_import, division, print_function
 import sys
 
 from ssbjkadmos.tools.performance.Performance import Performance
-from ssbjkadmos.utils.execution import run_tool
 
 
 class PerformanceAnalysis(Performance):  # AbstractDiscipline
@@ -22,4 +21,4 @@ class PerformanceAnalysis(Performance):  # AbstractDiscipline
 
 if __name__ == "__main__":
     analysis = PerformanceAnalysis()
-    run_tool(analysis, sys.argv)
+    analysis.run_tool(sys.argv)

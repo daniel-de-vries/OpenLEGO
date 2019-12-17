@@ -12,7 +12,6 @@ from __future__ import absolute_import, division, print_function
 import sys
 
 from ssbjkadmos.tools.aerodynamics.Aerodynamics import Aerodynamics
-from ssbjkadmos.utils.execution import run_tool
 
 
 class AeroAnalysis(Aerodynamics):  # AbstractDiscipline
@@ -20,6 +19,5 @@ class AeroAnalysis(Aerodynamics):  # AbstractDiscipline
 
 
 if __name__ == "__main__":
-
     analysis = AeroAnalysis()
-    run_tool(analysis, sys.argv)
+    analysis.run_tool(sys.argv)

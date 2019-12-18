@@ -126,7 +126,7 @@ def value_to_xml(elem, value):
 
 
 def xml_to_dict(xml):
-    # type: (Union[str, etree._ElementTree]) -> OrderedDict
+    # type: (Union[str, bytes, etree._ElementTree]) -> OrderedDict
     """Convert an XML file to a python dictionary with all valued elements as values with their full XPaths as keys.
 
     Parameters

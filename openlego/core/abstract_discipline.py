@@ -198,3 +198,10 @@ class AbstractDiscipline(object):
                 Path to the sensitivities XML file.
         """
         Partials().write(partials_file)
+
+    def cleanup(self):
+        """
+        Called after running the driver. Similar to the System.cleanup() function of OpenMDAO.
+
+        :return:
+        """

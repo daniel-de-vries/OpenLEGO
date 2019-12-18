@@ -137,3 +137,7 @@ class DisciplineComponent(XMLComponent):
                 raise ValueError('Both an input_xml and a partials_xml path are expected.')
             self.discipline.linearize(input_xml, partials_xml)
         self.number_of_linearizes += 1
+
+    def cleanup(self):
+        super(DisciplineComponent, self).cleanup()
+        self._discipline.cleanup()

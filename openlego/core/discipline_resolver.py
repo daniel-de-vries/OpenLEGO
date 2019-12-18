@@ -68,6 +68,16 @@ class DisciplineInstanceResolver(DisciplineResolver):
             if discipline.name == name:
                 return discipline
 
+    def write_io(self, folder):
+        """
+        Write input/output (and partials if available) specification files of all disciplines to the provided folder.
+
+        :param folder:
+        :return:
+        """
+        for discipline in self.disciplines:
+            discipline.deploy(folder)
+
 
 class ModuleDisciplineResolver(DisciplineResolver):
     """

@@ -22,6 +22,7 @@ from __future__ import absolute_import, division, print_function
 import abc
 import inspect
 import os
+from typing import Optional
 
 from six import string_types
 from cached_property import cached_property
@@ -49,7 +50,10 @@ class AbstractDiscipline(object):
     def in_file(self):
         # type: () -> str
         """:obj:`str`: Path of the template input XML file of this discipline."""
-        return os.path.join(self.path, self.name + '-input.xml')
+        return self._get_in_file_path(self.path)
+
+    def _get_in_file_path(self, folder):
+        return os.path.join(folder, self.name + '-input.xml')
 
     @cached_property
     def in_file_content(self):
@@ -67,7 +71,10 @@ class AbstractDiscipline(object):
     def out_file(self):
         # type: () -> str
         """:obj:`str`: Path of the template output XML file of this discipline."""
-        return os.path.join(self.path, self.name + '-output.xml')
+        return self._get_out_file_path(self.path)
+
+    def _get_out_file_path(self, folder):
+        return os.path.join(folder, self.name + '-output.xml')
 
     @cached_property
     def out_file_content(self):
@@ -85,7 +92,10 @@ class AbstractDiscipline(object):
     def partials_file(self):
         # type: () -> str
         """:obj:`str`: Path of the partials XML file of this discipline."""
-        return os.path.join(self.path, self.name + '-partials.xml')
+        return self._get_partials_file_path(self.path)
+
+    def _get_partials_file_path(self, folder):
+        return os.path.join(folder, self.name + '-partials.xml')
 
     @property
     def supplies_partials(self):
@@ -151,16 +161,20 @@ class AbstractDiscipline(object):
         """
         return Partials().get_string()
 
-    def deploy(self):
-        # type: () -> None
+    def deploy(self, target_folder=None):
+        # type: (Optional[str]) -> None
         """Deploy this discipline's template in-/output, partials XML files and its information
         JSON file."""
-        with open(self.in_file, 'wb') as f:
+        if target_folder is None:
+            target_folder = self.path
+
+        with open(self._get_in_file_path(target_folder), 'wb') as f:
             f.write(self.generate_input_xml())
-        with open(self.out_file, 'wb') as f:
+        with open(self._get_out_file_path(target_folder), 'wb') as f:
             f.write(self.generate_output_xml())
-        with open(self.partials_file, 'wb') as f:
-            f.write(self.generate_partials_xml())
+        if self.supplies_partials:
+            with open(self._get_partials_file_path(target_folder), 'wb') as f:
+                f.write(self.generate_partials_xml())
 
     @staticmethod
     @abc.abstractmethod

@@ -22,7 +22,11 @@ from __future__ import absolute_import, division, print_function
 import copy
 import os
 import warnings
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 from numbers import Integral
 
 import numpy as np

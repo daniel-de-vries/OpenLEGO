@@ -115,9 +115,15 @@ def value_to_xml(elem, value):
 
     if isinstance(value, np.ndarray):
         if value.size == 1:
-            elem.text = str('{:.24e}'.format(value[0]))
+            try:
+                elem.text = str('{:.24e}'.format(value[0]))
+            except ValueError:
+                elem.text = str(value[0])
         else:
-            elem.text = ';'.join([str('{:.24e}'.format(v)) for v in value[:]])
+            try:
+                elem.text = ';'.join([str('{:.24e}'.format(v)) for v in value[:]])
+            except ValueError:
+                elem.text = ';'.join([str(v) for v in value[:]])
             elem.attrib.update({'mapType': 'vector'})
     elif isinstance(value, float):
         elem.text = str('{:.24e}'.format(value))

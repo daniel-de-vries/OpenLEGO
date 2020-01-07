@@ -1,8 +1,8 @@
 import os
 from openlego.core.abstract_discipline import AbstractDiscipline
-from openlego.test_suite.test_examples.sellar_competences_virtual.sellar_code import d1, d2, f1, g1, g2
+from openlego.test_suite.test_examples.sellar_competences_virtual.sellar_code import d1, d2, d12, f1, g1, g2
 
-__all__ = ['D1Discipline', 'D2Discipline', 'F1Discipline', 'G1Discipline', 'G2Discipline']
+__all__ = ['D1Discipline', 'D2Discipline', 'D12Discipline', 'F1Discipline', 'G1Discipline', 'G2Discipline']
 
 
 class AbstractSellarDiscipline(AbstractDiscipline):
@@ -45,6 +45,17 @@ class D2Discipline(AbstractSellarDiscipline):
     @staticmethod
     def execute(in_file, out_file):
         d2.run(in_file, out_file)
+
+
+class D12Discipline(AbstractSellarDiscipline):
+
+    @property
+    def name(self):
+        return 'D12'
+
+    @staticmethod
+    def execute(in_file, out_file):
+        d12.run(in_file, out_file)
 
 
 class F1Discipline(AbstractSellarDiscipline):

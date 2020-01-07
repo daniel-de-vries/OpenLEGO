@@ -39,7 +39,7 @@ from typing import Union, Optional, List, Any, Dict, Tuple
 
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, \
     NonlinearBlockJac, LinearRunOnce, NonlinearRunOnce, DirectSolver, \
-    MetaModelUnStructuredComp, FloatKrigingSurrogate, ResponseSurface
+    MetaModelUnStructuredComp, FloatKrigingSurrogate, ResponseSurface, ExplicitComponent
 from openmdao.utils.general_utils import format_as_float_or_array, determine_adder_scaler
 from openmdao import INF_BOUND as INF_BOUND
 
@@ -1082,6 +1082,8 @@ class LEGOModel(CMDOWSObject, Group):
                 else:
                     subsys.nonlinear_solver = NonlinearRunOnce()
             elif isinstance(entry, str):  # if entry specifies an executable block
+                output_rename_map = discrete_output_rename_map = {}
+
                 if root:
                     raise AssertionError('Code was not expected to get here for root == True.')
                 # Get the correct DisciplineComponent or MathematicalFunction
@@ -1089,6 +1091,10 @@ class LEGOModel(CMDOWSObject, Group):
                 uid = entry
                 if uid in self.discipline_components:
                     block = self.discipline_components[uid]
+
+                    output_rename_map = block.output_rename_map
+                    discrete_output_rename_map = block.discrete_output_rename_map
+
                 elif uid in self.mathematical_functions_groups:
                     block = self.mathematical_functions_groups[uid]
                 else:
@@ -1096,9 +1102,16 @@ class LEGOModel(CMDOWSObject, Group):
                                        'mathematical_functions_groups.'.format(uid))
                 # Add the block to the group
                 coupled_gr.add_subsystem(str_to_valid_sys_name(uid), block, promotes)
+
+                # If the disciplines renames output, reverse map it to be able to feed it to the solver
+                if len(output_rename_map) > 0 or len(discrete_output_rename_map) > 0:
+                    reverse_map_component = self._get_reverse_map_comp(output_rename_map, discrete_output_rename_map,
+                                                                       name='%s_self_loop' % block.name)
+                    coupled_gr.add_subsystem(reverse_map_component.name, reverse_map_component, promotes=['*'])
             else:
                 raise ValueError('Unexpected value type {} encountered in the coupled_hierarchy {}.'
                                  .format(type(entry), hierarchy))
+
         if root:
             return subsys
         else:
@@ -1510,3 +1523,41 @@ class LEGOModel(CMDOWSObject, Group):
             return True
         else:
             return False
+
+    @staticmethod
+    def _get_reverse_map_comp(output_map, discrete_output_map, name=None):
+        # type: (Dict[str,Tuple[str,Any,Any]], Dict[str,Tuple[str,Any]], Optional[str]) -> ExplicitComponent
+        """
+        A component that simply copies values from target to source names.
+        Used together with XMLComponent.output_rename_map and discrete_output_rename_map.
+        """
+
+        comp = ExplicitComponent()
+        comp.name = name or 'ReverseMap'
+
+        # Map continuous parameters
+        for src_param, (tgt_param, value, ref) in output_map.items():
+            comp.add_input(tgt_param, value)
+            comp.add_output(src_param, value, ref=ref)
+
+        # Declare derivatives
+        if len(output_map) > 0:
+            comp.declare_partials('*', '*', method='fd', step_calc='rel')
+
+        # Map discrete parameters
+        for src_param, (tgt_param, value) in discrete_output_map.items():
+            comp.add_discrete_input(tgt_param, value)
+            comp.add_discrete_output(src_param, value)
+
+        # Declare compute function (simply copy the values)
+        def _compute(inputs, outputs, discrete_inputs=None, discrete_outputs=None):
+            for cmp_src_param, (cmp_tgt_param, _, _) in output_map.items():
+                outputs[cmp_src_param] = inputs[cmp_tgt_param]
+
+            if discrete_inputs is not None and discrete_outputs is not None:
+                for cmp_src_param, (cmp_tgt_param, _) in discrete_output_map.items():
+                    discrete_outputs[cmp_src_param] = discrete_inputs[cmp_tgt_param]
+
+        comp.compute = _compute
+
+        return comp

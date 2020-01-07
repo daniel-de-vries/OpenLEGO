@@ -141,6 +141,16 @@ class TestSellarMath(unittest.TestCase):
         self.assertion_mdo(*run_openlego('cmdows_mdax_Sellar_Test_MDF-GS.xml',
                                          discipline_resolvers=[self.virtual_kb()]))
 
+    def test_mda_gs_self_loop(self):
+        virtual_kb = DisciplineInstanceResolver([
+            D12Discipline(),
+            F1Discipline(),
+            G1Discipline(),
+            G2Discipline(),
+        ])
+        self.assertion_con_mda(*run_openlego('cmdows_mdax_Sellar_Test_MDA-GS-self.xml',
+                                             discipline_resolvers=[virtual_kb]))
+
     def __del__(self):
         clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_cmdows_',
                                                        'sellar-output.xml', 'SLSQP.out'])

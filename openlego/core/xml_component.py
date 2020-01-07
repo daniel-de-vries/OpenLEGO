@@ -23,6 +23,7 @@ import abc
 import os
 from abc import abstractmethod
 from datetime import datetime
+from cached_property import cached_property
 
 import numpy as np
 from lxml import etree
@@ -176,19 +177,90 @@ class XMLComponent(ExplicitComponent):
         variables.update(self.outputs_from_xml.copy())
         return variables
 
+    @cached_property
+    def _input_names(self):
+        input_names = set()
+        discrete_input_names = set()
+        for name, value in self.inputs_from_xml.items():
+            if not is_float(value):
+                discrete_input_names.add(name)
+            else:
+                input_names.add(name)
+
+        return input_names, discrete_input_names
+
+    @cached_property
+    def output_rename_map(self):
+        """
+        Dict mapping original output params to renamed output params.
+        Outputs are renamed if they confict with an input parameter.
+        """
+        input_names, discrete_input_names = self._input_names
+
+        output_rename_map = {}
+        for name, value in self.outputs_from_xml.items():
+            if is_float(value):
+                # Use the value stored in the input.xml as a reference value
+                if isinstance(value, np.ndarray):
+                    ref = value.mean()
+                else:
+                    ref = value
+                if ref == 0.:
+                    ref = 1.
+
+                # Rename output variable if in conflict with input
+                if name in discrete_input_names:
+                    raise RuntimeError('Output not same type (cont) as input (discrete): %s' % name)
+                elif name in input_names:
+                    renamed = name + '___out'
+                    output_rename_map[name] = (renamed, value, ref)
+
+        return output_rename_map
+
+    @cached_property
+    def discrete_output_rename_map(self):
+        """
+        Dict mapping original output params to renamed output params.
+        Outputs are renamed if they confict with an input parameter.
+        """
+        input_names, discrete_input_names = self._input_names
+
+        discrete_output_rename_map = {}
+        for name, value in self.outputs_from_xml.items():
+            if not is_float(value):
+                # Rename output variable if in conflict with input
+                if name in input_names:
+                    raise RuntimeError('Output not same type (discrete) as input (cont): %s' % name)
+                elif name in discrete_input_names:
+                    renamed = name + '___out'
+                    discrete_output_rename_map[name] = (renamed, value)
+
+        return discrete_output_rename_map
+
     def setup(self):
         has_cont_input = False
+        input_names = set()
+        discrete_input_names = set()
         for name, value in self.inputs_from_xml.items():
             if not is_float(value):
                 self.add_discrete_input(name, value)
+                discrete_input_names.add(name)
             else:
                 self.add_input(name, value)
+                input_names.add(name)
                 has_cont_input = True
 
         has_cont_output = False
+        output_rename_map = self.output_rename_map
+        discrete_output_rename_map = self.discrete_output_rename_map
         for name, value in self.outputs_from_xml.items():
             if not is_float(value):
+                # Rename output variable if in conflict with input
+                if name in discrete_output_rename_map:
+                    name = discrete_output_rename_map[name]
+
                 self.add_discrete_output(name, value)
+
             else:
                 # Use the value stored in the input.xml as a reference value
                 if isinstance(value, np.ndarray):
@@ -198,6 +270,10 @@ class XMLComponent(ExplicitComponent):
                 if ref == 0.:
                     ref = 1.
 
+                # Rename output variable if in conflict with input
+                if name in output_rename_map:
+                    name = output_rename_map[name][0]
+
                 self.add_output(name, value, ref=ref)
                 has_cont_output = True
 
@@ -206,7 +282,10 @@ class XMLComponent(ExplicitComponent):
             if self.partials_from_xml:
                 for of, wrt in self.partials_from_xml.items():
                     if of is not None and wrt is not None:
-                        self.declare_partials(xpath_to_param(of), [xpath_to_param(_wrt) for _wrt in wrt.keys()])
+                        out_param = xpath_to_param(of)
+                        if out_param in output_rename_map:
+                            out_param = output_rename_map[out_param][0]
+                        self.declare_partials(out_param, [xpath_to_param(_wrt) for _wrt in wrt.keys()])
             else:
                 self.declare_partials('*', '*', method='fd', step_calc='rel')
                 # if self.outputs_from_xml and self.inputs_from_xml:
@@ -304,13 +383,22 @@ class XMLComponent(ExplicitComponent):
             discrete_outputs : dict
                 Discrete (i.e. not treated as floats) outputs.
         """
+        output_rename_map = self.output_rename_map
+        discrete_output_rename_map = self.discrete_output_rename_map
+
         # Extract the results from the output xml
         for xpath, value in xml_to_dict(file).items():
             name = xpath_to_param(xpath)
             if name in self.outputs_from_xml:
+                # Rename output
+                if name in output_rename_map:
+                    name = output_rename_map[name][0]
+                elif name in discrete_output_rename_map:
+                    name = discrete_output_rename_map[name][0]
+
                 if name in outputs:
                     outputs[name] = value
-                elif name in discrete_outputs:
+                elif discrete_outputs is not None and name in discrete_outputs:
                     discrete_outputs[name] = value
 
     def read_partials_file(self, file, partials):
@@ -326,10 +414,15 @@ class XMLComponent(ExplicitComponent):
                 Partials vector of this `Component`.
 
         """
+        output_rename_map = self.output_rename_map
+
         _partials = Partials(file)
         for of, wrts in _partials.get_partials().items():
             for wrt, val in wrts.items():
                 of = xpath_to_param(of)
+                if of in output_rename_map:
+                    of = output_rename_map[of][0]
+
                 wrt = xpath_to_param(wrt)
                 if (of, wrt) in partials:
                     try:

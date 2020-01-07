@@ -29,7 +29,7 @@ from six import string_types, binary_type
 from typing import Optional, Union, List
 
 # Patterns for XML attribute names and values
-pttrn_attr_val = r'([-.0-9:A-Z_a-z]+?)'
+pttrn_attr_val = r'([-.0-9:A-Z_a-z]*?)'
 pttrn_attr_name = r'([:A-Z_a-z][0-9:A-Z_a-z]*?)'
 
 # Expressions used to replace illegal characters in an XPath to legal characters within an OpenMDAO variable name.

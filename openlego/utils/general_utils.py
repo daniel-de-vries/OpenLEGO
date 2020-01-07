@@ -128,7 +128,13 @@ def is_float(value):
     """
     Returns whether or not the value represents a continuous value.
     """
-    return isinstance(value, float) or isinstance(value, np.ndarray)
+    if isinstance(value, float):
+        return True
+
+    if isinstance(value, np.ndarray):
+        return value.dtype == np.float64
+
+    return False
 
 
 def print_optional(string, print_in_log):

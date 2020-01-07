@@ -184,6 +184,8 @@ def xml_to_dict(xml):
                 value = np.array(text.split(';'), dtype=float)
             except ValueError:
                 value = str(text)
+                if ';' in value:
+                    value = np.array(value.split(';'))
 
         # Update the dict with this element
         _dict.update({'/' + xpath[:-1]: value})

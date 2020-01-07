@@ -46,7 +46,7 @@ from openmdao import INF_BOUND as INF_BOUND
 from openlego.core.b2k_solver import B2kSolver
 from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid, \
     get_loop_nesting_obj, get_surrogate_model_setting_safe
-from openlego.utils.general_utils import parse_cmdows_value, str_to_valid_sys_name, parse_string
+from openlego.utils.general_utils import parse_cmdows_value, str_to_valid_sys_name, parse_string, is_float
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict, param_to_xpath
 from openlego.core.exec_comp import ExecComp
 from .abstract_discipline import AbstractDiscipline
@@ -425,6 +425,18 @@ class LEGOModel(CMDOWSObject, Group):
                 _mathematical_functions.update({uid: group})
 
         return _mathematical_functions
+
+    @cached_property
+    def discrete_variables(self):
+        # type: () -> Dict[str, Any]
+        """Dictionary of discrete variables and their default values."""
+        variables_cont = {}
+        for component in self.discipline_components.values():
+            for name, value in component.variables_from_xml.items():
+                if not is_float(value):
+                    variables_cont[name] = value
+
+        return variables_cont
 
     @cached_property
     def variable_sizes(self):
@@ -1143,8 +1155,12 @@ class LEGOModel(CMDOWSObject, Group):
             coordinator.add_output(name, value['initial'])
 
         # Add system constants
+        discrete_variables = self.discrete_variables
         for name, shape in self.model_constants.items():
-            coordinator.add_output(name, shape=shape)
+            if name in discrete_variables:
+                coordinator.add_discrete_output(name, discrete_variables[name])
+            else:
+                coordinator.add_output(name, shape=shape)
 
         return coordinator
 

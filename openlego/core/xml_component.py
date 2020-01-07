@@ -31,6 +31,7 @@ from openmdao.vectors.vector import Vector
 from typing import Optional, List, Union, Iterable, Tuple
 
 from openlego.utils.xml_utils import xml_safe_create_element, xml_to_dict, xpath_to_param, param_to_xpath, xml_merge
+from openlego.utils.general_utils import is_float
 from openlego.partials.partials import Partials
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -176,19 +177,18 @@ class XMLComponent(ExplicitComponent):
         return variables
 
     def setup(self):
+        has_cont_input = False
         for name, value in self.inputs_from_xml.items():
-            if not isinstance(value, float) and not isinstance(value, np.ndarray):
-                # TODO: pass_by_obj
-                # raise NotImplementedError('pass-by-object variables are not yet supported by OpenMDAO 2.0')
-                pass
+            if not is_float(value):
+                self.add_discrete_input(name, value)
             else:
                 self.add_input(name, value)
+                has_cont_input = True
 
+        has_cont_output = False
         for name, value in self.outputs_from_xml.items():
-            if not isinstance(value, float) and not isinstance(value, np.ndarray):
-                # TODO: pass_by_obj
-                # raise NotImplementedError('pass-by-object variables are not yet supported by OpenMDAO 2.0')
-                pass
+            if not is_float(value):
+                self.add_discrete_output(name, value)
             else:
                 # Use the value stored in the input.xml as a reference value
                 if isinstance(value, np.ndarray):
@@ -199,16 +199,19 @@ class XMLComponent(ExplicitComponent):
                     ref = 1.
 
                 self.add_output(name, value, ref=ref)
+                has_cont_output = True
 
-        if self.partials_from_xml:
-            for of, wrt in self.partials_from_xml.items():
-                if of is not None and wrt is not None:
-                    self.declare_partials(xpath_to_param(of), [xpath_to_param(_wrt) for _wrt in wrt.keys()])
-        else:
-            self.declare_partials('*', '*', method='fd', step_calc='rel')
-            # if self.outputs_from_xml and self.inputs_from_xml:
-            #     for src in self.outputs_from_xml.keys():
-            #         self.declare_partials(src, self.inputs_from_xml.keys(), method='fd')
+        # Only declare partials if we have at least one continuous input and output parameter
+        if has_cont_input and has_cont_output:
+            if self.partials_from_xml:
+                for of, wrt in self.partials_from_xml.items():
+                    if of is not None and wrt is not None:
+                        self.declare_partials(xpath_to_param(of), [xpath_to_param(_wrt) for _wrt in wrt.keys()])
+            else:
+                self.declare_partials('*', '*', method='fd', step_calc='rel')
+                # if self.outputs_from_xml and self.inputs_from_xml:
+                #     for src in self.outputs_from_xml.keys():
+                #         self.declare_partials(src, self.inputs_from_xml.keys(), method='fd')
 
     @abstractmethod
     def execute(self, input_xml=None, output_xml=None):
@@ -257,8 +260,8 @@ class XMLComponent(ExplicitComponent):
 
         return input_xml, output_xml, partials_xml
 
-    def write_input_file(self, file, inputs):
-        # type: (Union[str, etree._ElementTree], Vector) -> None
+    def write_input_file(self, file, inputs, discrete_inputs=None):
+        # type: (Union[str, etree._ElementTree], Vector, Optional[dict]) -> None
         """Write the current input values to an input XML file.
 
         Parameters
@@ -268,6 +271,9 @@ class XMLComponent(ExplicitComponent):
 
             inputs : Vector
                 Input vector of this `Component`.
+
+            discrete_inputs : dict
+                Discrete (i.e. not treated as floats) inputs.
         """
         # Create new root element and an ElementTree
         root = etree.Element(param_to_xpath(list(self.inputs_from_xml)[0]).split('/')[1])
@@ -277,12 +283,14 @@ class XMLComponent(ExplicitComponent):
         for param in self.inputs_from_xml:
             if param in inputs:
                 xml_safe_create_element(doc, param_to_xpath(param), inputs[param])
+            elif param in discrete_inputs:
+                xml_safe_create_element(doc, param_to_xpath(param), discrete_inputs[param])
 
         # Write the tree to an XML file
         doc.write(file, pretty_print=True, xml_declaration=True, encoding='utf-8')
 
-    def read_outputs_file(self, file, outputs):
-        # type: (Union[str, etree._ElementTree], Vector) -> None
+    def read_outputs_file(self, file, outputs, discrete_outputs=None):
+        # type: (Union[str, etree._ElementTree], Vector, Optional[dict]) -> None
         """Read the outputs from a given XML file and store them in this `Component`'s variables.
 
         Parameters
@@ -292,12 +300,18 @@ class XMLComponent(ExplicitComponent):
 
             outputs : Vector
                 Output vector of this `Component`.
+
+            discrete_outputs : dict
+                Discrete (i.e. not treated as floats) outputs.
         """
         # Extract the results from the output xml
         for xpath, value in xml_to_dict(file).items():
             name = xpath_to_param(xpath)
-            if name in self.outputs_from_xml and name in outputs:
-                outputs[name] = value
+            if name in self.outputs_from_xml:
+                if name in outputs:
+                    outputs[name] = value
+                elif name in discrete_outputs:
+                    discrete_outputs[name] = value
 
     def read_partials_file(self, file, partials):
         # type: (Union[str, etree._ElementTree], Vector) -> None
@@ -323,8 +337,8 @@ class XMLComponent(ExplicitComponent):
                     except Exception as e:
                         print(e.message)
 
-    def compute(self, inputs, outputs):
-        # type: (Vector, Vector) -> None
+    def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
+        # type: (Vector, Vector, Optional[dict], Optional[dict]) -> None
         """Write the input XML file, call `execute()`, and read the output XML file to obtain the results.
 
         Parameters
@@ -334,12 +348,18 @@ class XMLComponent(ExplicitComponent):
 
             outputs : `Vector`
                 Output parameters.
+
+            discrete_inputs : `dict`
+                Discrete (i.e. not treated as floats) input parameters.
+
+            discrete_outputs : `dict`
+                Discrete (i.e. not treated as floats) output parameters.
         """
 
         input_xml, output_xml, _ = self.generate_file_names()
 
         if self.inputs_from_xml:
-            self.write_input_file(input_xml, inputs)
+            self.write_input_file(input_xml, inputs, discrete_inputs)
             if self.base_file is not None:
                 xml_merge(self.base_file, input_xml)
 
@@ -358,7 +378,7 @@ class XMLComponent(ExplicitComponent):
                 pass
 
         if self.outputs_from_xml:
-            self.read_outputs_file(output_xml, outputs)
+            self.read_outputs_file(output_xml, outputs, discrete_outputs)
 
             # If files should not be kept, delete the output XML file
             if not self.keep_files:

@@ -68,8 +68,8 @@ class CMDOWSObject(object):
     SUPERCOMP_PREFIX = '__SuperComponent__'
 
     def __init__(self, cmdows_path=None, kb_path='', driver_uid=None, data_folder=None,
-                 base_xml_file=None, discipline_resolvers=None, **kwargs):
-        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Optional[list], dict) -> None
+                 base_xml_file=None, discipline_resolvers=None, keep_files=False, **kwargs):
+        # type: (Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Optional[list], bool, dict) -> None
         """Initialize CMDOWS dependent class from given CMDOWS file, knowledge base and driver UID.
 
         It is also possible to specify where (temporary) data should be stored, and if a base XML
@@ -96,6 +96,7 @@ class CMDOWSObject(object):
         self._kb_path = kb_path
         self._driver_uid = driver_uid
         self.data_folder = data_folder
+        self.keep_files = keep_files
         self.base_xml_file = base_xml_file
         self._super_driver_components = []
 

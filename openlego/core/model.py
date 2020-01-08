@@ -209,7 +209,8 @@ class LEGOModel(CMDOWSObject, Group):
                     raise ValueError('Unable to process CMDOWS file: no proper discipline found for'
                                      ' design competence with name {}'.format(name))
 
-                component = DisciplineComponent(discipline, data_folder=self.data_folder, base_file=self.base_xml_file)
+                component = DisciplineComponent(discipline, data_folder=self.data_folder, base_file=self.base_xml_file,
+                                                keep_files=self.keep_files)
                 _discipline_components.update({uid: component})
         return _discipline_components
 

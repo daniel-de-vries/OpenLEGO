@@ -22,7 +22,11 @@ from __future__ import absolute_import, division, print_function
 import copy
 import os
 import warnings
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 from numbers import Integral
 
 import numpy as np
@@ -35,14 +39,14 @@ from typing import Union, Optional, List, Any, Dict, Tuple
 
 from openmdao.api import Group, IndepVarComp, LinearBlockGS, NonlinearBlockGS, LinearBlockJac, \
     NonlinearBlockJac, LinearRunOnce, NonlinearRunOnce, DirectSolver, \
-    MetaModelUnStructuredComp, FloatKrigingSurrogate, ResponseSurface
+    MetaModelUnStructuredComp, FloatKrigingSurrogate, ResponseSurface, ExplicitComponent
 from openmdao.utils.general_utils import format_as_float_or_array, determine_adder_scaler
 from openmdao import INF_BOUND as INF_BOUND
 
 from openlego.core.b2k_solver import B2kSolver
 from openlego.utils.cmdows_utils import get_element_by_uid, get_related_parameter_uid, \
     get_loop_nesting_obj, get_surrogate_model_setting_safe
-from openlego.utils.general_utils import parse_cmdows_value, str_to_valid_sys_name, parse_string
+from openlego.utils.general_utils import parse_cmdows_value, str_to_valid_sys_name, parse_string, is_float
 from openlego.utils.xml_utils import xpath_to_param, xml_to_dict, param_to_xpath
 from openlego.core.exec_comp import ExecComp
 from .abstract_discipline import AbstractDiscipline
@@ -205,7 +209,8 @@ class LEGOModel(CMDOWSObject, Group):
                     raise ValueError('Unable to process CMDOWS file: no proper discipline found for'
                                      ' design competence with name {}'.format(name))
 
-                component = DisciplineComponent(discipline, data_folder=self.data_folder, base_file=self.base_xml_file)
+                component = DisciplineComponent(discipline, data_folder=self.data_folder, base_file=self.base_xml_file,
+                                                keep_files=self.keep_files)
                 _discipline_components.update({uid: component})
         return _discipline_components
 
@@ -421,6 +426,18 @@ class LEGOModel(CMDOWSObject, Group):
                 _mathematical_functions.update({uid: group})
 
         return _mathematical_functions
+
+    @cached_property
+    def discrete_variables(self):
+        # type: () -> Dict[str, Any]
+        """Dictionary of discrete variables and their default values."""
+        variables_cont = {}
+        for component in self.discipline_components.values():
+            for name, value in component.variables_from_xml.items():
+                if not is_float(value):
+                    variables_cont[name] = value
+
+        return variables_cont
 
     @cached_property
     def variable_sizes(self):
@@ -1066,6 +1083,8 @@ class LEGOModel(CMDOWSObject, Group):
                 else:
                     subsys.nonlinear_solver = NonlinearRunOnce()
             elif isinstance(entry, str):  # if entry specifies an executable block
+                output_rename_map = discrete_output_rename_map = {}
+
                 if root:
                     raise AssertionError('Code was not expected to get here for root == True.')
                 # Get the correct DisciplineComponent or MathematicalFunction
@@ -1073,6 +1092,10 @@ class LEGOModel(CMDOWSObject, Group):
                 uid = entry
                 if uid in self.discipline_components:
                     block = self.discipline_components[uid]
+
+                    output_rename_map = block.output_rename_map
+                    discrete_output_rename_map = block.discrete_output_rename_map
+
                 elif uid in self.mathematical_functions_groups:
                     block = self.mathematical_functions_groups[uid]
                 else:
@@ -1080,9 +1103,16 @@ class LEGOModel(CMDOWSObject, Group):
                                        'mathematical_functions_groups.'.format(uid))
                 # Add the block to the group
                 coupled_gr.add_subsystem(str_to_valid_sys_name(uid), block, promotes)
+
+                # If the disciplines renames output, reverse map it to be able to feed it to the solver
+                if len(output_rename_map) > 0 or len(discrete_output_rename_map) > 0:
+                    reverse_map_component = self._get_reverse_map_comp(output_rename_map, discrete_output_rename_map,
+                                                                       name='%s_self_loop' % block.name)
+                    coupled_gr.add_subsystem(reverse_map_component.name, reverse_map_component, promotes=['*'])
             else:
                 raise ValueError('Unexpected value type {} encountered in the coupled_hierarchy {}.'
                                  .format(type(entry), hierarchy))
+
         if root:
             return subsys
         else:
@@ -1139,8 +1169,12 @@ class LEGOModel(CMDOWSObject, Group):
             coordinator.add_output(name, value['initial'])
 
         # Add system constants
+        discrete_variables = self.discrete_variables
         for name, shape in self.model_constants.items():
-            coordinator.add_output(name, shape=shape)
+            if name in discrete_variables:
+                coordinator.add_discrete_output(name, discrete_variables[name])
+            else:
+                coordinator.add_output(name, shape=shape)
 
         return coordinator
 
@@ -1490,3 +1524,41 @@ class LEGOModel(CMDOWSObject, Group):
             return True
         else:
             return False
+
+    @staticmethod
+    def _get_reverse_map_comp(output_map, discrete_output_map, name=None):
+        # type: (Dict[str,Tuple[str,Any,Any]], Dict[str,Tuple[str,Any]], Optional[str]) -> ExplicitComponent
+        """
+        A component that simply copies values from target to source names.
+        Used together with XMLComponent.output_rename_map and discrete_output_rename_map.
+        """
+
+        comp = ExplicitComponent()
+        comp.name = name or 'ReverseMap'
+
+        # Map continuous parameters
+        for src_param, (tgt_param, value, ref) in output_map.items():
+            comp.add_input(tgt_param, value)
+            comp.add_output(src_param, value, ref=ref)
+
+        # Declare derivatives
+        if len(output_map) > 0:
+            comp.declare_partials('*', '*', method='fd', step_calc='rel')
+
+        # Map discrete parameters
+        for src_param, (tgt_param, value) in discrete_output_map.items():
+            comp.add_discrete_input(tgt_param, value)
+            comp.add_discrete_output(src_param, value)
+
+        # Declare compute function (simply copy the values)
+        def _compute(inputs, outputs, discrete_inputs=None, discrete_outputs=None):
+            for cmp_src_param, (cmp_tgt_param, _, _) in output_map.items():
+                outputs[cmp_src_param] = inputs[cmp_tgt_param]
+
+            if discrete_inputs is not None and discrete_outputs is not None:
+                for cmp_src_param, (cmp_tgt_param, _) in discrete_output_map.items():
+                    discrete_outputs[cmp_src_param] = discrete_inputs[cmp_tgt_param]
+
+        comp.compute = _compute
+
+        return comp

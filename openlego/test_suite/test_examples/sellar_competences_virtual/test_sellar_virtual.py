@@ -22,6 +22,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 import os
 import unittest
+import tempfile
 
 from openlego.core.problem import LEGOProblem
 from openlego.test_suite.test_examples.sellar_functions import get_couplings, get_objective, get_g1, \
@@ -123,6 +124,15 @@ class TestSellarMath(unittest.TestCase):
         self.assertIsNone(virtual_kb.resolve_discipline('NonExistingDiscipline', 'main'))
         self.assertIsNone(virtual_kb.resolve_discipline('D1', 'special_mode'))
 
+    def test_write_io(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            virtual_kb = self.virtual_kb()
+            virtual_kb.write_io(tmp_dir)
+
+            for discipline in virtual_kb.disciplines:
+                assert os.path.exists(os.path.join(tmp_dir, discipline.name+'-input.xml'))
+                assert os.path.exists(os.path.join(tmp_dir, discipline.name+'-output.xml'))
+
     def test_mda_gs(self):
         self.assertion_con_mda(*run_openlego('cmdows_mdax_Sellar_Test_MDA-GS.xml',
                                              discipline_resolvers=[self.virtual_kb()]))
@@ -130,6 +140,16 @@ class TestSellarMath(unittest.TestCase):
     def test_mdf_gs(self):
         self.assertion_mdo(*run_openlego('cmdows_mdax_Sellar_Test_MDF-GS.xml',
                                          discipline_resolvers=[self.virtual_kb()]))
+
+    def test_mda_gs_self_loop(self):
+        virtual_kb = DisciplineInstanceResolver([
+            D12Discipline(),
+            F1Discipline(),
+            G1Discipline(),
+            G2Discipline(),
+        ])
+        self.assertion_con_mda(*run_openlego('cmdows_mdax_Sellar_Test_MDA-GS-self.xml',
+                                             discipline_resolvers=[virtual_kb]))
 
     def __del__(self):
         clean_dir_filtered(os.path.dirname(__file__), ['case_reader_', 'n2_cmdows_',

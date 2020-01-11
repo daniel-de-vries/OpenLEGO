@@ -29,7 +29,7 @@ from six import string_types, binary_type
 from typing import Optional, Union, List
 
 # Patterns for XML attribute names and values
-pttrn_attr_val = r'([-.0-9:A-Z_a-z]+?)'
+pttrn_attr_val = r'([-.0-9:A-Z_a-z]*?)'
 pttrn_attr_name = r'([:A-Z_a-z][0-9:A-Z_a-z]*?)'
 
 # Expressions used to replace illegal characters in an XPath to legal characters within an OpenMDAO variable name.
@@ -115,9 +115,15 @@ def value_to_xml(elem, value):
 
     if isinstance(value, np.ndarray):
         if value.size == 1:
-            elem.text = str('{:.24e}'.format(value[0]))
+            try:
+                elem.text = str('{:.24e}'.format(value[0]))
+            except ValueError:
+                elem.text = str(value[0])
         else:
-            elem.text = ';'.join([str('{:.24e}'.format(v)) for v in value[:]])
+            try:
+                elem.text = ';'.join([str('{:.24e}'.format(v)) for v in value[:]])
+            except ValueError:
+                elem.text = ';'.join([str(v) for v in value[:]])
             elem.attrib.update({'mapType': 'vector'})
     elif isinstance(value, float):
         elem.text = str('{:.24e}'.format(value))
@@ -126,7 +132,7 @@ def value_to_xml(elem, value):
 
 
 def xml_to_dict(xml):
-    # type: (Union[str, etree._ElementTree]) -> OrderedDict
+    # type: (Union[str, bytes, etree._ElementTree]) -> OrderedDict
     """Convert an XML file to a python dictionary with all valued elements as values with their full XPaths as keys.
 
     Parameters
@@ -178,6 +184,8 @@ def xml_to_dict(xml):
                 value = np.array(text.split(';'), dtype=float)
             except ValueError:
                 value = str(text)
+                if ';' in value:
+                    value = np.array(value.split(';'))
 
         # Update the dict with this element
         _dict.update({'/' + xpath[:-1]: value})

@@ -124,6 +124,19 @@ def parse_string(s):
         return s
 
 
+def is_float(value):
+    """
+    Returns whether or not the value represents a continuous value.
+    """
+    if isinstance(value, float):
+        return True
+
+    if isinstance(value, np.ndarray):
+        return value.dtype == np.float64
+
+    return False
+
+
 def print_optional(string, print_in_log):
     # type: (str, bool) -> None
     """Print a statement based on a string and a boolean wheter to really print or not.

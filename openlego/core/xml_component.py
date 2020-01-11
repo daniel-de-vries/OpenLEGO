@@ -23,6 +23,7 @@ import abc
 import os
 from abc import abstractmethod
 from datetime import datetime
+from cached_property import cached_property
 
 import numpy as np
 from lxml import etree
@@ -31,6 +32,7 @@ from openmdao.vectors.vector import Vector
 from typing import Optional, List, Union, Iterable, Tuple
 
 from openlego.utils.xml_utils import xml_safe_create_element, xml_to_dict, xpath_to_param, param_to_xpath, xml_merge
+from openlego.utils.general_utils import is_float
 from openlego.partials.partials import Partials
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -175,20 +177,90 @@ class XMLComponent(ExplicitComponent):
         variables.update(self.outputs_from_xml.copy())
         return variables
 
-    def setup(self):
+    @cached_property
+    def _input_names(self):
+        input_names = set()
+        discrete_input_names = set()
         for name, value in self.inputs_from_xml.items():
-            if not isinstance(value, float) and not isinstance(value, np.ndarray):
-                # TODO: pass_by_obj
-                # raise NotImplementedError('pass-by-object variables are not yet supported by OpenMDAO 2.0')
-                pass
+            if not is_float(value):
+                discrete_input_names.add(name)
+            else:
+                input_names.add(name)
+
+        return input_names, discrete_input_names
+
+    @cached_property
+    def output_rename_map(self):
+        """
+        Dict mapping original output params to renamed output params.
+        Outputs are renamed if they confict with an input parameter.
+        """
+        input_names, discrete_input_names = self._input_names
+
+        output_rename_map = {}
+        for name, value in self.outputs_from_xml.items():
+            if is_float(value):
+                # Use the value stored in the input.xml as a reference value
+                if isinstance(value, np.ndarray):
+                    ref = value.mean()
+                else:
+                    ref = value
+                if ref == 0.:
+                    ref = 1.
+
+                # Rename output variable if in conflict with input
+                if name in discrete_input_names:
+                    raise RuntimeError('Output not same type (cont) as input (discrete): %s' % name)
+                elif name in input_names:
+                    renamed = name + '___out'
+                    output_rename_map[name] = (renamed, value, ref)
+
+        return output_rename_map
+
+    @cached_property
+    def discrete_output_rename_map(self):
+        """
+        Dict mapping original output params to renamed output params.
+        Outputs are renamed if they confict with an input parameter.
+        """
+        input_names, discrete_input_names = self._input_names
+
+        discrete_output_rename_map = {}
+        for name, value in self.outputs_from_xml.items():
+            if not is_float(value):
+                # Rename output variable if in conflict with input
+                if name in input_names:
+                    raise RuntimeError('Output not same type (discrete) as input (cont): %s' % name)
+                elif name in discrete_input_names:
+                    renamed = name + '___out'
+                    discrete_output_rename_map[name] = (renamed, value)
+
+        return discrete_output_rename_map
+
+    def setup(self):
+        has_cont_input = False
+        input_names = set()
+        discrete_input_names = set()
+        for name, value in self.inputs_from_xml.items():
+            if not is_float(value):
+                self.add_discrete_input(name, value)
+                discrete_input_names.add(name)
             else:
                 self.add_input(name, value)
+                input_names.add(name)
+                has_cont_input = True
 
+        has_cont_output = False
+        output_rename_map = self.output_rename_map
+        discrete_output_rename_map = self.discrete_output_rename_map
         for name, value in self.outputs_from_xml.items():
-            if not isinstance(value, float) and not isinstance(value, np.ndarray):
-                # TODO: pass_by_obj
-                # raise NotImplementedError('pass-by-object variables are not yet supported by OpenMDAO 2.0')
-                pass
+            if not is_float(value):
+                # Rename output variable if in conflict with input
+                if name in discrete_output_rename_map:
+                    name = discrete_output_rename_map[name]
+
+                self.add_discrete_output(name, value)
+
             else:
                 # Use the value stored in the input.xml as a reference value
                 if isinstance(value, np.ndarray):
@@ -198,17 +270,27 @@ class XMLComponent(ExplicitComponent):
                 if ref == 0.:
                     ref = 1.
 
-                self.add_output(name, value, ref=ref)
+                # Rename output variable if in conflict with input
+                if name in output_rename_map:
+                    name = output_rename_map[name][0]
 
-        if self.partials_from_xml:
-            for of, wrt in self.partials_from_xml.items():
-                if of is not None and wrt is not None:
-                    self.declare_partials(xpath_to_param(of), [xpath_to_param(_wrt) for _wrt in wrt.keys()])
-        else:
-            self.declare_partials('*', '*', method='fd', step_calc='rel')
-            # if self.outputs_from_xml and self.inputs_from_xml:
-            #     for src in self.outputs_from_xml.keys():
-            #         self.declare_partials(src, self.inputs_from_xml.keys(), method='fd')
+                self.add_output(name, value, ref=ref)
+                has_cont_output = True
+
+        # Only declare partials if we have at least one continuous input and output parameter
+        if has_cont_input and has_cont_output:
+            if self.partials_from_xml:
+                for of, wrt in self.partials_from_xml.items():
+                    if of is not None and wrt is not None:
+                        out_param = xpath_to_param(of)
+                        if out_param in output_rename_map:
+                            out_param = output_rename_map[out_param][0]
+                        self.declare_partials(out_param, [xpath_to_param(_wrt) for _wrt in wrt.keys()])
+            else:
+                self.declare_partials('*', '*', method='fd', step_calc='rel')
+                # if self.outputs_from_xml and self.inputs_from_xml:
+                #     for src in self.outputs_from_xml.keys():
+                #         self.declare_partials(src, self.inputs_from_xml.keys(), method='fd')
 
     @abstractmethod
     def execute(self, input_xml=None, output_xml=None):
@@ -257,8 +339,8 @@ class XMLComponent(ExplicitComponent):
 
         return input_xml, output_xml, partials_xml
 
-    def write_input_file(self, file, inputs):
-        # type: (Union[str, etree._ElementTree], Vector) -> None
+    def write_input_file(self, file, inputs, discrete_inputs=None):
+        # type: (Union[str, etree._ElementTree], Vector, Optional[dict]) -> None
         """Write the current input values to an input XML file.
 
         Parameters
@@ -268,6 +350,9 @@ class XMLComponent(ExplicitComponent):
 
             inputs : Vector
                 Input vector of this `Component`.
+
+            discrete_inputs : dict
+                Discrete (i.e. not treated as floats) inputs.
         """
         # Create new root element and an ElementTree
         root = etree.Element(param_to_xpath(list(self.inputs_from_xml)[0]).split('/')[1])
@@ -277,12 +362,14 @@ class XMLComponent(ExplicitComponent):
         for param in self.inputs_from_xml:
             if param in inputs:
                 xml_safe_create_element(doc, param_to_xpath(param), inputs[param])
+            elif param in discrete_inputs:
+                xml_safe_create_element(doc, param_to_xpath(param), discrete_inputs[param])
 
         # Write the tree to an XML file
         doc.write(file, pretty_print=True, xml_declaration=True, encoding='utf-8')
 
-    def read_outputs_file(self, file, outputs):
-        # type: (Union[str, etree._ElementTree], Vector) -> None
+    def read_outputs_file(self, file, outputs, discrete_outputs=None):
+        # type: (Union[str, etree._ElementTree], Vector, Optional[dict]) -> None
         """Read the outputs from a given XML file and store them in this `Component`'s variables.
 
         Parameters
@@ -292,12 +379,27 @@ class XMLComponent(ExplicitComponent):
 
             outputs : Vector
                 Output vector of this `Component`.
+
+            discrete_outputs : dict
+                Discrete (i.e. not treated as floats) outputs.
         """
+        output_rename_map = self.output_rename_map
+        discrete_output_rename_map = self.discrete_output_rename_map
+
         # Extract the results from the output xml
         for xpath, value in xml_to_dict(file).items():
             name = xpath_to_param(xpath)
-            if name in self.outputs_from_xml and name in outputs:
-                outputs[name] = value
+            if name in self.outputs_from_xml:
+                # Rename output
+                if name in output_rename_map:
+                    name = output_rename_map[name][0]
+                elif name in discrete_output_rename_map:
+                    name = discrete_output_rename_map[name][0]
+
+                if name in outputs:
+                    outputs[name] = value
+                elif discrete_outputs is not None and name in discrete_outputs:
+                    discrete_outputs[name] = value
 
     def read_partials_file(self, file, partials):
         # type: (Union[str, etree._ElementTree], Vector) -> None
@@ -312,10 +414,15 @@ class XMLComponent(ExplicitComponent):
                 Partials vector of this `Component`.
 
         """
+        output_rename_map = self.output_rename_map
+
         _partials = Partials(file)
         for of, wrts in _partials.get_partials().items():
             for wrt, val in wrts.items():
                 of = xpath_to_param(of)
+                if of in output_rename_map:
+                    of = output_rename_map[of][0]
+
                 wrt = xpath_to_param(wrt)
                 if (of, wrt) in partials:
                     try:
@@ -323,8 +430,8 @@ class XMLComponent(ExplicitComponent):
                     except Exception as e:
                         print(e.message)
 
-    def compute(self, inputs, outputs):
-        # type: (Vector, Vector) -> None
+    def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
+        # type: (Vector, Vector, Optional[dict], Optional[dict]) -> None
         """Write the input XML file, call `execute()`, and read the output XML file to obtain the results.
 
         Parameters
@@ -334,12 +441,18 @@ class XMLComponent(ExplicitComponent):
 
             outputs : `Vector`
                 Output parameters.
+
+            discrete_inputs : `dict`
+                Discrete (i.e. not treated as floats) input parameters.
+
+            discrete_outputs : `dict`
+                Discrete (i.e. not treated as floats) output parameters.
         """
 
         input_xml, output_xml, _ = self.generate_file_names()
 
         if self.inputs_from_xml:
-            self.write_input_file(input_xml, inputs)
+            self.write_input_file(input_xml, inputs, discrete_inputs)
             if self.base_file is not None:
                 xml_merge(self.base_file, input_xml)
 
@@ -358,7 +471,7 @@ class XMLComponent(ExplicitComponent):
                 pass
 
         if self.outputs_from_xml:
-            self.read_outputs_file(output_xml, outputs)
+            self.read_outputs_file(output_xml, outputs, discrete_outputs)
 
             # If files should not be kept, delete the output XML file
             if not self.keep_files:

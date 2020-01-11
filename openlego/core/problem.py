@@ -176,6 +176,7 @@ class LEGOProblem(CMDOWSObject, Problem):
             data_folder=self.data_folder,
             base_xml_file=self.base_xml_file,
             discipline_resolvers=self.discipline_resolvers.copy(),
+            keep_files=self.keep_files,
         )
 
     @cached_property

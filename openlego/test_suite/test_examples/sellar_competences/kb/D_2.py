@@ -21,10 +21,9 @@ from __future__ import absolute_import, division, print_function
 
 from lxml import etree
 
-from KADMOS_SellarProblem.sellar_openlego_journal.sellar.kb import x_c
 from openlego.api import AbstractDiscipline
 from openlego.utils.xml_utils import xml_safe_create_element
-from openlego.test_suite.test_examples.sellar_competences.kb import root_tag, x_y1, x_y2, x_z1, x_z2
+from openlego.test_suite.test_examples.sellar_competences.kb import root_tag, x_y1, x_y2, x_z1, x_z2, x_c
 from openlego.partials.partials import Partials
 
 
